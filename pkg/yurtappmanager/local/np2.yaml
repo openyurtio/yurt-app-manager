@@ -1,0 +1,14 @@
+apiVersion: unit.openyurt.io/v1alpha1
+kind: NodePool
+metadata:
+  name: np2
+spec:
+  type: Edge 
+  annotations:
+    foo: bar
+  labels:
+    foo: bar
+  taints:
+  - key: foo
+    value: bar
+    effect: NoSchedule
