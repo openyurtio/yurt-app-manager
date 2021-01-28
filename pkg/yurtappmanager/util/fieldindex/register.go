@@ -18,13 +18,14 @@ limitations under the License.
 package fieldindex
 
 import (
+	"context"
 	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -38,7 +39,7 @@ func RegisterFieldIndexes(c cache.Cache) error {
 	var err error
 	registerOnce.Do(func() {
 		// pod nodeName
-		err = c.IndexField(&v1.Pod{}, IndexNameForPodNodeName, func(obj runtime.Object) []string {
+		err = c.IndexField(context.TODO(), &v1.Pod{}, IndexNameForPodNodeName, func(obj client.Object) []string {
 			pod, ok := obj.(*v1.Pod)
 			if !ok {
 				return []string{}
@@ -52,7 +53,7 @@ func RegisterFieldIndexes(c cache.Cache) error {
 			return
 		}
 
-		ownerIndexFunc := func(obj runtime.Object) []string {
+		ownerIndexFunc := func(obj client.Object) []string {
 			metaObj, ok := obj.(metav1.Object)
 			if !ok {
 				return []string{}
@@ -65,11 +66,11 @@ func RegisterFieldIndexes(c cache.Cache) error {
 		}
 
 		// pod ownerReference
-		if err = c.IndexField(&v1.Pod{}, IndexNameForOwnerRefUID, ownerIndexFunc); err != nil {
+		if err = c.IndexField(context.TODO(), &v1.Pod{}, IndexNameForOwnerRefUID, ownerIndexFunc); err != nil {
 			return
 		}
 		// pvc ownerReference
-		if err = c.IndexField(&v1.PersistentVolumeClaim{}, IndexNameForOwnerRefUID, ownerIndexFunc); err != nil {
+		if err = c.IndexField(context.TODO(), &v1.PersistentVolumeClaim{}, IndexNameForOwnerRefUID, ownerIndexFunc); err != nil {
 			return
 		}
 	})

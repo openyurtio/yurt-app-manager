@@ -23,20 +23,20 @@ import (
 	"net/http"
 	"os"
 
-	appsv1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	extclient "github.com/alibaba/openyurt/pkg/yurtappmanager/client"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/constant"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/controller"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/util/fieldindex"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/webhook"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	extclient "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/fieldindex"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/alibaba/openyurt/cmd/yurt-app-manager/options"
-	"github.com/alibaba/openyurt/pkg/projectinfo"
+	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
+	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/klog"
@@ -151,7 +151,7 @@ func Run(opts *options.YurtAppOptions) {
 
 	stopCh := ctrl.SetupSignalHandler()
 	setupLog.Info("initialize webhook")
-	if err := webhook.Initialize(mgr, stopCh); err != nil {
+	if err := webhook.Initialize(mgr, stopCh.Done()); err != nil {
 		setupLog.Error(err, "unable to initialize webhook")
 		os.Exit(1)
 	}

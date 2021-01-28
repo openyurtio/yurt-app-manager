@@ -24,7 +24,7 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
-	appsv1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 type EnqueueNodePoolForNode struct{}
@@ -52,13 +52,13 @@ func (e *EnqueueNodePoolForNode) Update(evt event.UpdateEvent,
 	newNode, ok := evt.ObjectNew.(*corev1.Node)
 	if !ok {
 		klog.Errorf("fail to assert runtime Object(%s) to v1.Node",
-			evt.MetaNew.GetName())
+			evt.ObjectNew.GetName())
 		return
 	}
 	oldNode, ok := evt.ObjectOld.(*corev1.Node)
 	if !ok {
 		klog.Errorf("fail to assert runtime Object(%s) to v1.Node",
-			evt.MetaOld.GetName())
+			evt.ObjectOld.GetName())
 		return
 	}
 	klog.V(5).Infof("will enqueue nodepool as node(%s) has been updated",

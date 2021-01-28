@@ -25,9 +25,9 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	appsv1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/util"
-	webhookutil "github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util"
+	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
 // NodePoolCreateUpdateHandler handles UnitedDeployment

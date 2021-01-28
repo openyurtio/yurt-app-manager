@@ -26,7 +26,7 @@ import (
 	"path"
 	"sync"
 
-	webhookutil "github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util"
+	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
 var (

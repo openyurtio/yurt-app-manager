@@ -19,8 +19,8 @@ limitations under the License.
 package apps
 
 import (
-	v1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/client/informers/externalversions/apps/v1alpha1"
-	internalinterfaces "github.com/alibaba/openyurt/pkg/yurtappmanager/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client/informers/externalversions/apps/v1alpha1"
+	internalinterfaces "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

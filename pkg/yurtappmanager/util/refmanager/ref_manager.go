@@ -105,30 +105,34 @@ func (mgr *RefManager) getOwner() (runtime.Object, error) {
 	return getOwner(mgr.owner, mgr.schema, mgr.client)
 }
 
-var getOwner = func(owner metav1.Object, schema *runtime.Scheme, c client.Client) (runtime.Object, error) {
-	runtimeObj, ok := owner.(runtime.Object)
+var getOwner = func(owner metav1.Object, schema *runtime.Scheme, c client.Client) (client.Object, error) {
+	cliObj, ok := owner.(client.Object)
 	if !ok {
 		return nil, fmt.Errorf("fail to convert %s/%s to runtime object", owner.GetNamespace(), owner.GetName())
 	}
 
-	kinds, _, err := schema.ObjectKinds(runtimeObj)
+	kinds, _, err := schema.ObjectKinds(cliObj)
 	if err != nil {
 		return nil, err
 	}
 
-	obj, err := schema.New(kinds[0])
+	runtimeObj, err := schema.New(kinds[0])
 	if err != nil {
 		return nil, err
+	}
+	obj, ok := runtimeObj.(client.Object)
+	if !ok {
+		return nil, fmt.Errorf("fail to convert %s/%s to client object", owner.GetNamespace(), owner.GetName())
 	}
 
 	return obj, c.Get(context.TODO(), client.ObjectKey{Namespace: owner.GetNamespace(), Name: owner.GetName()}, obj)
 }
 
-func (mgr *RefManager) updateOwnee(object runtime.Object) error {
+func (mgr *RefManager) updateOwnee(object client.Object) error {
 	return updateOwnee(object, mgr.client)
 }
 
-var updateOwnee = func(object runtime.Object, c client.Client) error {
+var updateOwnee = func(object client.Object, c client.Client) error {
 	return c.Update(context.TODO(), object)
 }
 
@@ -170,7 +174,7 @@ func (mgr *RefManager) adopt(obj metav1.Object) error {
 		return fmt.Errorf("can't set Object %v/%v (%v) owner reference: %v", obj.GetNamespace(), obj.GetName(), obj.GetUID(), err)
 	}
 
-	runtimeObj, ok := obj.(runtime.Object)
+	runtimeObj, ok := obj.(client.Object)
 	if !ok {
 		return fmt.Errorf("can't update Object %v/%v (%v) owner reference: fail to cast to runtime.Object", obj.GetNamespace(), obj.GetName(), obj.GetUID())
 	}
@@ -190,7 +194,7 @@ func (mgr *RefManager) release(obj metav1.Object) error {
 		}
 	}
 	if idx > -1 {
-		runtimeObj, ok := obj.(runtime.Object)
+		runtimeObj, ok := obj.(client.Object)
 		if !ok {
 			return fmt.Errorf("can't remove Pod %v/%v (%v) owner reference: fail to cast to runtime.Object", obj.GetNamespace(), obj.GetName(), obj.GetUID())
 		}

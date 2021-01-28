@@ -34,9 +34,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	yurtctlutil "github.com/alibaba/openyurt/pkg/yurtappmanager/controller/util"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/util/refmanager"
+	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	yurtctlutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/util"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/refmanager"
 )
 
 type StatefulSetAdapter struct {

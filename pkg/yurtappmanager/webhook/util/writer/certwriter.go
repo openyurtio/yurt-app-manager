@@ -27,7 +27,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util/generator"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/generator"
 )
 
 const (

@@ -19,7 +19,9 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"context"
+
+	v1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -38,7 +40,7 @@ var nodepoolsResource = schema.GroupVersionResource{Group: "apps.openyurt.io", V
 var nodepoolsKind = schema.GroupVersionKind{Group: "apps.openyurt.io", Version: "v1alpha1", Kind: "NodePool"}
 
 // Get takes name of the nodePool, and returns the corresponding nodePool object, and an error if there is any.
-func (c *FakeNodePools) Get(name string, options v1.GetOptions) (result *v1alpha1.NodePool, err error) {
+func (c *FakeNodePools) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.NodePool, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(nodepoolsResource, name), &v1alpha1.NodePool{})
 	if obj == nil {
@@ -48,7 +50,7 @@ func (c *FakeNodePools) Get(name string, options v1.GetOptions) (result *v1alpha
 }
 
 // List takes label and field selectors, and returns the list of NodePools that match those selectors.
-func (c *FakeNodePools) List(opts v1.ListOptions) (result *v1alpha1.NodePoolList, err error) {
+func (c *FakeNodePools) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.NodePoolList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(nodepoolsResource, nodepoolsKind, opts), &v1alpha1.NodePoolList{})
 	if obj == nil {
@@ -69,13 +71,13 @@ func (c *FakeNodePools) List(opts v1.ListOptions) (result *v1alpha1.NodePoolList
 }
 
 // Watch returns a watch.Interface that watches the requested nodePools.
-func (c *FakeNodePools) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeNodePools) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(nodepoolsResource, opts))
 }
 
 // Create takes the representation of a nodePool and creates it.  Returns the server's representation of the nodePool, and an error, if there is any.
-func (c *FakeNodePools) Create(nodePool *v1alpha1.NodePool) (result *v1alpha1.NodePool, err error) {
+func (c *FakeNodePools) Create(ctx context.Context, nodePool *v1alpha1.NodePool, opts v1.CreateOptions) (result *v1alpha1.NodePool, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(nodepoolsResource, nodePool), &v1alpha1.NodePool{})
 	if obj == nil {
@@ -85,7 +87,7 @@ func (c *FakeNodePools) Create(nodePool *v1alpha1.NodePool) (result *v1alpha1.No
 }
 
 // Update takes the representation of a nodePool and updates it. Returns the server's representation of the nodePool, and an error, if there is any.
-func (c *FakeNodePools) Update(nodePool *v1alpha1.NodePool) (result *v1alpha1.NodePool, err error) {
+func (c *FakeNodePools) Update(ctx context.Context, nodePool *v1alpha1.NodePool, opts v1.UpdateOptions) (result *v1alpha1.NodePool, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(nodepoolsResource, nodePool), &v1alpha1.NodePool{})
 	if obj == nil {
@@ -96,7 +98,7 @@ func (c *FakeNodePools) Update(nodePool *v1alpha1.NodePool) (result *v1alpha1.No
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeNodePools) UpdateStatus(nodePool *v1alpha1.NodePool) (*v1alpha1.NodePool, error) {
+func (c *FakeNodePools) UpdateStatus(ctx context.Context, nodePool *v1alpha1.NodePool, opts v1.UpdateOptions) (*v1alpha1.NodePool, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(nodepoolsResource, "status", nodePool), &v1alpha1.NodePool{})
 	if obj == nil {
@@ -106,22 +108,22 @@ func (c *FakeNodePools) UpdateStatus(nodePool *v1alpha1.NodePool) (*v1alpha1.Nod
 }
 
 // Delete takes name of the nodePool and deletes it. Returns an error if one occurs.
-func (c *FakeNodePools) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeNodePools) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(nodepoolsResource, name), &v1alpha1.NodePool{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeNodePools) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(nodepoolsResource, listOptions)
+func (c *FakeNodePools) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(nodepoolsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.NodePoolList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched nodePool.
-func (c *FakeNodePools) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.NodePool, err error) {
+func (c *FakeNodePools) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.NodePool, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(nodepoolsResource, name, pt, data, subresources...), &v1alpha1.NodePool{})
 	if obj == nil {

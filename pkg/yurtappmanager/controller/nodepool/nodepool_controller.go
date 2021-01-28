@@ -41,9 +41,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	appsv1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/constant"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/util/gate"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/gate"
 )
 
 const controllerName = "nodepool-controller"
@@ -169,7 +169,7 @@ func createDefaultNodePool(client client.Client) {
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;update;patch
 
-func (r *NodePoolReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	var nodePool appsv1alpha1.NodePool
 	// try to reconcile the NodePool object
@@ -260,7 +260,7 @@ func (r *NodePoolReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// 3. always update the node pool status if necessary
-	return conciliateNodePoolStatus(r, readyNode, notReadyNode, nodes, &nodePool)
+	return conciliateNodePoolStatus(r.Client, readyNode, notReadyNode, nodes, &nodePool)
 }
 
 // removePoolRelatedAttrs removes attributes(label/annotation/taint) that

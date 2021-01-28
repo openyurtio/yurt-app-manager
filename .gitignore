@@ -1,0 +1,8 @@
+_output
+.idea
+.DS_Store
+gopath
+dockerbuild
+
+*.out
+logs

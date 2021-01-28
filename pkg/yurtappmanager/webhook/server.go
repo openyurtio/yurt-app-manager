@@ -26,9 +26,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	webhookutil "github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util"
-	webhookcontroller "github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util/controller"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util/health"
+	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
+	webhookcontroller "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/controller"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/health"
 )
 
 var (
@@ -81,10 +81,12 @@ func SetupWithManager(mgr manager.Manager) error {
 // +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
 
 func Initialize(mgr manager.Manager, stopCh <-chan struct{}) error {
-	cli := &client.DelegatingClient{
-		Reader:       mgr.GetAPIReader(),
-		Writer:       mgr.GetClient(),
-		StatusClient: mgr.GetClient(),
+	cli, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
+		CacheReader: mgr.GetCache(),
+		Client:      mgr.GetClient(),
+	})
+	if err != nil {
+		return err
 	}
 
 	c, err := webhookcontroller.New(cli, HandlerMap)

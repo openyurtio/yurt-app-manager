@@ -19,6 +19,7 @@ package uniteddeployment
 
 import (
 	"context"
+	"errors"
 	"reflect"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,9 +28,9 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/controller/uniteddeployment/adapter"
-	"github.com/alibaba/openyurt/pkg/yurtappmanager/util/refmanager"
+	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment/adapter"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/refmanager"
 )
 
 // PoolControl provides pool operations of MutableSet.
@@ -48,7 +49,11 @@ func (m *PoolControl) GetAllPools(ud *alpha1.UnitedDeployment) (pools []*Pool, e
 	}
 
 	setList := m.adapter.NewResourceListObject()
-	err = m.Client.List(context.TODO(), setList, &client.ListOptions{LabelSelector: selector})
+	cliSetList, ok := setList.(client.ObjectList)
+	if !ok {
+		return nil, errors.New("fail to convert runtime object to client.ObjectList")
+	}
+	err = m.Client.List(context.TODO(), cliSetList, &client.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, err
 	}
@@ -86,15 +91,23 @@ func (m *PoolControl) CreatePool(ud *alpha1.UnitedDeployment, poolName string, r
 	m.adapter.ApplyPoolTemplate(ud, poolName, revision, replicas, set)
 
 	klog.V(4).Infof("Have %d replicas when creating Pool for UnitedDeployment %s/%s", replicas, ud.Namespace, ud.Name)
-	return m.Create(context.TODO(), set)
+	cliSet, ok := set.(client.Object)
+	if !ok {
+		return errors.New("fail to convert runtime.Object to client.Object")
+	}
+	return m.Create(context.TODO(), cliSet)
 }
 
 // UpdatePool is used to update the pool. The target Pool workload can be found with the input pool.
 func (m *PoolControl) UpdatePool(pool *Pool, ud *alpha1.UnitedDeployment, revision string, replicas int32) error {
 	set := m.adapter.NewResourceObject()
+	cliSet, ok := set.(client.Object)
+	if !ok {
+		return errors.New("fail to convert runtime.Object to client.Object")
+	}
 	var updateError error
 	for i := 0; i < updateRetries; i++ {
-		getError := m.Client.Get(context.TODO(), m.objectKey(pool), set)
+		getError := m.Client.Get(context.TODO(), m.objectKey(pool), cliSet)
 		if getError != nil {
 			return getError
 		}
@@ -102,7 +115,7 @@ func (m *PoolControl) UpdatePool(pool *Pool, ud *alpha1.UnitedDeployment, revisi
 		if err := m.adapter.ApplyPoolTemplate(ud, pool.Name, revision, replicas, set); err != nil {
 			return err
 		}
-		updateError = m.Client.Update(context.TODO(), set)
+		updateError = m.Client.Update(context.TODO(), cliSet)
 		if updateError == nil {
 			break
 		}
@@ -118,7 +131,11 @@ func (m *PoolControl) UpdatePool(pool *Pool, ud *alpha1.UnitedDeployment, revisi
 // DeletePool is called to delete the pool. The target Pool workload can be found with the input pool.
 func (m *PoolControl) DeletePool(pool *Pool) error {
 	set := pool.Spec.PoolRef.(runtime.Object)
-	return m.Delete(context.TODO(), set, client.PropagationPolicy(metav1.DeletePropagationBackground))
+	cliSet, ok := set.(client.Object)
+	if !ok {
+		return errors.New("fail to convert runtime.Object to client.Object")
+	}
+	return m.Delete(context.TODO(), cliSet, client.PropagationPolicy(metav1.DeletePropagationBackground))
 }
 
 // GetPoolFailure return the error message extracted form Pool workload status conditions.

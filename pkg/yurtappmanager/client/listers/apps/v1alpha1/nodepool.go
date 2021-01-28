@@ -19,17 +19,20 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
+	v1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/cache"
 )
 
 // NodePoolLister helps list NodePools.
+// All objects returned here must be treated as read-only.
 type NodePoolLister interface {
 	// List lists all NodePools in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.NodePool, err error)
 	// Get retrieves the NodePool from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.NodePool, error)
 	NodePoolListerExpansion
 }

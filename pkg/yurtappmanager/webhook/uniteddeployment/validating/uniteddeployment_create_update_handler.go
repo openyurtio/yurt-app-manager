@@ -21,12 +21,12 @@ import (
 	"context"
 	"net/http"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	unitv1alpha1 "github.com/alibaba/openyurt/pkg/yurtappmanager/apis/apps/v1alpha1"
-	webhookutil "github.com/alibaba/openyurt/pkg/yurtappmanager/webhook/util"
+	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
 // UnitedDeploymentCreateUpdateHandler handles UnitedDeployment
@@ -58,11 +58,11 @@ func (h *UnitedDeploymentCreateUpdateHandler) Handle(ctx context.Context, req ad
 	}
 
 	switch req.AdmissionRequest.Operation {
-	case admissionv1beta1.Create:
+	case admissionv1.Create:
 		if allErrs := validateUnitedDeployment(h.Client, obj); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity, allErrs.ToAggregate())
 		}
-	case admissionv1beta1.Update:
+	case admissionv1.Update:
 		oldObj := &unitv1alpha1.UnitedDeployment{}
 		if err := h.Decoder.DecodeRaw(req.AdmissionRequest.OldObject, oldObj); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
