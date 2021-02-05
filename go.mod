@@ -3,16 +3,12 @@ module github.com/openyurtio/yurt-app-manager
 go 1.15
 
 require (
-	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/onsi/gomega v1.10.2
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.7.1 // indirect
 	github.com/sclevine/agouti v3.0.0+incompatible // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	google.golang.org/grpc v1.27.0 // indirect
-	gopkg.in/square/go-jose.v2 v2.2.2 // indirect
 	k8s.io/api v0.19.7
 	k8s.io/apimachinery v0.19.7
 	k8s.io/client-go v0.19.7
@@ -20,7 +16,6 @@ require (
 	k8s.io/kubernetes v1.19.7
 	k8s.io/utils v0.0.0-20200912215256-4140de9c8800
 	sigs.k8s.io/controller-runtime v0.7.0
-	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 replace (

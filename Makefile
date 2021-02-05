@@ -18,16 +18,11 @@ all: test build
 
 # Build binaries in the host environment
 build: 
-	bash hack/make-rules/build.sh $(WHAT)
-
-# generate yaml files 
-gen-yaml:
-	hack/make-rules/genyaml.sh $(WHAT)
+	bash hack/make-rules/build.sh
 
 # Run test
 test: fmt vet
 	go test ./pkg/... ./cmd/... -coverprofile cover.out
-	go test -v  -coverpkg=./pkg/yurttunnel/...  -coverprofile=yurttunnel-cover.out ./test/integration/yurttunnel_test.go
 
 # Run go fmt against code
 fmt:
@@ -60,21 +55,23 @@ clean:
 	-rm -Rf _output
 	-rm -Rf dockerbuild
 
-e2e: 
-	hack/make-rules/build-e2e.sh 
+generate: controller-gen generate-manifests generate-goclient
 
-# Generate manifests e.g. CRD, RBAC etc.
-gen-app-manager-manifests: app-manager-controller-gen
+# Generate manifests, e.g., CRD, RBAC etc.
+generate-manifests: controller-gen
 	$(CONTROLLER_GEN) crd:trivialVersions=true rbac:roleName=manager-role webhook paths="./pkg/yurtappmanager/..." output:crd:artifacts:config=config/yurt-app-manager/crd/bases  output:rbac:artifacts:config=config/yurt-app-manager/rbac output:webhook:artifacts:config=config/yurt-app-manager/webhook
 
-# Generate code
-gen-app-manager-client: app-manager-controller-gen
+# Generate go codes.
+generate-goclient: controller-gen
 	hack/make-rules/generate_client.sh
 	$(CONTROLLER_GEN) object:headerFile="./pkg/yurtappmanager/hack/boilerplate.go.txt" paths="./pkg/yurtappmanager/apis/..."
 
+generate-deploy-yaml: 
+	hack/make-rules/genyaml.sh
+
 # find or download controller-gen
 # download controller-gen if necessary
-app-manager-controller-gen:
+controller-gen:
 ifeq (, $(shell which controller-gen-openyurt))
 	@{ \
 	set -e ;\

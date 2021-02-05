@@ -16,15 +16,6 @@
 
 set -x
 
-readonly YURT_ALL_TARGETS=(
-    yurtctl
-    yurthub
-    yurt-controller-manager
-    yurt-tunnel-server
-    yurt-tunnel-agent
-    yurt-app-manager
-)
-
 # we will generates setup yaml files for following components
 readonly YURT_YAML_TARGETS=(
     yurthub
@@ -57,93 +48,35 @@ get_binary_dir_with_arch(){
     echo $1/$(go env GOOS)/$(go env GOARCH)/
 }
 
-build_binaries() {
+build_binary() {
     local goflags goldflags gcflags
     goldflags="${GOLDFLAGS:--s -w $(project_info)}"
     gcflags="${GOGCFLAGS:-}"
     goflags=${GOFLAGS:-}
 
-    local -a targets=()
     local arg
-
     for arg; do
       if [[ "${arg}" == -* ]]; then
         # Assume arguments starting with a dash are flags to pass to go.
         goflags+=("${arg}")
-      else
-        targets+=("${arg}")
       fi
     done
 
-    if [[ ${#targets[@]} -eq 0 ]]; then
-      targets=("${YURT_ALL_TARGETS[@]}")
-    fi
-
-    local target_bin_dir=$(get_binary_dir_with_arch ${YURT_BIN_DIR})
-    mkdir -p ${target_bin_dir}
-    cd ${target_bin_dir}
-    for binary in "${targets[@]}"; do
-      echo "Building ${binary}"
-      go build -o $(get_output_name $binary) \
-          -ldflags "${goldflags:-}" \
-          -gcflags "${gcflags:-}" ${goflags} $YURT_ROOT/cmd/$(canonicalize_target $binary)
-    done
+    local bin_dir=$(get_binary_dir_with_arch ${YURT_BIN_DIR})
+    local bin_name=$(get_output_name $binary)
+    mkdir -p ${bin_dir}
+    
+    echo "Building ${bin_name}"
+    go build -o ${bin_dir}${bin_name} \
+        -ldflags "${goldflags:-}" \
+        -gcflags "${gcflags:-}" ${goflags} 
 }
 
-# gen_yamls generates yaml files for user specified components by 
-# subsituting the place holders with envs
+# gen_yamls generates yaml files for the yurt-app-manager 
 gen_yamls() {
-    REPO=${REPO:-openyurt}
-    TAG=${TAG:-latest}
-    PKI_PATH=${PKI_PATH:-/etc/kubernetes/pki}
-    # we use the serivce/kubernetes's DNS as the server address for hub
-    kube_svc_addr=${KUBE_SVC_ADDR:-kubernetes}
-    kube_svc_port=${KUBE_SVC_PORT:-}
-    
-    server_addr=https://$kube_svc_addr
-    if [ ! -z $kube_svc_port ]; then
-        server_addr=https://$kube_svc_addr:$kube_svc_port
-    fi
-
-    local -a yaml_targets=() 
-    for arg; do
-        # ignoring go flags 
-        [[ "$arg" == -* ]] && continue
-        target=$(basename $arg)
-        # only add target that is in the ${YURT_YAML_TARGETS} list
-        if [[ "${YURT_YAML_TARGETS[@]}" =~ "$target" ]]; then
-            yaml_targets+=("$target")        
-        fi
-    done
-    # if not specified, generate yaml for default yaml targets
-    if [ ${#yaml_targets[@]} -eq 0 ]; then
-        yaml_targets=("${YURT_YAML_TARGETS[@]}")
-    fi
-    echo $yaml_targets
-    
-    local yaml_dir=$YURT_OUTPUT_DIR/setup/
-    mkdir -p $yaml_dir
-    for yaml_target in "${yaml_targets[@]}"; do
-        if [ "$yaml_target" == "yurt-app-manager" ]; then
-            gen_yurtappmanager_yaml 
-            continue
-        fi 
-        oup_file=${yaml_target/yurt/$PROJECT_PREFIX}
-        echo "generating yaml file for $oup_file"
-        sed "s|__project_prefix__|${PROJECT_PREFIX}|g;
-        s|__label_prefix__|$LABEL_PREFIX|g;
-        s|__repo__|$REPO|g;
-        s|__tag__|$TAG|g;
-        s|__pki_path__|$PKI_PATH|g;
-        s|__server_addr__|$server_addr|g;" \
-            $YURT_ROOT/config/yaml-template/$yaml_target.yaml > \
-            $yaml_dir/$oup_file.yaml
-    done
-}
-
-gen_yurtappmanager_yaml() {
     local OUT_YAML_DIR=$YURT_ROOT/_output/yamls/
     local BUILD_YAML_DIR=${OUT_YAML_DIR}/build/
+    [ -f $BUILD_YAML_DIR ] || mkdir -p $BUILD_YAML_DIR
     mkdir -p ${BUILD_YAML_DIR}
     (
         rm -rf ${BUILD_YAML_DIR}/yurt-app-manager
@@ -154,4 +87,5 @@ gen_yurtappmanager_yaml() {
     set +x
     echo "==== create yurt-app-manager.yaml in $OUT_YAML_DIR ===="
     kustomize build ${BUILD_YAML_DIR}/yurt-app-manager/default > ${OUT_YAML_DIR}/yurt-app-manager.yaml
+    rm -Rf ${BUILD_YAML_DIR}
 }
