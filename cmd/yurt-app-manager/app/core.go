@@ -30,11 +30,10 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/fieldindex"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook"
 	"k8s.io/apimachinery/pkg/runtime"
-
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
-
 	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
 	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
 	"github.com/spf13/cobra"
@@ -113,6 +112,7 @@ func Run(opts *options.YurtAppOptions) {
 		LeaderElection:          opts.EnableLeaderElection,
 		LeaderElectionID:        "yurt-app-manager",
 		LeaderElectionNamespace: opts.LeaderElectionNamespace,
+		LeaderElectionResourceLock: resourcelock.LeasesResourceLock, // use lease to election
 		Namespace:               opts.Namespace,
 	})
 	if err != nil {

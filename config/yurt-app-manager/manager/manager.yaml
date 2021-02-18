@@ -10,7 +10,7 @@ spec:
   selector:
     matchLabels:
       control-plane: yurt-app-manager
-  replicas: 1
+  replicas: 2 
   template:
     metadata:
       labels:
