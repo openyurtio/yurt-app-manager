@@ -29,61 +29,6 @@ var (
 	buildDate     = "1970-01-01T00:00:00Z"
 )
 
-func ShortAgentVersion() string {
-	commit := gitCommit
-	if len(gitCommit) > 7 {
-		commit = gitCommit[:7]
-	}
-	return GetAgentName() + "/" + gitVersion + "-" + commit
-}
-
-func ShortServerVersion() string {
-	commit := gitCommit
-	if len(gitCommit) > 7 {
-		commit = gitCommit[:7]
-	}
-	return GetServerName() + "/" + gitVersion + "-" + commit
-}
-
-func GetProjectPrefix() string {
-	return projectPrefix
-}
-
-func GetServerName() string {
-	return projectPrefix + "tunnel-server"
-}
-
-func GetAgentName() string {
-	return projectPrefix + "tunnel-agent"
-}
-
-// GetEdgeWorkerLabelKey returns the edge-worker label, which is used to
-// identify if a node is a edge node ("true") or a cloud node ("false")
-func GetEdgeWorkerLabelKey() string {
-	return labelPrefix + "/is-edge-worker"
-}
-
-// GetHubName returns name of yurthub agent
-func GetHubName() string {
-	return projectPrefix + "hub"
-}
-
-// GetEdgeEnableTunnelLabelKey returns the tunnel agent label, which is used
-// to identify if tunnel agent is running on the node or not.
-func GetEdgeEnableTunnelLabelKey() string {
-	return labelPrefix + "/edge-enable-reverseTunnel-client"
-}
-
-// GetTunnelName returns name of tunnel
-func GetTunnelName() string {
-	return projectPrefix + "tunnel"
-}
-
-// GetYurtControllerManagerName returns name of openyurt controller-manager
-func GetYurtControllerManagerName() string {
-	return projectPrefix + "controller-manager"
-}
-
 // GetYurtAppManagerName returns name of tunnel
 func GetYurtAppManagerName() string {
 	return projectPrefix + "app-manager"
