@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: yurt-app-manager
   name: manager-metrics-service
-  namespace: system
+  namespace: kube-system
 spec:
   ports:
   - name: https

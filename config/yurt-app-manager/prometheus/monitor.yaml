@@ -6,7 +6,7 @@ metadata:
   labels:
     control-plane: yurt-app-manager
   name: manager-metrics-monitor
-  namespace: system
+  namespace: kube-system
 spec:
   endpoints:
     - path: /metrics
