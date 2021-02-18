@@ -16,21 +16,6 @@
 
 set -x
 
-# we will generates setup yaml files for following components
-readonly YURT_YAML_TARGETS=(
-    yurthub
-    yurt-controller-manager
-    yurt-tunnel-server
-    yurt-tunnel-agent
-    yurt-app-manager
-)
-
-#PROJECT_PREFIX=${PROJECT_PREFIX:-yurt}
-#LABEL_PREFIX=${LABEL_PREFIX:-openyurt.io}
-#GIT_VERSION="v0.1.1"
-#GIT_COMMIT=$(git rev-parse HEAD)
-#BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-
 # project_info generates the project information and the corresponding valuse 
 # for 'ldflags -X' option
 project_info() {
@@ -42,11 +27,6 @@ project_info() {
     echo "-X ${PROJECT_INFO_PKG}.buildDate=${BUILD_DATE}"
 }
 
-# get_binary_dir_with_arch generated the binary's directory with GOOS and GOARCH.
-# eg: ./_output/bin/darwin/arm64/
-get_binary_dir_with_arch(){
-    echo $1/$(go env GOOS)/$(go env GOARCH)/
-}
 
 build_binary() {
     local goflags goldflags gcflags
@@ -62,12 +42,12 @@ build_binary() {
       fi
     done
 
-    local bin_dir=$(get_binary_dir_with_arch ${YURT_BIN_DIR})
-    local bin_name=$(get_output_name $binary)
+    local bin_dir=${YURT_BIN_DIR}
+    local bin_name=${BIN_NAME:-yurt-app-manager}
     mkdir -p ${bin_dir}
     
     echo "Building ${bin_name}"
-    go build -o ${bin_dir}${bin_name} \
+    go build -o ${bin_dir}/${bin_name} \
         -ldflags "${goldflags:-}" \
         -gcflags "${gcflags:-}" ${goflags} 
 }
