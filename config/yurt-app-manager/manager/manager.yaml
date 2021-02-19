@@ -18,6 +18,7 @@ spec:
     spec:
       tolerations:
       nodeSelector:
+      priorityClassName: system-node-critical
       containers:
       - command:
         - /usr/local/bin/yurt-app-manager
