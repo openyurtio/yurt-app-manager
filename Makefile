@@ -20,6 +20,7 @@ all: test build
 build: 
 	bash hack/make-rules/build.sh
 
+
 # Run test
 test: fmt vet
 	go test ./pkg/... ./cmd/... -coverprofile cover.out
@@ -36,20 +37,35 @@ vet:
 # NOTE: this rule can take time, as we build binaries inside containers
 #
 # ARGS:
-#   WHAT: list of components that will be compiled.
-#   ARCH: list of target architectures.
+#   REPO: image repo.
+#   TAG:  image tag 
 #   REGION: in which region this rule is executed, if in mainland China,
 #   	set it as cn.
 #
 # Examples:
-#   # compile yurthub, yurt-controller-manager and yurtctl-servant with 
-#   # architectures arm64 and arm in the mainland China
-#   make release WHAT="yurthub yurt-controller-manager yurtctl-servant" ARCH="arm64 arm" REGION=cn
-#
-#   # compile all components with all architectures (i.e., amd64, arm64, arm)
-#   make relase 
+#   # compile yurt-app-manager
+#   make release REGION=cn REPO= TAG=
+#   or
+#   make release 
 release:
 	bash hack/make-rules/release-images.sh
+
+# Push docker images.  
+#
+# ARGS:
+#   REPO: image repo.
+#   TAG:  image tag 
+#   REGION: in which region this rule is executed, if in mainland China,
+#   	set it as cn.
+#
+# Examples:
+#   # compile yurt-app-manager
+#   make push REGION=cn REPO= TAG=
+#   or
+#   make push 
+
+push: 
+	bash hack/make-rules/push-images.sh
 
 clean: 
 	-rm -Rf _output
@@ -65,6 +81,21 @@ generate-manifests: controller-gen
 generate-goclient: controller-gen
 	hack/make-rules/generate_client.sh
 	$(CONTROLLER_GEN) object:headerFile="./pkg/yurtappmanager/hack/boilerplate.go.txt" paths="./pkg/yurtappmanager/apis/..."
+
+
+# generate deploy yaml.  
+#
+# ARGS:
+#   REPO: image repo.
+#   TAG:  image tag 
+#   REGION: in which region this rule is executed, if in mainland China,
+#   	set it as cn.
+#
+# Examples:
+#   # compile yurt-app-manager
+#   make generate-deploy-yaml REGION=cn REPO= TAG=
+#   or
+#   make generate-deploy-yaml 
 
 generate-deploy-yaml: 
 	hack/make-rules/genyaml.sh

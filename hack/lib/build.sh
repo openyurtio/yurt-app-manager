@@ -52,20 +52,4 @@ build_binary() {
         -gcflags "${gcflags:-}" ${goflags} 
 }
 
-# gen_yamls generates yaml files for the yurt-app-manager 
-gen_yamls() {
-    local OUT_YAML_DIR=$YURT_ROOT/_output/yamls/
-    local BUILD_YAML_DIR=${OUT_YAML_DIR}/build/
-    [ -f $BUILD_YAML_DIR ] || mkdir -p $BUILD_YAML_DIR
-    mkdir -p ${BUILD_YAML_DIR}
-    (
-        rm -rf ${BUILD_YAML_DIR}/yurt-app-manager
-        cp -rf $YURT_ROOT/config/yurt-app-manager ${BUILD_YAML_DIR}
-        cd ${BUILD_YAML_DIR}/yurt-app-manager/manager
-        kustomize edit set image controller=$REPO/yurt-app-manager:${TAG}
-	)
-    set +x
-    echo "==== create yurt-app-manager.yaml in $OUT_YAML_DIR ===="
-    kustomize build ${BUILD_YAML_DIR}/yurt-app-manager/default > ${OUT_YAML_DIR}/yurt-app-manager.yaml
-    rm -Rf ${BUILD_YAML_DIR}
-}
+
