@@ -24,6 +24,7 @@ YURT_BUILD_IMAGE="golang:1.15-alpine"
 readonly SUPPORTED_OS=linux
 readonly bin_target=yurt-app-manager
 readonly region=${REGION:-us}
+readonly yurt_component_image="${REPO}/${bin_target}:${TAG}"
 
 build_multi_arch_binaries() {
     local docker_run_opts=(
@@ -59,22 +60,20 @@ build_multi_arch_binaries() {
 }
 
 build_docker_image() {
-    local binary_name=$(get_output_name $bin_target)
-    local binary_path=${YURT_BIN_DIR}/${binary_name}
+    local binary_path=${YURT_BIN_DIR}/${bin_target}
     if [ -f ${binary_path} ]; then
         local docker_build_path=${DOCKER_BUILD_BASE_IDR}/
-        local docker_file_path=${docker_build_path}/Dockerfile.${binary_name}
+        local docker_file_path=${docker_build_path}/Dockerfile.${bin_target}
         mkdir -p ${docker_build_path}
  
-        local yurt_component_image="${REPO}/${binary_name}:${TAG}"
         local base_image="k8s.gcr.io/debian-base-amd64:v1.0.0"
         cat <<EOF > "${docker_file_path}"
 FROM ${base_image}
-COPY ${binary_name} /usr/local/bin/${binary_name}
-ENTRYPOINT ["/usr/local/bin/${binary_name}"]
+COPY ${bin_target} /usr/local/bin/${bin_target}
+ENTRYPOINT ["/usr/local/bin/${bin_target}"]
 EOF
 
-        ln "${binary_path}" "${docker_build_path}/${binary_name}"
+        ln "${binary_path}" "${docker_build_path}/${bin_target}"
         docker build --no-cache -t "${yurt_component_image}" -f "${docker_file_path}" ${docker_build_path}
         rm -rf ${docker_build_path}
     fi
@@ -90,4 +89,28 @@ build_images() {
     
     build_multi_arch_binaries
     build_docker_image
+    gen_yamls
+}
+
+push_images() {
+    build_images
+    docker push ${yurt_component_image}
+}
+
+# gen_yamls generates yaml files for the yurt-app-manager 
+gen_yamls() {
+    local OUT_YAML_DIR=$YURT_ROOT/_output/yamls/
+    local BUILD_YAML_DIR=${OUT_YAML_DIR}/build/
+    [ -f $BUILD_YAML_DIR ] || mkdir -p $BUILD_YAML_DIR
+    mkdir -p ${BUILD_YAML_DIR}
+    (
+        rm -rf ${BUILD_YAML_DIR}/yurt-app-manager
+        cp -rf $YURT_ROOT/config/yurt-app-manager ${BUILD_YAML_DIR}
+        cd ${BUILD_YAML_DIR}/yurt-app-manager/manager
+        kustomize edit set image controller=$REPO/yurt-app-manager:${TAG}
+	)
+    set +x
+    echo "==== create yurt-app-manager.yaml in $OUT_YAML_DIR ===="
+    kustomize build ${BUILD_YAML_DIR}/yurt-app-manager/default > ${OUT_YAML_DIR}/yurt-app-manager.yaml
+    rm -Rf ${BUILD_YAML_DIR}
 }
