@@ -19,6 +19,7 @@ limitations under the License.
 package writer
 
 import (
+	"context"
 	"errors"
 
 	corev1 "k8s.io/api/core/v1"
@@ -102,7 +103,7 @@ func (s *secretCertWriter) write() (*generator.Artifacts, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = s.Client.Create(nil, secret)
+	err = s.Client.Create(context.TODO(), secret)
 	if apierrors.IsAlreadyExists(err) {
 		return nil, alreadyExistError{err}
 	}
@@ -116,7 +117,7 @@ func (s *secretCertWriter) overwrite(resourceVersion string) (
 		return nil, err
 	}
 	secret.ResourceVersion = resourceVersion
-	err = s.Client.Update(nil, secret)
+	err = s.Client.Update(context.TODO(), secret)
 	klog.Infof("Cert writer update secret %s resourceVersion from %s to %s",
 		secret.Name, resourceVersion, secret.ResourceVersion)
 	return certs, err
@@ -129,7 +130,7 @@ func (s *secretCertWriter) read() (*generator.Artifacts, error) {
 			Kind:       "Secret",
 		},
 	}
-	err := s.Client.Get(nil, *s.Secret, secret)
+	err := s.Client.Get(context.TODO(), *s.Secret, secret)
 	if apierrors.IsNotFound(err) {
 		return nil, notFoundError{err}
 	}
