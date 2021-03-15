@@ -63,7 +63,6 @@ func handleCommon(dnsName string, ch certReadWriter) (*generator.Artifacts, bool
 	if err != nil {
 		return nil, changed, err
 	}
-
 	// Recreate the cert if it's invalid.
 	valid := validCert(certs, dnsName)
 	if !valid {
@@ -107,26 +106,31 @@ type certReadWriter interface {
 
 func validCert(certs *generator.Artifacts, dnsName string) bool {
 	if certs == nil || certs.Cert == nil || certs.Key == nil || certs.CACert == nil {
+		klog.Errorf("valid cert error is null")
 		return false
 	}
 
 	// Verify key and cert are valid pair
 	_, err := tls.X509KeyPair(certs.Cert, certs.Key)
 	if err != nil {
+		klog.Errorf("valid cert key pair error %v", err)
 		return false
 	}
 
 	// Verify cert is good for desired DNS name and signed by CA and will be valid for desired period of time.
 	pool := x509.NewCertPool()
 	if !pool.AppendCertsFromPEM(certs.CACert) {
+		klog.Errorf("valid cert append cert error %v", err)
 		return false
 	}
 	block, _ := pem.Decode(certs.Cert)
 	if block == nil {
+		klog.Errorf("valid cert decode error %v", err)
 		return false
 	}
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
+		klog.Errorf("valid cert parse cert error %v", err)
 		return false
 	}
 	ops := x509.VerifyOptions{
@@ -135,5 +139,8 @@ func validCert(certs *generator.Artifacts, dnsName string) bool {
 		CurrentTime: time.Now().AddDate(0, 6, 0),
 	}
 	_, err = cert.Verify(ops)
+	if err != nil {
+		klog.Errorf("valid cert verify error %v", err)
+	}
 	return err == nil
 }

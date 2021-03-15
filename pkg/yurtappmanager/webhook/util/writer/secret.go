@@ -131,8 +131,13 @@ func (s *secretCertWriter) read() (*generator.Artifacts, error) {
 		},
 	}
 	err := s.Client.Get(context.TODO(), *s.Secret, secret)
-	if apierrors.IsNotFound(err) {
-		return nil, notFoundError{err}
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			klog.Errorf("Secret %v not found", s.Secret.String())
+			return nil, notFoundError{err}
+		}
+		klog.Errorf("Get secret %v error %v", s.Secret.String(), err)
+		return nil, err
 	}
 	certs := secretToCerts(secret)
 	if certs != nil {

@@ -10,7 +10,7 @@ webhooks:
     caBundle: Cg==
     service:
       name: webhook-service
-      namespace: kube-system
+      namespace: system
       path: /mutate-apps-openyurt-io-v1alpha1-nodepool
   failurePolicy: Fail
   name: mnodepool.kb.io
@@ -28,7 +28,7 @@ webhooks:
     caBundle: Cg==
     service:
       name: webhook-service
-      namespace: kube-system
+      namespace: system
       path: /mutate-apps-openyurt-io-v1alpha1-uniteddeployment
   failurePolicy: Fail
   name: muniteddeployment.kb.io
@@ -54,7 +54,7 @@ webhooks:
     caBundle: Cg==
     service:
       name: webhook-service
-      namespace: kube-system
+      namespace: system
       path: /validate-apps-openyurt-io-v1alpha1-nodepool
   failurePolicy: Fail
   name: vnodepool.kb.io
@@ -73,7 +73,7 @@ webhooks:
     caBundle: Cg==
     service:
       name: webhook-service
-      namespace: kube-system
+      namespace: system
       path: /validate-apps-openyurt-io-v1alpha1-uniteddeployment
   failurePolicy: Fail
   name: vuniteddeployment.kb.io

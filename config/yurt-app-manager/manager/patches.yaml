@@ -4,4 +4,14 @@ kind: Deployment
 metadata:
   name: manager
   namespace: kube-system
-
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: "node-role.alibabacloud.com/addon"
+          operator: "Exists"
+          effect: "NoSchedule"
+      nodeSelector:
+        beta.kubernetes.io/arch: amd64
+        beta.kubernetes.io/os: linux
+        alibabacloud.com/is-edge-worker: "false"

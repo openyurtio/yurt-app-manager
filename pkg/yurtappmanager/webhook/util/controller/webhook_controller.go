@@ -102,14 +102,14 @@ func New(cli client.Client, handlers map[string]webhookutil.Handler) (*Controlle
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
 			if secret.Name == secretName {
-				klog.Infof("Secret %s added", secretName)
+				klog.Infof("Secret %s/%s added", secret.GetNamespace(), secretName)
 				c.queue.Add("")
 			}
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			secret := cur.(*v1.Secret)
 			if secret.Name == secretName {
-				klog.Infof("Secret %s updated", secretName)
+				klog.Infof("Secret %s/%s updated", secret.GetNamespace(), secretName)
 				c.queue.Add("")
 			}
 		},
@@ -206,15 +206,17 @@ func (c *Controller) sync() error {
 		certWriter, err = writer.NewFSCertWriter(writer.FSCertWriterOptions{
 			Path: webhookutil.GetCertDir(),
 		})
+		klog.Infof("Use Fs Cert Writer")
 	} else {
 		dnsName = generator.ServiceToCommonName(webhookutil.GetNamespace(), webhookutil.GetServiceName())
 		certWriter, err = writer.NewSecretCertWriter(writer.SecretCertWriterOptions{
 			Client: c.runtimeClient,
 			Secret: &types.NamespacedName{Namespace: webhookutil.GetNamespace(), Name: webhookutil.GetSecretName()},
 		})
+		klog.Infof("Use Secret Cert Writer")
 	}
 	if err != nil {
-		return fmt.Errorf("failed to ensure certs: %v", err)
+		return fmt.Errorf("failed to create certs writer: %v", err)
 	}
 
 	certs, _, err := certWriter.EnsureCert(dnsName)

@@ -24,7 +24,7 @@ spec:
         - /usr/local/bin/yurt-app-manager
         args:
         - --enable-leader-election
-        - --v=5
+        - --v=4
         image: controller:latest
         imagePullPolicy: Always 
         name: manager
