@@ -90,9 +90,9 @@ func (a *StatefulSetAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, pool
 	set := obj.(*appsv1.StatefulSet)
 
 	var poolConfig *alpha1.Pool
-	for _, pool := range ud.Spec.Topology.Pools {
+	for i, pool := range ud.Spec.Topology.Pools {
 		if pool.Name == poolName {
-			poolConfig = &pool
+			poolConfig = &(ud.Spec.Topology.Pools[i])
 			break
 		}
 	}
@@ -148,6 +148,7 @@ func (a *StatefulSetAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, pool
 	set.Spec.VolumeClaimTemplates = ud.Spec.WorkloadTemplate.StatefulSetTemplate.Spec.VolumeClaimTemplates
 
 	attachNodeAffinityAndTolerations(&set.Spec.Template.Spec, poolConfig)
+
 	return nil
 }
 

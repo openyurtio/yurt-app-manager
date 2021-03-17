@@ -127,6 +127,9 @@ spec:
                           distributed across multiple groups of nodes. A pool's nodeSelectorTerm
                           is not allowed to be updated.
                         type: object
+                      patches:
+                        description: Indicates the patches for the templateSpec
+                        type: object
                       replicas:
                         description: Indicates the number of the pod to be created
                           under this pool.

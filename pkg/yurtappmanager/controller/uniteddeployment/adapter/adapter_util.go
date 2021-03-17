@@ -18,7 +18,12 @@ limitations under the License.
 package adapter
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/klog"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -102,4 +107,30 @@ func getCurrentPartition(pods []*corev1.Pod, revision string) *int32 {
 	}
 
 	return &partition
+}
+
+func StrategicMergeByPatches(patchKind string, oldobj interface{}, patches *runtime.RawExtension, newPatched interface{}) error {
+	patchMap := make(map[string]interface{})
+	if err := json.Unmarshal(patches.Raw, &patchMap); err != nil {
+		klog.Errorf("For %s Unmarshal Pool Patches error %v, Patches Raw %v", patchKind, err,string(patches.Raw))
+		return  err
+	}
+
+	originalObjMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldobj)
+	if err != nil {
+		klog.Errorf("For %s obj ToUnstructured error %v", patchKind, err)
+		return  err
+	}
+
+	patchedObjMap, err := strategicpatch.StrategicMergeMapPatch(originalObjMap, patchMap, newPatched)
+	if err != nil {
+		klog.Errorf("For %s obj StartegicMergeMapPatch error %v", patchKind, err)
+		return err
+	}
+
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(patchedObjMap, newPatched); err != nil {
+		klog.Errorf("For %s FromUnstructured error %v", patchKind, err)
+		return err
+	}
+	return nil
 }
