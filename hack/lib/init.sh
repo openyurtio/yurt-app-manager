@@ -26,7 +26,6 @@ YURT_BIN_DIR=${YURT_OUTPUT_DIR}/bin
 PROJECT_PREFIX=${PROJECT_PREFIX:-yurt}
 LABEL_PREFIX=${LABEL_PREFIX:-openyurt.io}
 GIT_COMMIT=$(git rev-parse --short HEAD)
-GIT_BRANCH=$(git branch --show-current)
 GIT_COMMIT_SHORT=$GIT_COMMIT
 GIT_VERSION=${GIT_VERSION:-v0.2.0}
 BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
