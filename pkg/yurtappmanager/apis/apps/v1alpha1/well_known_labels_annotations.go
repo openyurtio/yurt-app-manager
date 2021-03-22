@@ -20,7 +20,7 @@ change some const value
 
 package v1alpha1
 
-// UnitedDeployment related labels
+// UnitedDeployment related labels and annotations
 const (
 	// ControllerRevisionHashLabelKey is used to record the controller revision of current resource.
 	ControllerRevisionHashLabelKey = "apps.openyurt.io/controller-revision-hash"
@@ -30,6 +30,9 @@ const (
 
 	// SpecifiedDeleteKey indicates this object should be deleted, and the value could be the deletion option.
 	SpecifiedDeleteKey = "apps.openyurt.io/specified-delete"
+
+	// AnnotationPatchesKey indicates the patches for every sub pool
+	AnnotationPatchesKey = "apps.openyurt.io/patches"
 )
 
 // NodePool related labels and annotations
@@ -42,12 +45,6 @@ const (
 	LabelCurrentNodePool = "apps.openyurt.io/nodepool"
 
 	AnnotationPrevAttrs = "nodepool.openyurt.io/previous-attributes"
-
-	// Note !!!!
-	// Can not change this const name , because go build -ldflags will change this values
-	// @kadisi
-	// LabelEdgeWorker indicates if the node is an edge node
-	LabelEdgeWorker = "alibabacloud.com/is-edge-worker"
 
 	// DefaultCloudNodePoolName defines the name of the default cloud nodepool
 	DefaultCloudNodePoolName = "default-nodepool"

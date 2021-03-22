@@ -32,6 +32,11 @@ import (
 
 const updateRetries = 5
 
+type UnitedDeploymentPatches struct {
+	Replicas int32
+	Patches string
+}
+
 func getPoolNameFrom(metaObj metav1.Object) (string, error) {
 	name, exist := metaObj.GetLabels()[unitv1alpha1.PoolNameLabelKey]
 	if !exist {
@@ -96,4 +101,19 @@ func filterOutCondition(conditions []unitv1alpha1.UnitedDeploymentCondition, con
 		newConditions = append(newConditions, c)
 	}
 	return newConditions
+}
+
+func GetNextPatches(ud *unitv1alpha1.UnitedDeployment) map[string]UnitedDeploymentPatches{
+	next := make(map[string]UnitedDeploymentPatches)
+	for _, pool := range ud.Spec.Topology.Pools {
+		t := UnitedDeploymentPatches{}
+		if pool.Replicas != nil {
+			t.Replicas = *pool.Replicas
+		}
+		if pool.Patches != nil {
+			t.Patches = string(pool.Patches.Raw)
+		}
+		next[pool.Name] = t
+	}
+	return next
 }

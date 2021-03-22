@@ -36,12 +36,12 @@ import (
 )
 
 func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeployment,
-	nameToPool map[string]*Pool, nextReplicas map[string]int32,
+	nameToPool map[string]*Pool, nextPatches map[string]UnitedDeploymentPatches,
 	expectedRevision *appsv1.ControllerRevision,
 	poolType unitv1alpha1.TemplateType) (newStatus *unitv1alpha1.UnitedDeploymentStatus, updateErr error) {
 
 	newStatus = ud.Status.DeepCopy()
-	exists, provisioned, err := r.managePoolProvision(ud, nameToPool, nextReplicas, expectedRevision, poolType)
+	exists, provisioned, err := r.managePoolProvision(ud, nameToPool, nextPatches, expectedRevision, poolType)
 	if err != nil {
 		SetUnitedDeploymentCondition(newStatus, NewUnitedDeploymentCondition(unitv1alpha1.PoolProvisioned, corev1.ConditionFalse, "Error", err.Error()))
 		return newStatus, fmt.Errorf("fail to manage Pool provision: %s", err)
@@ -55,7 +55,8 @@ func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeploymen
 	for _, name := range exists.List() {
 		pool := nameToPool[name]
 		if r.poolControls[poolType].IsExpected(pool, expectedRevision.Name) ||
-			pool.Status.ReplicasInfo.Replicas != nextReplicas[name] {
+			pool.Status.ReplicasInfo.Replicas != nextPatches[name].Replicas ||
+			pool.Patches != nextPatches[name].Patches {
 			needUpdate = append(needUpdate, name)
 		}
 	}
@@ -64,7 +65,7 @@ func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeploymen
 		_, updateErr = util.SlowStartBatch(len(needUpdate), slowStartInitialBatchSize, func(index int) error {
 			cell := needUpdate[index]
 			pool := nameToPool[cell]
-			replicas := nextReplicas[cell]
+			replicas := nextPatches[cell].Replicas
 
 			klog.V(0).Infof("UnitedDeployment %s/%s needs to update Pool (%s) %s/%s with revision %s, replicas %d ",
 				ud.Namespace, ud.Name, poolType, pool.Namespace, pool.Name, expectedRevision.Name, replicas)
@@ -86,7 +87,7 @@ func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeploymen
 }
 
 func (r *ReconcileUnitedDeployment) managePoolProvision(ud *unitv1alpha1.UnitedDeployment,
-	nameToPool map[string]*Pool, nextReplicas map[string]int32,
+	nameToPool map[string]*Pool, nextPatches map[string]UnitedDeploymentPatches,
 	expectedRevision *appsv1.ControllerRevision, workloadType unitv1alpha1.TemplateType) (sets.String, bool, error) {
 	expectedPools := sets.String{}
 	gotPools := sets.String{}
@@ -135,7 +136,7 @@ func (r *ReconcileUnitedDeployment) managePoolProvision(ud *unitv1alpha1.UnitedD
 		createdNum, createdErr = util.SlowStartBatch(len(creates), slowStartInitialBatchSize, func(idx int) error {
 			poolName := createdPools[idx]
 
-			replicas := nextReplicas[poolName]
+			replicas := nextPatches[poolName].Replicas
 			err := r.poolControls[workloadType].CreatePool(ud, poolName, revision, replicas)
 			if err != nil {
 				if !errors.IsTimeout(err) {

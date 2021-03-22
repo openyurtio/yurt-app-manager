@@ -30,6 +30,7 @@ type Pool struct {
 	Namespace string
 	Spec      PoolSpec
 	Status    PoolStatus
+	Patches   string
 }
 
 // PoolSpec stores the spec details of the Pool

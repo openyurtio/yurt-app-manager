@@ -157,7 +157,6 @@ func (m *PoolControl) convertToPool(set metav1.Object) (*Pool, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	pool := &Pool{
 		Name:      poolName,
 		Namespace: set.GetNamespace(),
@@ -168,6 +167,9 @@ func (m *PoolControl) convertToPool(set metav1.Object) (*Pool, error) {
 			ObservedGeneration: m.adapter.GetStatusObservedGeneration(set),
 			ReplicasInfo:       specReplicas,
 		},
+	}
+	if data, ok :=set.GetAnnotations()[alpha1.AnnotationPatchesKey] ;ok {
+		pool.Patches = data
 	}
 	return pool, nil
 }

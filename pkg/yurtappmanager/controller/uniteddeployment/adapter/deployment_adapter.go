@@ -110,6 +110,7 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 		set.Annotations[k] = v
 	}
 
+
 	set.GenerateName = getPoolPrefix(ud.Name, poolName)
 
 	selectors := ud.Spec.Selector.DeepCopy()
@@ -138,6 +139,10 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 	attachNodeAffinityAndTolerations(&set.Spec.Template.Spec, poolConfig)
 
 	if poolConfig.Patches == nil {
+		// If No Patches, Must Set patches annotation
+		set.Annotations[alpha1.AnnotationPatchesKey]=""
+		klog.Infof("Deployment[%s/%s-] has no patches, do not need strategicmerge", set.Namespace,
+			set.GenerateName)
 		return nil
 	}
 
@@ -150,31 +155,14 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 	klog.Infof("Deployment [%s/%s-] has patches configure successfully:%v", set.Namespace,
 		set.GenerateName, string(poolConfig.Patches.Raw))
 
-	/*
-		patchMap := make(map[string]interface{})
-		if err := json.Unmarshal(poolConfig.Patches.Raw, &patchMap); err != nil {
-			klog.Errorf("Unmarshal Pool Patches error %v, Patches Raw %v", err,string(poolConfig.Patches.Raw))
-			return err
-		}
-
-		originalObjMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(set)
-		if err != nil {
-			klog.Errorf("Deployment obj ToUnstructured error %v", err)
-			return err
-		}
-
-		patchedObjMap, err := strategicpatch.StrategicMergeMapPatch(originalObjMap, patchMap, &appsv1.Deployment{})
-		if err != nil {
-			klog.Errorf("Deployment obj StartegicMergeMapPatch error %v", err)
-			return err
-		}
-		patched := &appsv1.Deployment{}
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(patchedObjMap, patched); err != nil {
-			klog.Errorf("Deployment FromUnstructured error %v", err)
-			return err
-		}
-	 */
 	*set = *patched
+
+	// Must Set Annotations, and judge whether is nil
+	if set.Annotations == nil {
+		set.Annotations = map[string]string{}
+	}
+
+	set.Annotations[alpha1.AnnotationPatchesKey]=string(poolConfig.Patches.Raw)
 	return nil
 }
 
