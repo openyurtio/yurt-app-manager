@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,6 @@ type Pool struct {
 	Namespace string
 	Spec      PoolSpec
 	Status    PoolStatus
-	Patches   string
 }
 
 // PoolSpec stores the spec details of the Pool
@@ -42,6 +41,7 @@ type PoolSpec struct {
 type PoolStatus struct {
 	ObservedGeneration int64
 	adapter.ReplicasInfo
+	PatchInfo string
 }
 
 // ResourceRef stores the Pool resource it represents.

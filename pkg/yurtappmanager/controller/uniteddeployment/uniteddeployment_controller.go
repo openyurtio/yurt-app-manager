@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,9 +187,6 @@ func (r *ReconcileUnitedDeployment) Reconcile(_ context.Context, request reconci
 			eventTypeFindPools), err.Error())
 		return reconcile.Result{}, nil
 	}
-
-	//nextReplicas := GetNextReplicas(instance)
-	//klog.V(4).Infof("Get UnitedDeployment %s/%s next Replicas %v", instance.Namespace, instance.Name, nextReplicas)
 
 	nextPatches := GetNextPatches(instance)
 	klog.V(4).Infof("Get UnitedDeployment %s/%s next Patches %v", instance.Namespace, instance.Name, nextPatches)

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2020 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,9 +126,12 @@ type Pool struct {
 	// +required
 	Replicas *int32 `json:"replicas,omitempty"`
 
-	// Indicates the patches for the templateSpec
+	// Indicates the patch for the templateSpec
+	// Now support strategic merge path :https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#notes-on-the-strategic-merge-patch
+	// Patch takes precedence over Replicas fields
+	// If the Patch also modifies the Replicas, use the Replicas value in the Patch
 	// +optional
-	Patches *runtime.RawExtension `json:"patches,omitempty"`
+	Patch *runtime.RawExtension `json:"patch,omitempty"`
 }
 
 // UnitedDeploymentStatus defines the observed state of UnitedDeployment.

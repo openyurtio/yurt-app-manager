@@ -127,8 +127,12 @@ spec:
                           distributed across multiple groups of nodes. A pool's nodeSelectorTerm
                           is not allowed to be updated.
                         type: object
-                      patches:
-                        description: Indicates the patches for the templateSpec
+                      patch:
+                        description: Indicates the patch for the templateSpec Now
+                          support strategic merge path :https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#notes-on-the-strategic-merge-patch
+                          Patch takes precedence over Replicas fields If the Patch
+                          also modifies the Replicas, use the Replicas value in the
+                          Patch
                         type: object
                       replicas:
                         description: Indicates the number of the pod to be created

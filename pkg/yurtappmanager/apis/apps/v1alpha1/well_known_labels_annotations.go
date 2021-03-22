@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ const (
 	// SpecifiedDeleteKey indicates this object should be deleted, and the value could be the deletion option.
 	SpecifiedDeleteKey = "apps.openyurt.io/specified-delete"
 
-	// AnnotationPatchesKey indicates the patches for every sub pool
-	AnnotationPatchesKey = "apps.openyurt.io/patches"
+	// AnnotationPatchKey indicates the patch for every sub pool
+	AnnotationPatchKey = "apps.openyurt.io/patch"
 )
 
 // NodePool related labels and annotations

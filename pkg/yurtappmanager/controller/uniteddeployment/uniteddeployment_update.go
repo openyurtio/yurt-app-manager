@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,7 @@ func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeploymen
 		pool := nameToPool[name]
 		if r.poolControls[poolType].IsExpected(pool, expectedRevision.Name) ||
 			pool.Status.ReplicasInfo.Replicas != nextPatches[name].Replicas ||
-			pool.Patches != nextPatches[name].Patches {
+			pool.Status.PatchInfo != nextPatches[name].Patch {
 			needUpdate = append(needUpdate, name)
 		}
 	}
@@ -67,7 +67,7 @@ func (r *ReconcileUnitedDeployment) managePools(ud *unitv1alpha1.UnitedDeploymen
 			pool := nameToPool[cell]
 			replicas := nextPatches[cell].Replicas
 
-			klog.V(0).Infof("UnitedDeployment %s/%s needs to update Pool (%s) %s/%s with revision %s, replicas %d ",
+			klog.Infof("UnitedDeployment %s/%s needs to update Pool (%s) %s/%s with revision %s, replicas %d ",
 				ud.Namespace, ud.Name, poolType, pool.Namespace, pool.Name, expectedRevision.Name, replicas)
 
 			updatePoolErr := r.poolControls[poolType].UpdatePool(pool, ud, expectedRevision.Name, replicas)
@@ -125,7 +125,7 @@ func (r *ReconcileUnitedDeployment) managePoolProvision(ud *unitv1alpha1.UnitedD
 	// manage creating
 	if len(creates) > 0 {
 		// do not consider deletion
-		klog.V(0).Infof("UnitedDeployment %s/%s needs creating pool (%s) with name: %v", ud.Namespace, ud.Name, workloadType, creates)
+		klog.Infof("UnitedDeployment %s/%s needs creating pool (%s) with name: %v", ud.Namespace, ud.Name, workloadType, creates)
 		createdPools := make([]string, len(creates))
 		for i, pool := range creates {
 			createdPools[i] = pool
@@ -155,7 +155,7 @@ func (r *ReconcileUnitedDeployment) managePoolProvision(ud *unitv1alpha1.UnitedD
 
 	// manage deleting
 	if len(deletes) > 0 {
-		klog.V(0).Infof("UnitedDeployment %s/%s needs deleting pool (%s) with name: [%v]", ud.Namespace, ud.Name, workloadType, deletes)
+		klog.Infof("UnitedDeployment %s/%s needs deleting pool (%s) with name: [%v]", ud.Namespace, ud.Name, workloadType, deletes)
 		var deleteErrs []error
 		for _, poolName := range deletes {
 			pool := nameToPool[poolName]

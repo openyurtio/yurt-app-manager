@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/klog"
-
-	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
+	"k8s.io/klog"
 )
 
 func getPoolPrefix(controllerName, poolName string) string {
@@ -39,12 +38,12 @@ func getPoolPrefix(controllerName, poolName string) string {
 	return prefix
 }
 
-func attachNodeAffinityAndTolerations(podSpec *corev1.PodSpec, pool *unitv1alpha1.Pool) {
+func attachNodeAffinityAndTolerations(podSpec *corev1.PodSpec, pool *appsv1alpha1.Pool) {
 	attachNodeAffinity(podSpec, pool)
 	attachTolerations(podSpec, pool)
 }
 
-func attachNodeAffinity(podSpec *corev1.PodSpec, pool *unitv1alpha1.Pool) {
+func attachNodeAffinity(podSpec *corev1.PodSpec, pool *appsv1alpha1.Pool) {
 	if podSpec.Affinity == nil {
 		podSpec.Affinity = &corev1.Affinity{}
 	}
@@ -73,7 +72,7 @@ func attachNodeAffinity(podSpec *corev1.PodSpec, pool *unitv1alpha1.Pool) {
 	}
 }
 
-func attachTolerations(podSpec *corev1.PodSpec, poolConfig *unitv1alpha1.Pool) {
+func attachTolerations(podSpec *corev1.PodSpec, poolConfig *appsv1alpha1.Pool) {
 
 	if poolConfig.Tolerations == nil {
 		return
@@ -94,7 +93,7 @@ func getRevision(objMeta metav1.Object) string {
 	if objMeta.GetLabels() == nil {
 		return ""
 	}
-	return objMeta.GetLabels()[unitv1alpha1.ControllerRevisionHashLabelKey]
+	return objMeta.GetLabels()[appsv1alpha1.ControllerRevisionHashLabelKey]
 }
 
 // getCurrentPartition calculates current partition by counting the pods not having the updated revision
@@ -109,28 +108,55 @@ func getCurrentPartition(pods []*corev1.Pod, revision string) *int32 {
 	return &partition
 }
 
-func StrategicMergeByPatches(patchKind string, oldobj interface{}, patches *runtime.RawExtension, newPatched interface{}) error {
+func StrategicMergeByPatches(oldobj interface{}, patch *runtime.RawExtension, newPatched interface{}) error {
 	patchMap := make(map[string]interface{})
-	if err := json.Unmarshal(patches.Raw, &patchMap); err != nil {
-		klog.Errorf("For %s Unmarshal Pool Patches error %v, Patches Raw %v", patchKind, err,string(patches.Raw))
-		return  err
+	if err := json.Unmarshal(patch.Raw, &patchMap); err != nil {
+		klog.Errorf("Unmarshal pool patch error %v, patch Raw %v", err, string(patch.Raw))
+		return err
 	}
 
 	originalObjMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldobj)
 	if err != nil {
-		klog.Errorf("For %s obj ToUnstructured error %v", patchKind, err)
-		return  err
+		klog.Errorf("ToUnstructured error %v", err)
+		return err
 	}
 
 	patchedObjMap, err := strategicpatch.StrategicMergeMapPatch(originalObjMap, patchMap, newPatched)
 	if err != nil {
-		klog.Errorf("For %s obj StartegicMergeMapPatch error %v", patchKind, err)
+		klog.Errorf("StartegicMergeMapPatch error %v", err)
 		return err
 	}
 
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(patchedObjMap, newPatched); err != nil {
-		klog.Errorf("For %s FromUnstructured error %v", patchKind, err)
+		klog.Errorf("FromUnstructured error %v", err)
 		return err
+	}
+	return nil
+}
+
+func PoolHasPatch(poolConfig *appsv1alpha1.Pool, set metav1.Object) bool {
+	if poolConfig.Patch == nil {
+		// If No Patches, Must Set patches annotation to ""
+		if anno := set.GetAnnotations(); anno != nil {
+			anno[appsv1alpha1.AnnotationPatchKey] = ""
+		}
+		return false
+	}
+	return true
+}
+
+func CreateNewPatchedObject(patchInfo *runtime.RawExtension, set metav1.Object, newPatched metav1.Object) error {
+
+	if err := StrategicMergeByPatches(set, patchInfo, newPatched); err != nil {
+		return err
+	}
+
+	if anno := newPatched.GetAnnotations(); anno == nil {
+		newPatched.SetAnnotations(map[string]string{
+			appsv1alpha1.AnnotationPatchKey: string(patchInfo.Raw),
+		})
+	} else {
+		anno[appsv1alpha1.AnnotationPatchKey] = string(patchInfo.Raw)
 	}
 	return nil
 }

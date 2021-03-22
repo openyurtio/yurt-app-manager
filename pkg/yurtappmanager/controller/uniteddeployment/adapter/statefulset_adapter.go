@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,6 +149,21 @@ func (a *StatefulSetAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, pool
 
 	attachNodeAffinityAndTolerations(&set.Spec.Template.Spec, poolConfig)
 
+	if !PoolHasPatch(poolConfig, set) {
+		klog.Infof("StatefulSet[%s/%s-] has no patches, do not need strategicmerge", set.Namespace,
+			set.GenerateName)
+		return nil
+	}
+
+	patched := &appsv1.StatefulSet{}
+	if err := CreateNewPatchedObject(poolConfig.Patch, set, patched); err != nil {
+		klog.Errorf("StatefulSet[%s/%s-] strategic merge by patch %s error %v", set.Namespace,
+			set.GenerateName, string(poolConfig.Patch.Raw), err)
+		return err
+	}
+	patched.DeepCopyInto(set)
+	klog.Infof("Statefulset [%s/%s-] has patches configure successfully:%v", set.Namespace,
+		set.GenerateName, string(poolConfig.Patch.Raw))
 	return nil
 }
 

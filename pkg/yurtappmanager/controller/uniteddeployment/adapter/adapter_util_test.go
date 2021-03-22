@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,10 @@ package adapter
 import (
 	"fmt"
 	"testing"
+
+	appsv1 "k8s.io/api/apps/v1"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,4 +89,85 @@ func buildPodList(ordinals []int, revisions []string, t *testing.T) []*corev1.Po
 	}
 
 	return pods
+}
+
+func TestCreateNewPatchedObject(t *testing.T) {
+	cases := []struct {
+		Name         string
+		PatchInfo    *runtime.RawExtension
+		OldObj       *appsv1.Deployment
+		EqualFuntion func(new *appsv1.Deployment) bool
+	}{
+		{
+			Name:      "replace image",
+			PatchInfo: &runtime.RawExtension{Raw: []byte(`{"spec":{"template":{"spec":{"containers":[{"image":"nginx:1.18.0","name":"nginx"}]}}}}`)},
+			OldObj: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:  "nginx",
+									Image: "nginx:1.19.0",
+								},
+							},
+						},
+					},
+				},
+			},
+			EqualFuntion: func(new *appsv1.Deployment) bool {
+				return new.Spec.Template.Spec.Containers[0].Image == "nginx:1.18.0"
+			},
+		},
+		{
+			Name:      "add other image",
+			PatchInfo: &runtime.RawExtension{Raw: []byte(`{"spec":{"template":{"spec":{"containers":[{"image":"nginx:1.18.0","name":"nginx111"}]}}}}`)},
+			OldObj: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:  "nginx",
+									Image: "nginx:1.19.0",
+								},
+							},
+						},
+					},
+				},
+			},
+			EqualFuntion: func(new *appsv1.Deployment) bool {
+				if len(new.Spec.Template.Spec.Containers) != 2 {
+					return false
+				}
+				containerMap := make(map[string]string)
+				for _, container := range new.Spec.Template.Spec.Containers {
+					containerMap[container.Name] = container.Image
+				}
+				image, ok := containerMap["nginx"]
+				if !ok {
+					return false
+				}
+
+				image1, ok := containerMap["nginx111"]
+				if !ok {
+					return false
+				}
+				return image == "nginx:1.19.0" && image1 == "nginx:1.18.0"
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.Name, func(t *testing.T) {
+			newObj := &appsv1.Deployment{}
+			if err := CreateNewPatchedObject(c.PatchInfo, c.OldObj, newObj); err != nil {
+				t.Fatalf("%s CreateNewPatchedObject error %v", c.Name, err)
+			}
+			if !c.EqualFuntion(newObj) {
+				t.Fatalf("%s Not Expect equal funtion", c.Name)
+			}
+		})
+	}
+
 }

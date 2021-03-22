@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 Copyright 2016 The Kubernetes Authors.
 
@@ -34,7 +34,7 @@ const updateRetries = 5
 
 type UnitedDeploymentPatches struct {
 	Replicas int32
-	Patches string
+	Patch    string
 }
 
 func getPoolNameFrom(metaObj metav1.Object) (string, error) {
@@ -103,15 +103,15 @@ func filterOutCondition(conditions []unitv1alpha1.UnitedDeploymentCondition, con
 	return newConditions
 }
 
-func GetNextPatches(ud *unitv1alpha1.UnitedDeployment) map[string]UnitedDeploymentPatches{
+func GetNextPatches(ud *unitv1alpha1.UnitedDeployment) map[string]UnitedDeploymentPatches {
 	next := make(map[string]UnitedDeploymentPatches)
 	for _, pool := range ud.Spec.Topology.Pools {
 		t := UnitedDeploymentPatches{}
 		if pool.Replicas != nil {
 			t.Replicas = *pool.Replicas
 		}
-		if pool.Patches != nil {
-			t.Patches = string(pool.Patches.Raw)
+		if pool.Patch != nil {
+			t.Patch = string(pool.Patch.Raw)
 		}
 		next[pool.Name] = t
 	}
