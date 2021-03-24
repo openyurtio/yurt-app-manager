@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -157,7 +157,6 @@ func (m *PoolControl) convertToPool(set metav1.Object) (*Pool, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	pool := &Pool{
 		Name:      poolName,
 		Namespace: set.GetNamespace(),
@@ -168,6 +167,9 @@ func (m *PoolControl) convertToPool(set metav1.Object) (*Pool, error) {
 			ObservedGeneration: m.adapter.GetStatusObservedGeneration(set),
 			ReplicasInfo:       specReplicas,
 		},
+	}
+	if data, ok := set.GetAnnotations()[alpha1.AnnotationPatchKey]; ok {
+		pool.Status.PatchInfo = data
 	}
 	return pool, nil
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ package adapter
 import (
 	"fmt"
 
+	"k8s.io/klog"
+
+	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 type DeploymentAdapter struct {
@@ -78,9 +79,9 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 	set := obj.(*appsv1.Deployment)
 
 	var poolConfig *alpha1.Pool
-	for _, pool := range ud.Spec.Topology.Pools {
+	for i, pool := range ud.Spec.Topology.Pools {
 		if pool.Name == poolName {
-			poolConfig = &pool
+			poolConfig = &(ud.Spec.Topology.Pools[i])
 			break
 		}
 	}
@@ -136,6 +137,23 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 	set.Spec.ProgressDeadlineSeconds = ud.Spec.WorkloadTemplate.DeploymentTemplate.Spec.ProgressDeadlineSeconds
 
 	attachNodeAffinityAndTolerations(&set.Spec.Template.Spec, poolConfig)
+
+	if !PoolHasPatch(poolConfig, set) {
+		klog.Infof("Deployment[%s/%s-] has no patches, do not need strategicmerge", set.Namespace,
+			set.GenerateName)
+		return nil
+	}
+
+	patched := &appsv1.Deployment{}
+	if err := CreateNewPatchedObject(poolConfig.Patch, set, patched); err != nil {
+		klog.Errorf("Deployment[%s/%s-] strategic merge by patch %s error %v", set.Namespace,
+			set.GenerateName, string(poolConfig.Patch.Raw), err)
+		return err
+	}
+	patched.DeepCopyInto(set)
+
+	klog.Infof("Deployment [%s/%s-] has patches configure successfully:%v", set.Namespace,
+		set.GenerateName, string(poolConfig.Patch.Raw))
 	return nil
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -188,14 +188,14 @@ func (r *ReconcileUnitedDeployment) Reconcile(_ context.Context, request reconci
 		return reconcile.Result{}, nil
 	}
 
-	nextReplicas := GetNextReplicas(instance)
-	klog.V(4).Infof("Get UnitedDeployment %s/%s next Replicas %v", instance.Namespace, instance.Name, nextReplicas)
+	nextPatches := GetNextPatches(instance)
+	klog.V(4).Infof("Get UnitedDeployment %s/%s next Patches %v", instance.Namespace, instance.Name, nextPatches)
 
 	expectedRevision := currentRevision
 	if updatedRevision != nil {
 		expectedRevision = updatedRevision
 	}
-	newStatus, err := r.managePools(instance, nameToPool, nextReplicas, expectedRevision, poolType)
+	newStatus, err := r.managePools(instance, nameToPool, nextPatches, expectedRevision, poolType)
 	if err != nil {
 		klog.Errorf("Fail to update UnitedDeployment %s/%s: %s", instance.Namespace, instance.Name, err)
 		r.recorder.Event(instance.DeepCopy(), corev1.EventTypeWarning, fmt.Sprintf("Failed%s", eventTypePoolsUpdate), err.Error())

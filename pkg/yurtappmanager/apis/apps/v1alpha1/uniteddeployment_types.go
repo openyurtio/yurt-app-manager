@@ -1,5 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
+Copyright 2021 The OpenYurt Authors.
 Copyright 2020 The Kruise Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type TemplateType string
@@ -124,6 +125,13 @@ type Pool struct {
 	// Indicates the number of the pod to be created under this pool.
 	// +required
 	Replicas *int32 `json:"replicas,omitempty"`
+
+	// Indicates the patch for the templateSpec
+	// Now support strategic merge path :https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#notes-on-the-strategic-merge-patch
+	// Patch takes precedence over Replicas fields
+	// If the Patch also modifies the Replicas, use the Replicas value in the Patch
+	// +optional
+	Patch *runtime.RawExtension `json:"patch,omitempty"`
 }
 
 // UnitedDeploymentStatus defines the observed state of UnitedDeployment.
