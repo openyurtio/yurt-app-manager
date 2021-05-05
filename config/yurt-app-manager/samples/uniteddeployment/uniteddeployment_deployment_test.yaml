@@ -1,0 +1,54 @@
+apiVersion: apps.openyurt.io/v1alpha1
+kind: UnitedDeployment
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: ud-test
+spec:
+  selector:
+    matchLabels:
+      app: ud-test
+  workloadTemplate:
+    deploymentTemplate:
+      metadata:
+        labels:
+          app: ud-test
+      spec:
+        template:
+          metadata:
+            labels:
+              app: ud-test
+          spec:
+            containers:
+              - name: nginx
+                image: nginx:1.19.3
+  topology:
+    pools:
+    - name: beijing 
+      nodeSelectorTerm:
+        matchExpressions:
+        - key: apps.openyurt.io/nodepool
+          operator: In
+          values:
+          - beijing 
+      replicas: 1
+      patch:
+        spec:
+          template:
+            spec:
+              containers:
+                - name: nginx
+                  image: nginx:1.19.0
+    - name: hangzhou 
+      nodeSelectorTerm:
+        matchExpressions:
+        - key: apps.openyurt.io/nodepool
+          operator: In
+          values:
+          - hangzhou 
+      replicas: 2
+      tolerations:
+      - effect: NoSchedule
+        key: apps.openyurt.io/example
+        operator: Exists
+  revisionHistoryLimit: 5 
