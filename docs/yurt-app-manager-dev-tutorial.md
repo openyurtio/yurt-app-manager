@@ -2,6 +2,31 @@
 
 This document introduces how to build and install yurt-app-manager controller. 
 
+## Label cloud nodes and edge nodes
+``` bash
+$ kubectl get nodes -o wide
+
+NAME        STATUS   ROLES    AGE   VERSION   INTERNAL-IP    
+k8s-node1   Ready    <none>   20d   v1.16.2   10.48.115.9    
+k8s-node2   Ready    <none>   20d   v1.16.2   10.48.115.10   
+master      Ready    master   20d   v1.16.2   10.48.115.8    
+```
+and we will use node `master` as the cloud node.
+
+We label the cloud node with value `false`,
+```bash
+$ kubectl label node master openyurt.io/is-edge-worker=false
+master labeled
+```
+
+and the edge node with value `true`.
+```bash
+$ kubectl label node k8s-node1 openyurt.io/is-edge-worker=true
+k8s-node1 labeled
+$ kubectl label node k8s-node2 openyurt.io/is-edge-worker=true
+k8s-node2 labeled
+```
+
 ##  clone yurt-app-manger code
 ```
 # cd $GOPATH/src/github.com/openyurtio
