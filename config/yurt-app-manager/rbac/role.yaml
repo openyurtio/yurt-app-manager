@@ -105,6 +105,26 @@ rules:
 - apiGroups:
   - apps.openyurt.io
   resources:
+  - uniteddaemonsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps.openyurt.io
+  resources:
+  - uniteddaemonsets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps.openyurt.io
+  resources:
   - uniteddeployments
   verbs:
   - create

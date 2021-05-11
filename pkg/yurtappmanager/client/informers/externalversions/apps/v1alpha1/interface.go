@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// NodePools returns a NodePoolInformer.
 	NodePools() NodePoolInformer
+	// UnitedDaemonSets returns a UnitedDaemonSetInformer.
+	UnitedDaemonSets() UnitedDaemonSetInformer
 	// UnitedDeployments returns a UnitedDeploymentInformer.
 	UnitedDeployments() UnitedDeploymentInformer
 }
@@ -44,6 +46,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // NodePools returns a NodePoolInformer.
 func (v *version) NodePools() NodePoolInformer {
 	return &nodePoolInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// UnitedDaemonSets returns a UnitedDaemonSetInformer.
+func (v *version) UnitedDaemonSets() UnitedDaemonSetInformer {
+	return &unitedDaemonSetInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // UnitedDeployments returns a UnitedDeploymentInformer.

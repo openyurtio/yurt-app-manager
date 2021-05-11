@@ -22,6 +22,14 @@ package v1alpha1
 // NodePoolLister.
 type NodePoolListerExpansion interface{}
 
+// UnitedDaemonSetListerExpansion allows custom methods to be added to
+// UnitedDaemonSetLister.
+type UnitedDaemonSetListerExpansion interface{}
+
+// UnitedDaemonSetNamespaceListerExpansion allows custom methods to be added to
+// UnitedDaemonSetNamespaceLister.
+type UnitedDaemonSetNamespaceListerExpansion interface{}
+
 // UnitedDeploymentListerExpansion allows custom methods to be added to
 // UnitedDeploymentLister.
 type UnitedDeploymentListerExpansion interface{}

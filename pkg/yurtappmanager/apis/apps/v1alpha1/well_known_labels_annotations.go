@@ -33,6 +33,8 @@ const (
 
 	// AnnotationPatchKey indicates the patch for every sub pool
 	AnnotationPatchKey = "apps.openyurt.io/patch"
+
+	AnnotationRefNodePool = "apps.openyurt.io/ref-nodepool"
 )
 
 // NodePool related labels and annotations

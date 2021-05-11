@@ -25,13 +25,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/nodepool"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddaemonset"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment"
 )
 
 var controllerAddFuncs []func(manager.Manager, context.Context) error
 
 func init() {
-	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, nodepool.Add)
+	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, nodepool.Add, uniteddaemonset.Add)
 }
 
 func SetupWithManager(m manager.Manager, ctx context.Context) error {
