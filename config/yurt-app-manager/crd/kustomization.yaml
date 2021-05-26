@@ -4,6 +4,7 @@
 resources:
 - bases/apps.openyurt.io_uniteddeployments.yaml
 - bases/apps.openyurt.io_nodepools.yaml
+- bases/apps.openyurt.io_uniteddaemonsets.yaml
 
 patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.

@@ -25,6 +25,15 @@ import (
 // UnitedDaemonSetConditionType indicates valid conditions type of a UnitedDaemonSet.
 type UnitedDaemonSetConditionType string
 
+const (
+	// WorkLoadProvisioned means all the expected workload are provisioned
+	WorkLoadProvisioned UnitedDaemonSetConditionType = "WorkLoadProvisioned"
+	// WorkLoadUpdated means all the workload are updated.
+	WorkLoadUpdated UnitedDaemonSetConditionType = "WorkLoadUpdated"
+	// WorkLoadFailure is added to a UnitedDeployment when one of its workload has failure during its own reconciling.
+	WorkLoadFailure UnitedDaemonSetConditionType = "WorkLoadFailure"
+)
+
 // UnitedDaemonSetSpec defines the desired state of UnitedDaemonSet.
 type UnitedDaemonSetSpec struct {
 	// Selector is a label query over pods that should match the replica count.
@@ -67,6 +76,9 @@ type UnitedDaemonSetStatus struct {
 
 	// TemplateType indicates the type of PoolTemplate
 	TemplateType TemplateType `json:"templateType"`
+
+	// NodePools indicates the list of node pools selected by UnitedDaemonSet
+	NodePools []string `json:"nodepools,omitempty"`
 }
 
 // UnitedDaemonSetCondition describes current state of a UnitedDaemonSet.

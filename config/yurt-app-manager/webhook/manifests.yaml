@@ -29,6 +29,24 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-apps-openyurt-io-v1alpha1-uniteddaemonset
+  failurePolicy: Fail
+  name: muniteddaemonset.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - uniteddaemonsets
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-apps-openyurt-io-v1alpha1-uniteddeployment
   failurePolicy: Fail
   name: muniteddeployment.kb.io
@@ -69,6 +87,24 @@ webhooks:
     - DELETE
     resources:
     - nodepools
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-apps-openyurt-io-v1alpha1-uniteddaemonset
+  failurePolicy: Fail
+  name: vuniteddaemonset.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - uniteddaemonsets
 - clientConfig:
     caBundle: Cg==
     service:
