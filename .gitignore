@@ -4,5 +4,6 @@ _output
 gopath
 dockerbuild
 
+vendor
 *.out
 logs
