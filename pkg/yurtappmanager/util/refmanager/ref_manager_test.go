@@ -89,12 +89,12 @@ func Test(t *testing.T) {
 		},
 	}
 
-	getOwner = func(owner metav1.Object, schema *runtime.Scheme, c client.Client) (runtime.Object, error) {
+	getOwner = func(owner metav1.Object, schema *runtime.Scheme, c client.Client) (client.Object, error) {
 		return sts, nil
 	}
 
 	var ownerRefs []metav1.OwnerReference
-	updateOwnee = func(obj runtime.Object, c client.Client) (err error) {
+	updateOwnee = func(obj client.Object, c client.Client) (err error) {
 		ownerRefs = obj.(*corev1.Pod).OwnerReferences
 		return nil
 	}
