@@ -609,7 +609,9 @@ metadata:
   namespace: kube-system
 spec:
   ports:
-  - port: 443
+  - name: webhook-server
+    port: 443
+    protocol: TCP
     targetPort: 9876
   selector:
     control-plane: yurt-app-manager
