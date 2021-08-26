@@ -307,11 +307,15 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alph
 			err := r.controls[templateType].CreateWorkload(instance, allNameToNodePools[nodepoolName], expectedRevision)
 			//err := r.poolControls[workloadType].CreatePool(ud, poolName, revision, replicas)
 			if err != nil {
+				klog.Errorf("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s error: %s",
+					instance.GetNamespace(), instance.GetName(), templateType, nodepoolName, err.Error())
 				if !errors.IsTimeout(err) {
 					return fmt.Errorf("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s error: %s",
 						instance.GetNamespace(), instance.GetName(), templateType, nodepoolName, err.Error())
 				}
 			}
+			klog.Infof("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s success",
+				instance.GetNamespace(), instance.GetName(), templateType, nodepoolName)
 			return nil
 		})
 		if createdErr == nil {

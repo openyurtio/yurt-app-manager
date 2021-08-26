@@ -46,7 +46,6 @@ func TaintsToTolerations(taints []corev1.Taint) []corev1.Toleration {
 		toleation := corev1.Toleration{
 			Key:      taint.Key,
 			Operator: corev1.TolerationOpExists,
-			Value:    taint.Value,
 			Effect:   taint.Effect,
 		}
 		tolerations = append(tolerations, toleation)
