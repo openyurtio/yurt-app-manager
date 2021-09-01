@@ -68,6 +68,7 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alph
 		set.Labels[k] = v
 	}
 	set.Labels[v1alpha1.ControllerRevisionHashLabelKey] = revision
+	set.Labels[v1alpha1.PoolNameLabelKey] = nodepool.GetName()
 
 	if set.Annotations == nil {
 		set.Annotations = map[string]string{}
@@ -85,6 +86,12 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alph
 	if set.Spec.Template.Spec.Affinity != nil && set.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
 		set.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = nil
 	}
+
+	if set.Spec.Template.Labels == nil {
+		set.Spec.Template.Labels = map[string]string{}
+	}
+	set.Spec.Template.Labels[v1alpha1.PoolNameLabelKey] = nodepool.GetName()
+	set.Spec.Template.Labels[v1alpha1.ControllerRevisionHashLabelKey] = revision
 
 	// use nodeSelector
 	set.Spec.Template.Spec.NodeSelector = CreateNodeSelectorByNodepoolName(nodepool.GetName())

@@ -93,6 +93,13 @@ type DeploymentTemplateSpec struct {
 	Spec              appsv1.DeploymentSpec `json:"spec"`
 }
 
+// ServiceTemplate defines the service template under the UnitedDeployment.
+type ServiceTemplate struct {
+	// StatefulSet template
+	// +optional
+	StatefulSetTemplate *[]corev1.ServiceSpec `json:"statefulSetTemplate,omitempty"`
+}
+
 // Topology defines the spread detail of each pool under UnitedDeployment.
 // A UnitedDeployment manages multiple homogeneous workloads which are called pool.
 // Each of pools under the UnitedDeployment is described in Topology.
