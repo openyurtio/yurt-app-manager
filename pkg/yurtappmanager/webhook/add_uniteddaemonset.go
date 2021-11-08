@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	if !gate.ResourceEnabled(&unitv1alpha1.UnitedDaemonSet{}) {
+	if !gate.ResourceEnabled(&unitv1alpha1.YurtAppDaemon{}) {
 		return
 	}
 	addHandlers(mutating.HandlerMap)

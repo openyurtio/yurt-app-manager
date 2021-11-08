@@ -27,8 +27,8 @@ import (
 type AppsV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	NodePoolsGetter
-	UnitedDaemonSetsGetter
 	UnitedDeploymentsGetter
+	YurtAppDaemonsGetter
 }
 
 // AppsV1alpha1Client is used to interact with features provided by the apps.openyurt.io group.
@@ -40,12 +40,12 @@ func (c *AppsV1alpha1Client) NodePools() NodePoolInterface {
 	return newNodePools(c)
 }
 
-func (c *AppsV1alpha1Client) UnitedDaemonSets(namespace string) UnitedDaemonSetInterface {
-	return newUnitedDaemonSets(c, namespace)
-}
-
 func (c *AppsV1alpha1Client) UnitedDeployments(namespace string) UnitedDeploymentInterface {
 	return newUnitedDeployments(c, namespace)
+}
+
+func (c *AppsV1alpha1Client) YurtAppDaemons(namespace string) YurtAppDaemonInterface {
+	return newYurtAppDaemons(c, namespace)
 }
 
 // NewForConfig creates a new AppsV1alpha1Client for the given config.

@@ -49,7 +49,7 @@ func (e *EnqueueUnitedDaemonsetForNodePool) Generic(event event.GenericEvent, li
 }
 
 func (e *EnqueueUnitedDaemonsetForNodePool) addAllUnitedDaemonsetToWorkQueue(limitingInterface workqueue.RateLimitingInterface) {
-	udds := &v1alpha1.UnitedDaemonSetList{}
+	udds := &v1alpha1.YurtAppDaemonList{}
 	if err := e.client.List(context.TODO(), udds); err != nil {
 		return
 	}

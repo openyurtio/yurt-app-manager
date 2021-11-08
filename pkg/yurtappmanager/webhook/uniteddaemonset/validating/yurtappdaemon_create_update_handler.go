@@ -14,8 +14,8 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// UnitedDaemonSetCreateUpdateHandler handles UnitedDaemonSet
-type UnitedDaemonSetCreateUpdateHandler struct {
+// YurtAppDaemonCreateUpdateHandler handles UnitedDaemonSet
+type YurtAppDaemonCreateUpdateHandler struct {
 	// To use the client, you need to do the following:
 	// - uncomment it
 	// - import sigs.k8s.io/controller-runtime/pkg/client
@@ -26,16 +26,16 @@ type UnitedDaemonSetCreateUpdateHandler struct {
 	Decoder *admission.Decoder
 }
 
-var _ webhookutil.Handler = &UnitedDaemonSetCreateUpdateHandler{}
+var _ webhookutil.Handler = &YurtAppDaemonCreateUpdateHandler{}
 
-func (h *UnitedDaemonSetCreateUpdateHandler) SetOptions(options webhookutil.Options) {
+func (h *YurtAppDaemonCreateUpdateHandler) SetOptions(options webhookutil.Options) {
 	h.Client = options.Client
 	return
 }
 
 // Handle handles admission requests.
-func (h *UnitedDaemonSetCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
-	obj := &unitv1alpha1.UnitedDaemonSet{}
+func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
+	obj := &unitv1alpha1.YurtAppDaemon{}
 
 	klog.V(2).Infof("prepare to valid united daemonset ...")
 	err := h.Decoder.Decode(req, obj)
@@ -49,7 +49,7 @@ func (h *UnitedDaemonSetCreateUpdateHandler) Handle(ctx context.Context, req adm
 			return admission.Errored(http.StatusUnprocessableEntity, allErrs.ToAggregate())
 		}
 	case admissionv1.Update:
-		oldObj := &unitv1alpha1.UnitedDaemonSet{}
+		oldObj := &unitv1alpha1.YurtAppDaemon{}
 		if err := h.Decoder.DecodeRaw(req.AdmissionRequest.OldObject, oldObj); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
@@ -64,10 +64,10 @@ func (h *UnitedDaemonSetCreateUpdateHandler) Handle(ctx context.Context, req adm
 	return admission.ValidationResponse(true, "")
 }
 
-var _ admission.DecoderInjector = &UnitedDaemonSetCreateUpdateHandler{}
+var _ admission.DecoderInjector = &YurtAppDaemonCreateUpdateHandler{}
 
 // InjectDecoder injects the decoder into the UnitedDeploymentCreateUpdateHandler
-func (h *UnitedDaemonSetCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
+func (h *YurtAppDaemonCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
 	h.Decoder = d
 	return nil
 }

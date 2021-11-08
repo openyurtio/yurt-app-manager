@@ -21,14 +21,14 @@ import (
 )
 
 // validateUnitedDaemonSet validates a UnitedDaemonSet.
-func validateUnitedDaemonSet(c client.Client, unitedDaemonSet *unitv1alpha1.UnitedDaemonSet) field.ErrorList {
+func validateUnitedDaemonSet(c client.Client, unitedDaemonSet *unitv1alpha1.YurtAppDaemon) field.ErrorList {
 	allErrs := apivalidation.ValidateObjectMeta(&unitedDaemonSet.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateUnitedDaemonSetSpec(c, &unitedDaemonSet.Spec, field.NewPath("spec"))...)
+	allErrs = append(allErrs, validateYurtAppDaemonSpec(c, &unitedDaemonSet.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
 
-// validateUnitedDaemonSetSpec tests if required fields in the UnitedDaemonSet spec are set.
-func validateUnitedDaemonSetSpec(c client.Client, spec *unitv1alpha1.UnitedDaemonSetSpec, fldPath *field.Path) field.ErrorList {
+// validateYurtAppDaemonSpec tests if required fields in the UnitedDaemonSet spec are set.
+func validateYurtAppDaemonSpec(c client.Client, spec *unitv1alpha1.YurtAppDaemonSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if spec.Selector == nil {
@@ -105,9 +105,9 @@ func validateWorkLoadTemplate(template *unitv1alpha1.WorkloadTemplate, selector 
 }
 
 // ValidateUnitedDaemonSetUpdate tests if required fields in the UnitedDaemonSet are set.
-func ValidateUnitedDaemonSetUpdate(unitedDaemonSet, oldUnitedDaemonSet *unitv1alpha1.UnitedDaemonSet) field.ErrorList {
+func ValidateUnitedDaemonSetUpdate(unitedDaemonSet, oldUnitedDaemonSet *unitv1alpha1.YurtAppDaemon) field.ErrorList {
 	allErrs := apivalidation.ValidateObjectMetaUpdate(&unitedDaemonSet.ObjectMeta, &oldUnitedDaemonSet.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateUnitedDaemonSetSpecUpdate(&unitedDaemonSet.Spec, &oldUnitedDaemonSet.Spec, field.NewPath("spec"))...)
+	allErrs = append(allErrs, validateYurtAppDaemonSpecUpdate(&unitedDaemonSet.Spec, &oldUnitedDaemonSet.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
 
@@ -119,7 +119,7 @@ func convertPodTemplateSpec(template *v1.PodTemplateSpec) (*core.PodTemplateSpec
 	return coreTemplate, nil
 }
 
-func validateUnitedDaemonSetSpecUpdate(spec, oldSpec *unitv1alpha1.UnitedDaemonSetSpec, fldPath *field.Path) field.ErrorList {
+func validateYurtAppDaemonSpecUpdate(spec, oldSpec *unitv1alpha1.YurtAppDaemonSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateWorkloadTemplateUpdate(&spec.WorkloadTemplate, &oldSpec.WorkloadTemplate, fldPath.Child("template"))...)
 	return allErrs

@@ -43,7 +43,7 @@ func (d *DeploymentControllor) GetTemplateType() v1alpha1.TemplateType {
 	return v1alpha1.DeploymentTemplateType
 }
 
-func (d *DeploymentControllor) DeleteWorkload(udd *v1alpha1.UnitedDaemonSet, load *Workload) error {
+func (d *DeploymentControllor) DeleteWorkload(udd *v1alpha1.YurtAppDaemon, load *Workload) error {
 	klog.Infof("UnitedDaemonset[%s/%s] prepare delete Deployment[%s/%s]", udd.GetNamespace(),
 		udd.GetName(), load.Namespace, load.Name)
 
@@ -56,7 +56,7 @@ func (d *DeploymentControllor) DeleteWorkload(udd *v1alpha1.UnitedDaemonSet, loa
 }
 
 // ApplyTemplate updates the object to the latest revision, depending on the UnitedDaemonSet.
-func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alpha1.UnitedDaemonSet, nodepool v1alpha1.NodePool, revision string, set *appsv1.Deployment) error {
+func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string, set *appsv1.Deployment) error {
 
 	if set.Labels == nil {
 		set.Labels = map[string]string{}
@@ -114,7 +114,7 @@ func (d *DeploymentControllor) ObjectKey(load *Workload) client.ObjectKey {
 	}
 }
 
-func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.UnitedDaemonSet, nodepool v1alpha1.NodePool, revision string) error {
+func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
 	klog.Infof("UnitedDaemonset[%s/%s] prepare update Deployment[%s/%s]", udd.GetNamespace(),
 		udd.GetName(), load.Namespace, load.Name)
 
@@ -138,7 +138,7 @@ func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.Unit
 	return updateError
 }
 
-func (d *DeploymentControllor) CreateWorkload(udd *v1alpha1.UnitedDaemonSet, nodepool v1alpha1.NodePool, revision string) error {
+func (d *DeploymentControllor) CreateWorkload(udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
 	klog.Infof("UnitedDaemonset[%s/%s] prepare create new deployment by nodepool %s ", udd.GetNamespace(), udd.GetName(), nodepool.GetName())
 
 	deploy := appsv1.Deployment{}
@@ -150,7 +150,7 @@ func (d *DeploymentControllor) CreateWorkload(udd *v1alpha1.UnitedDaemonSet, nod
 	return d.Client.Create(context.TODO(), &deploy)
 }
 
-func (d *DeploymentControllor) GetAllWorkloads(set *v1alpha1.UnitedDaemonSet) ([]*Workload, error) {
+func (d *DeploymentControllor) GetAllWorkloads(set *v1alpha1.YurtAppDaemon) ([]*Workload, error) {
 	allDeployments := appsv1.DeploymentList{}
 	// 获得UnitedDaemonset 对应的 所有Deployment, 根据OwnerRef
 	selector, err := metav1.LabelSelectorAsSelector(set.Spec.Selector)

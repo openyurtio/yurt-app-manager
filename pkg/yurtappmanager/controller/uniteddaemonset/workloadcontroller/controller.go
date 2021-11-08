@@ -24,9 +24,9 @@ import (
 
 type WorkloadControllor interface {
 	ObjectKey(load *Workload) client.ObjectKey
-	GetAllWorkloads(set *v1alpha1.UnitedDaemonSet) ([]*Workload, error)
-	CreateWorkload(set *v1alpha1.UnitedDaemonSet, nodepool v1alpha1.NodePool, revision string) error
-	UpdateWorkload(load *Workload, set *v1alpha1.UnitedDaemonSet, nodepool v1alpha1.NodePool, revision string) error
-	DeleteWorkload(set *v1alpha1.UnitedDaemonSet, load *Workload) error
+	GetAllWorkloads(set *v1alpha1.YurtAppDaemon) ([]*Workload, error)
+	CreateWorkload(set *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error
+	UpdateWorkload(load *Workload, set *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error
+	DeleteWorkload(set *v1alpha1.YurtAppDaemon, load *Workload) error
 	GetTemplateType() v1alpha1.TemplateType
 }

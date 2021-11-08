@@ -29,9 +29,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-apps-openyurt-io-v1alpha1-uniteddaemonset
+      path: /mutate-apps-openyurt-io-v1alpha1-yurtappdaemon
   failurePolicy: Fail
-  name: muniteddaemonset.kb.io
+  name: myurtappdaemon.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
@@ -41,7 +41,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - uniteddaemonsets
+    - yurtappdaemons
 - clientConfig:
     caBundle: Cg==
     service:
@@ -92,9 +92,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-apps-openyurt-io-v1alpha1-uniteddaemonset
+      path: /validate-apps-openyurt-io-v1alpha1-yurtappdaemon
   failurePolicy: Fail
-  name: vuniteddaemonset.kb.io
+  name: vyurtappdaemon.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
@@ -104,7 +104,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - uniteddaemonsets
+    - yurtappdaemons
 - clientConfig:
     caBundle: Cg==
     service:

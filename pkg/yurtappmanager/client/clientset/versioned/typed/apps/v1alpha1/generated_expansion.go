@@ -20,6 +20,6 @@ package v1alpha1
 
 type NodePoolExpansion interface{}
 
-type UnitedDaemonSetExpansion interface{}
-
 type UnitedDeploymentExpansion interface{}
+
+type YurtAppDaemonExpansion interface{}

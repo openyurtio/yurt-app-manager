@@ -14,8 +14,8 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// UnitedDaemonsetCreateUpdateHandler handles UnitedDeployment
-type UnitedDaemonsetCreateUpdateHandler struct {
+// YurtAppDaemonCreateUpdateHandler handles UnitedDeployment
+type YurtAppDaemonCreateUpdateHandler struct {
 	// To use the client, you need to do the following:
 	// - uncomment it
 	// - import sigs.k8s.io/controller-runtime/pkg/client
@@ -26,16 +26,16 @@ type UnitedDaemonsetCreateUpdateHandler struct {
 	Decoder *admission.Decoder
 }
 
-var _ webhookutil.Handler = &UnitedDaemonsetCreateUpdateHandler{}
+var _ webhookutil.Handler = &YurtAppDaemonCreateUpdateHandler{}
 
-func (h *UnitedDaemonsetCreateUpdateHandler) SetOptions(options webhookutil.Options) {
+func (h *YurtAppDaemonCreateUpdateHandler) SetOptions(options webhookutil.Options) {
 	h.Client = options.Client
 	return
 }
 
 // Handle handles admission requests.
-func (h *UnitedDaemonsetCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
-	obj := &unitv1alpha1.UnitedDaemonSet{}
+func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
+	obj := &unitv1alpha1.YurtAppDaemon{}
 
 	err := h.Decoder.Decode(req, obj)
 	if err != nil {
@@ -43,21 +43,16 @@ func (h *UnitedDaemonsetCreateUpdateHandler) Handle(ctx context.Context, req adm
 	}
 
 	unitv1alpha1.SetDefaultsUnitedDaemonSet(obj)
-	obj.Status = unitv1alpha1.UnitedDaemonSetStatus{}
+	obj.Status = unitv1alpha1.YurtAppDaemonStatus{}
 
 	statefulSetTemp := obj.Spec.WorkloadTemplate.StatefulSetTemplate
 	deployTem := obj.Spec.WorkloadTemplate.DeploymentTemplate
-	svcTem := obj.Spec.ServiceTemplate
 
 	if statefulSetTemp != nil {
 		statefulSetTemp.Spec.Selector = obj.Spec.Selector
 	}
 	if deployTem != nil {
 		deployTem.Spec.Selector = obj.Spec.Selector
-	}
-	if svcTem != nil {
-		svcTem.Labels[unitv1alpha1.LabelCurrentYurtAppDaemon] = obj.GetName()
-		svcTem.Spec.Selector = nil
 	}
 
 	marshalled, err := json.Marshal(obj)
@@ -72,10 +67,10 @@ func (h *UnitedDaemonsetCreateUpdateHandler) Handle(ctx context.Context, req adm
 	return resp
 }
 
-var _ admission.DecoderInjector = &UnitedDaemonsetCreateUpdateHandler{}
+var _ admission.DecoderInjector = &YurtAppDaemonCreateUpdateHandler{}
 
 // InjectDecoder injects the decoder into the UnitedDeploymentCreateUpdateHandler
-func (h *UnitedDaemonsetCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
+func (h *YurtAppDaemonCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
 	h.Decoder = d
 	return nil
 }

@@ -67,7 +67,7 @@ func init() {
 // The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, _ context.Context) error {
-	if !gate.ResourceEnabled(&unitv1alpha1.UnitedDaemonSet{}) {
+	if !gate.ResourceEnabled(&unitv1alpha1.YurtAppDaemon{}) {
 		return nil
 	}
 	return add(mgr, newReconciler(mgr))
@@ -82,7 +82,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to UnitedDaemonSet
-	err = c.Watch(&source.Kind{Type: &unitv1alpha1.UnitedDaemonSet{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &unitv1alpha1.YurtAppDaemon{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcile.Request) (reconcile.Result, error) {
 	klog.V(4).Infof("Reconcile UnitedDaemonSet %s/%s", request.Namespace, request.Name)
 	// Fetch the UnitedDaemonSet instance
-	instance := &unitv1alpha1.UnitedDaemonSet{}
+	instance := &unitv1alpha1.YurtAppDaemon{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -184,7 +184,7 @@ func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcil
 	return r.updateStatus(instance, newStatus, oldStatus, currentRevision, collisionCount, templateType)
 }
 
-func (r *ReconcileUnitedDaemonSet) updateStatus(instance *unitv1alpha1.UnitedDaemonSet, newStatus, oldStatus *unitv1alpha1.UnitedDaemonSetStatus,
+func (r *ReconcileUnitedDaemonSet) updateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus, oldStatus *unitv1alpha1.YurtAppDaemonStatus,
 	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) (reconcile.Result, error) {
 
 	newStatus = r.calculateStatus(instance, newStatus, currentRevision, collisionCount, templateType)
@@ -193,7 +193,7 @@ func (r *ReconcileUnitedDaemonSet) updateStatus(instance *unitv1alpha1.UnitedDae
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.UnitedDaemonSet, oldStatus, newStatus *unitv1alpha1.UnitedDaemonSetStatus) (*unitv1alpha1.UnitedDaemonSet, error) {
+func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.YurtAppDaemon, oldStatus, newStatus *unitv1alpha1.YurtAppDaemonStatus) (*unitv1alpha1.YurtAppDaemon, error) {
 	if oldStatus.CurrentRevision == newStatus.CurrentRevision &&
 		*oldStatus.CollisionCount == *newStatus.CollisionCount &&
 		oldStatus.TemplateType == newStatus.TemplateType &&
@@ -221,7 +221,7 @@ func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.Unite
 		if i >= updateRetries {
 			break
 		}
-		tmpObj := &unitv1alpha1.UnitedDaemonSet{}
+		tmpObj := &unitv1alpha1.YurtAppDaemon{}
 		if getErr = r.Client.Get(context.TODO(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, tmpObj); getErr != nil {
 			return nil, getErr
 		}
@@ -232,8 +232,8 @@ func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.Unite
 	return nil, updateErr
 }
 
-func (r *ReconcileUnitedDaemonSet) calculateStatus(instance *unitv1alpha1.UnitedDaemonSet, newStatus *unitv1alpha1.UnitedDaemonSetStatus,
-	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) *unitv1alpha1.UnitedDaemonSetStatus {
+func (r *ReconcileUnitedDaemonSet) calculateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus *unitv1alpha1.YurtAppDaemonStatus,
+	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) *unitv1alpha1.YurtAppDaemonStatus {
 
 	newStatus.CollisionCount = &collisionCount
 
@@ -247,8 +247,8 @@ func (r *ReconcileUnitedDaemonSet) calculateStatus(instance *unitv1alpha1.United
 	return newStatus
 }
 
-func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.UnitedDaemonSet, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
-	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string, templateType unitv1alpha1.TemplateType) (newStatus *unitv1alpha1.UnitedDaemonSetStatus, updateErr error) {
+func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
+	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string, templateType unitv1alpha1.TemplateType) (newStatus *unitv1alpha1.YurtAppDaemonStatus, updateErr error) {
 
 	newStatus = instance.Status.DeepCopy()
 
@@ -292,7 +292,7 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.United
 	return newStatus, updateErr
 }
 
-func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alpha1.UnitedDaemonSet,
+func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alpha1.YurtAppDaemon,
 	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string, templateType unitv1alpha1.TemplateType,
 	needDeleted []*workloadcontroller.Workload, needCreate []string) (bool, error) {
 	// 针对于Create 的 需要创建
@@ -345,7 +345,7 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alph
 	return len(needCreate) > 0 || len(needDeleted) > 0, utilerrors.NewAggregate(errs)
 }
 
-func (r *ReconcileUnitedDaemonSet) classifyWorkloads(instance *unitv1alpha1.UnitedDaemonSet, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
+func (r *ReconcileUnitedDaemonSet) classifyWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
 	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string) (needDeleted, needUpdate []*workloadcontroller.Workload,
 	needCreate []string) {
 
@@ -401,7 +401,7 @@ func (r *ReconcileUnitedDaemonSet) classifyWorkloads(instance *unitv1alpha1.Unit
 	return
 }
 
-func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.UnitedDaemonSet) (map[string]unitv1alpha1.NodePool, error) {
+func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.YurtAppDaemon) (map[string]unitv1alpha1.NodePool, error) {
 	klog.V(4).Infof("UnitedDaemonSet [%s/%s] prepare to get associated nodepools",
 		instance.Namespace, instance.Name)
 
@@ -428,7 +428,7 @@ func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.Uni
 	return indexs, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) getTemplateControls(instance *unitv1alpha1.UnitedDaemonSet) (workloadcontroller.WorkloadControllor,
+func (r *ReconcileUnitedDaemonSet) getTemplateControls(instance *unitv1alpha1.YurtAppDaemon) (workloadcontroller.WorkloadControllor,
 	unitv1alpha1.TemplateType, error) {
 	switch {
 	case instance.Spec.WorkloadTemplate.StatefulSetTemplate != nil:
@@ -442,7 +442,7 @@ func (r *ReconcileUnitedDaemonSet) getTemplateControls(instance *unitv1alpha1.Un
 	}
 }
 
-func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.UnitedDaemonSet, c workloadcontroller.WorkloadControllor) (map[string]*workloadcontroller.Workload, error) {
+func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.YurtAppDaemon, c workloadcontroller.WorkloadControllor) (map[string]*workloadcontroller.Workload, error) {
 	klog.V(4).Infof("UnitedDaemonSet [%s/%s/%s] prepare to get all workload", c.GetTemplateType(), instance.Namespace, instance.Name)
 
 	nodePoolsToWorkloads := make(map[string]*workloadcontroller.Workload)
@@ -468,7 +468,7 @@ func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.
 	return nodePoolsToWorkloads, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) getOwnedServices(instance *unitv1alpha1.UnitedDaemonSet) (*corev1.ServiceList, error) {
+func (r *ReconcileUnitedDaemonSet) getOwnedServices(instance *unitv1alpha1.YurtAppDaemon) (*corev1.ServiceList, error) {
 	svcList := &corev1.ServiceList{}
 
 	labelSelector := &metav1.LabelSelector{
@@ -486,13 +486,4 @@ func (r *ReconcileUnitedDaemonSet) getOwnedServices(instance *unitv1alpha1.Unite
 		return nil, err
 	}
 	return svcList, nil
-}
-
-func (r *ReconcileUnitedDaemonSet) updateOwnedServices(instance *unitv1alpha1.UnitedDaemonSet) error {
-	currentownedServices, err := r.getOwnedServices(instance)
-	if err != nil {
-		klog.Errorf("UnitedDaemonSet [%s/%s] Fail to get currentOwnedServices, error: %s", instance.Namespace, instance.Name, err)
-		return err
-	}
-
 }

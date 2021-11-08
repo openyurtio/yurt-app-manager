@@ -35,7 +35,7 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/refmanager"
 )
 
-func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.UnitedDaemonSet) ([]*apps.ControllerRevision, error) {
+func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.YurtAppDaemon) ([]*apps.ControllerRevision, error) {
 	// List all histories to include those that don't match the selector anymore
 	// but have a ControllerRef pointing to the controller.
 	selector, err := metav1.LabelSelectorAsSelector(ud.Spec.Selector)
@@ -72,7 +72,7 @@ func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.UnitedDae
 	return claimHistories, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) constructUnitedDaemonSetRevisions(ud *appsalphav1.UnitedDaemonSet) (*apps.ControllerRevision, *apps.ControllerRevision, int32, error) {
+func (r *ReconcileUnitedDaemonSet) constructUnitedDaemonSetRevisions(ud *appsalphav1.YurtAppDaemon) (*apps.ControllerRevision, *apps.ControllerRevision, int32, error) {
 	var currentRevision, updateRevision *apps.ControllerRevision
 
 	revisions, err := r.controlledHistories(ud)
@@ -146,7 +146,7 @@ func (r *ReconcileUnitedDaemonSet) constructUnitedDaemonSetRevisions(ud *appsalp
 	return currentRevision, updateRevision, collisionCount, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) cleanExpiredRevision(ud *appsalphav1.UnitedDaemonSet,
+func (r *ReconcileUnitedDaemonSet) cleanExpiredRevision(ud *appsalphav1.YurtAppDaemon,
 	sortedRevisions *[]*apps.ControllerRevision) (*[]*apps.ControllerRevision, error) {
 
 	exceedNum := len(*sortedRevisions) - int(*ud.Spec.RevisionHistoryLimit)
@@ -211,7 +211,7 @@ func (r *ReconcileUnitedDaemonSet) createControllerRevision(parent metav1.Object
 // The Revision of the returned ControllerRevision is set to revision. If the returned error is nil, the returned
 // ControllerRevision is valid. StatefulSet revisions are stored as patches that re-apply the current state of set
 // to a new StatefulSet using a strategic merge patch to replace the saved state of the new StatefulSet.
-func (r *ReconcileUnitedDaemonSet) newRevision(ud *appsalphav1.UnitedDaemonSet, revision int64, collisionCount *int32) (*apps.ControllerRevision, error) {
+func (r *ReconcileUnitedDaemonSet) newRevision(ud *appsalphav1.YurtAppDaemon, revision int64, collisionCount *int32) (*apps.ControllerRevision, error) {
 	patch, err := getUnitedDaemonSetPatch(ud)
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func nextRevision(revisions []*apps.ControllerRevision) int64 {
 	return revisions[count-1].Revision + 1
 }
 
-func getUnitedDaemonSetPatch(ud *appsalphav1.UnitedDaemonSet) ([]byte, error) {
+func getUnitedDaemonSetPatch(ud *appsalphav1.YurtAppDaemon) ([]byte, error) {
 	dsBytes, err := json.Marshal(ud)
 	if err != nil {
 		return nil, err

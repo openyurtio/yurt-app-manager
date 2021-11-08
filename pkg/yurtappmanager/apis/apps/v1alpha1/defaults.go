@@ -23,7 +23,7 @@ import (
 )
 
 // SetDefaults_UnitedDaemonSet set default values for UnitedDaemonset.
-func SetDefaultsUnitedDaemonSet(obj *UnitedDaemonSet) {
+func SetDefaultsUnitedDaemonSet(obj *YurtAppDaemon) {
 
 	if obj.Spec.RevisionHistoryLimit == nil {
 		obj.Spec.RevisionHistoryLimit = utilpointer.Int32Ptr(10)

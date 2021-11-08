@@ -6,7 +6,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.9
   creationTimestamp: null
-  name: uniteddaemonsets.apps.openyurt.io
+  name: yurtappdaemons.apps.openyurt.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.templateType
@@ -22,18 +22,18 @@ spec:
     type: date
   group: apps.openyurt.io
   names:
-    kind: UnitedDaemonSet
-    listKind: UnitedDaemonSetList
-    plural: uniteddaemonsets
+    kind: YurtAppDaemon
+    listKind: YurtAppDaemonList
+    plural: yurtappdaemons
     shortNames:
     - udd
-    singular: uniteddaemonset
+    singular: yurtappdaemon
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: UnitedDaemonSet is the Schema for the uniteddeployments API
+      description: YurtAppDaemon is the Schema for the YurtAppDaemon API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -48,7 +48,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: UnitedDaemonSetSpec defines the desired state of UnitedDaemonSet.
+          description: YurtAppDaemonSpec defines the desired state of YurtAppDaemon.
           properties:
             nodepoolSelector:
               description: NodePoolSelector is a label query over nodepool that should
@@ -175,7 +175,7 @@ spec:
           - selector
           type: object
         status:
-          description: UnitedDaemonSetStatus defines the observed state of UnitedDaemonSet.
+          description: YurtAppDaemonStatus defines the observed state of YurtAppDaemon.
           properties:
             collisionCount:
               description: Count of hash collisions for the UnitedDaemonSet. The UnitedDaemonSet
@@ -187,8 +187,7 @@ spec:
               description: Represents the latest available observations of a UnitedDaemonSet's
                 current state.
               items:
-                description: UnitedDaemonSetCondition describes current state of a
-                  UnitedDaemonSet.
+                description: YurtAppDaemonCondition describes current state of a YurtAppDaemon.
                 properties:
                   lastTransitionTime:
                     description: Last time the condition transitioned from one status
@@ -222,8 +221,8 @@ spec:
               type: array
             observedGeneration:
               description: ObservedGeneration is the most recent generation observed
-                for this UnitedDaemonSet. It corresponds to the UnitedDaemonSet's
-                generation, which is updated on mutation by the API Server.
+                for this YurtAppDaemon. It corresponds to the UnitedDaemonSet's generation,
+                which is updated on mutation by the API Server.
               format: int64
               type: integer
             templateType:

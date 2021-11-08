@@ -22,20 +22,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// UnitedDaemonSetConditionType indicates valid conditions type of a UnitedDaemonSet.
-type UnitedDaemonSetConditionType string
+// YurtAppDaemonConditionType indicates valid conditions type of a YurtAppDaemon.
+type YurtAppDaemonConditionType string
 
 const (
 	// WorkLoadProvisioned means all the expected workload are provisioned
-	WorkLoadProvisioned UnitedDaemonSetConditionType = "WorkLoadProvisioned"
+	WorkLoadProvisioned YurtAppDaemonConditionType = "WorkLoadProvisioned"
 	// WorkLoadUpdated means all the workload are updated.
-	WorkLoadUpdated UnitedDaemonSetConditionType = "WorkLoadUpdated"
+	WorkLoadUpdated YurtAppDaemonConditionType = "WorkLoadUpdated"
 	// WorkLoadFailure is added to a UnitedDeployment when one of its workload has failure during its own reconciling.
-	WorkLoadFailure UnitedDaemonSetConditionType = "WorkLoadFailure"
+	WorkLoadFailure YurtAppDaemonConditionType = "WorkLoadFailure"
 )
 
-// UnitedDaemonSetSpec defines the desired state of UnitedDaemonSet.
-type UnitedDaemonSetSpec struct {
+// YurtAppDaemonSpec defines the desired state of YurtAppDaemon.
+type YurtAppDaemonSpec struct {
 	// Selector is a label query over pods that should match the replica count.
 	// It must match the pod template's labels.
 	Selector *metav1.LabelSelector `json:"selector"`
@@ -43,9 +43,6 @@ type UnitedDaemonSetSpec struct {
 	// WorkloadTemplate describes the pool that will be created.
 	// +optional
 	WorkloadTemplate WorkloadTemplate `json:"workloadTemplate,omitempty"`
-
-	//
-	ServiceTemplate *ServiceTemplate `json:"serviceTemplate,omitempty"`
 
 	// NodePoolSelector is a label query over nodepool that should match the replica count.
 	// It must match the nodepool's labels.
@@ -57,16 +54,9 @@ type UnitedDaemonSetSpec struct {
 	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty"`
 }
 
-// ServiceTemplate defines the service template
-type ServiceTemplate struct {
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              corev1.ServiceSpec `json:"spec,omitempty"`
-}
-
-// UnitedDaemonSetStatus defines the observed state of UnitedDaemonSet.
-type UnitedDaemonSetStatus struct {
-	// ObservedGeneration is the most recent generation observed for this UnitedDaemonSet. It corresponds to the
+// YurtAppDaemonStatus defines the observed state of YurtAppDaemon.
+type YurtAppDaemonStatus struct {
+	// ObservedGeneration is the most recent generation observed for this YurtAppDaemon. It corresponds to the
 	// UnitedDaemonSet's generation, which is updated on mutation by the API Server.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
@@ -82,7 +72,7 @@ type UnitedDaemonSetStatus struct {
 
 	// Represents the latest available observations of a UnitedDaemonSet's current state.
 	// +optional
-	Conditions []UnitedDaemonSetCondition `json:"conditions,omitempty"`
+	Conditions []YurtAppDaemonCondition `json:"conditions,omitempty"`
 
 	// TemplateType indicates the type of PoolTemplate
 	TemplateType TemplateType `json:"templateType"`
@@ -91,10 +81,10 @@ type UnitedDaemonSetStatus struct {
 	NodePools []string `json:"nodepools,omitempty"`
 }
 
-// UnitedDaemonSetCondition describes current state of a UnitedDaemonSet.
-type UnitedDaemonSetCondition struct {
+// YurtAppDaemonCondition describes current state of a YurtAppDaemon.
+type YurtAppDaemonCondition struct {
 	// Type of in place set condition.
-	Type UnitedDaemonSetConditionType `json:"type,omitempty"`
+	Type YurtAppDaemonConditionType `json:"type,omitempty"`
 
 	// Status of the condition, one of True, False, Unknown.
 	Status corev1.ConditionStatus `json:"status,omitempty"`
@@ -116,24 +106,24 @@ type UnitedDaemonSetCondition struct {
 // +kubebuilder:printcolumn:name="WorkloadTemplate",type="string",JSONPath=".status.templateType",description="The WorkloadTemplate Type."
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp",description="CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC."
 
-// UnitedDaemonSet is the Schema for the uniteddeployments API
-type UnitedDaemonSet struct {
+// YurtAppDaemon is the Schema for the YurtAppDaemon API
+type YurtAppDaemon struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   UnitedDaemonSetSpec   `json:"spec,omitempty"`
-	Status UnitedDaemonSetStatus `json:"status,omitempty"`
+	Spec   YurtAppDaemonSpec   `json:"spec,omitempty"`
+	Status YurtAppDaemonStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// UnitedDaemonSetList contains a list of UnitedDaemonSet
-type UnitedDaemonSetList struct {
+// YurtAppDaemonList contains a list of YurtAppDaemon
+type YurtAppDaemonList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []UnitedDaemonSet `json:"items"`
+	Items           []YurtAppDaemon `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&UnitedDaemonSet{}, &UnitedDaemonSetList{})
+	SchemeBuilder.Register(&YurtAppDaemon{}, &YurtAppDaemonList{})
 }
