@@ -38,7 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddaemonset/workloadcontroller"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappdaemon/workloadcontroller"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/gate"
 )
@@ -48,7 +48,7 @@ var (
 )
 
 const (
-	controllerName            = "uniteddaemonset-controller"
+	controllerName            = "yurtappdaemon-controller"
 	slowStartInitialBatchSize = 1
 
 	eventTypeRevisionProvision  = "RevisionProvision"
@@ -60,7 +60,7 @@ const (
 )
 
 func init() {
-	flag.IntVar(&concurrentReconciles, "uniteddaemonset-workers", concurrentReconciles, "Max concurrent workers for UnitedDaemonSet controller.")
+	flag.IntVar(&concurrentReconciles, "yurtappdaemon-workers", concurrentReconciles, "Max concurrent workers for UnitedDaemonSet controller.")
 }
 
 // Add creates a new UnitedDaemonSet Controller and adds it to the Manager with default RBAC.

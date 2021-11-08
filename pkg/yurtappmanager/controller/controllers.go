@@ -25,8 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/nodepool"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddaemonset"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment"
+	uniteddaemonset "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappdaemon"
 )
 
 var controllerAddFuncs []func(manager.Manager, context.Context) error
