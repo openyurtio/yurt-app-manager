@@ -46,6 +46,10 @@ const (
 	// belonging to
 	LabelCurrentNodePool = "apps.openyurt.io/nodepool"
 
+	// LabelCurrentYurtAppDaemon indicates which service the yurtappdaemon is currently
+	// belonging to
+	LabelCurrentYurtAppDaemon = "apps.openyurt.io/yurtappdaemon"
+
 	AnnotationPrevAttrs = "nodepool.openyurt.io/previous-attributes"
 
 	// DefaultCloudNodePoolName defines the name of the default cloud nodepool

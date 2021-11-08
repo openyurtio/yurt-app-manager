@@ -156,9 +156,11 @@ func validatePodTemplateSpec(template *core.PodTemplateSpec, selector labels.Sel
 
 func validateStatefulSet(statefulSet *unitv1alpha1.StatefulSetTemplateSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if statefulSet.Spec.Replicas != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *statefulSet.Spec.Replicas, "replicas in statefulSetTemplate will not be used"))
-	}
+	/*
+		if statefulSet.Spec.Replicas != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *statefulSet.Spec.Replicas, "replicas in statefulSetTemplate will not be used"))
+		}
+	*/
 	if statefulSet.Spec.UpdateStrategy.Type == appsv1.RollingUpdateStatefulSetStrategyType &&
 		statefulSet.Spec.UpdateStrategy.RollingUpdate != nil &&
 		statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition != nil {
@@ -170,9 +172,11 @@ func validateStatefulSet(statefulSet *unitv1alpha1.StatefulSetTemplateSpec, fldP
 
 func validateDeployment(deployment *unitv1alpha1.DeploymentTemplateSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if deployment.Spec.Replicas != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *deployment.Spec.Replicas, "replicas in deploymentTemplate will not be used"))
-	}
+	/*
+		if deployment.Spec.Replicas != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *deployment.Spec.Replicas, "replicas in deploymentTemplate will not be used"))
+		}
+	*/
 	return allErrs
 }
 

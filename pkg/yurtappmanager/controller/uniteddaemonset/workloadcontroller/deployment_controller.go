@@ -78,9 +78,11 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alph
 	}
 	set.Annotations[v1alpha1.AnnotationRefNodePool] = nodepool.GetName()
 
-	set.Spec = udd.Spec.WorkloadTemplate.DeploymentTemplate.Spec
 	set.Namespace = udd.GetNamespace()
 	set.GenerateName = getWorkloadPrefix(udd.GetName(), nodepool.GetName())
+
+	set.Spec = *udd.Spec.WorkloadTemplate.DeploymentTemplate.Spec.DeepCopy()
+	set.Spec.Selector.MatchLabels[v1alpha1.PoolNameLabelKey] = nodepool.GetName()
 
 	// set RequiredDuringSchedulingIgnoredDuringExecution nil
 	if set.Spec.Template.Spec.Affinity != nil && set.Spec.Template.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {

@@ -467,3 +467,32 @@ func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.
 		instance.Namespace, instance.Name, len(nodePoolsToWorkloads), c.GetTemplateType())
 	return nodePoolsToWorkloads, nil
 }
+
+func (r *ReconcileUnitedDaemonSet) getOwnedServices(instance *unitv1alpha1.UnitedDaemonSet) (*corev1.ServiceList, error) {
+	svcList := &corev1.ServiceList{}
+
+	labelSelector := &metav1.LabelSelector{
+		MatchLabels: map[string]string{
+			unitv1alpha1.LabelCurrentYurtAppDaemon: instance.GetName(),
+		},
+	}
+	// 获得YurtAppDaemon 对应的 所有的service
+	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+	// List all Service to include
+	if err := r.Client.List(context.TODO(), svcList, &client.ListOptions{LabelSelector: selector}); err != nil {
+		return nil, err
+	}
+	return svcList, nil
+}
+
+func (r *ReconcileUnitedDaemonSet) updateOwnedServices(instance *unitv1alpha1.UnitedDaemonSet) error {
+	currentownedServices, err := r.getOwnedServices(instance)
+	if err != nil {
+		klog.Errorf("UnitedDaemonSet [%s/%s] Fail to get currentOwnedServices, error: %s", instance.Namespace, instance.Name, err)
+		return err
+	}
+
+}

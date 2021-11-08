@@ -47,12 +47,17 @@ func (h *UnitedDaemonsetCreateUpdateHandler) Handle(ctx context.Context, req adm
 
 	statefulSetTemp := obj.Spec.WorkloadTemplate.StatefulSetTemplate
 	deployTem := obj.Spec.WorkloadTemplate.DeploymentTemplate
+	svcTem := obj.Spec.ServiceTemplate
 
 	if statefulSetTemp != nil {
 		statefulSetTemp.Spec.Selector = obj.Spec.Selector
 	}
 	if deployTem != nil {
 		deployTem.Spec.Selector = obj.Spec.Selector
+	}
+	if svcTem != nil {
+		svcTem.Labels[unitv1alpha1.LabelCurrentYurtAppDaemon] = obj.GetName()
+		svcTem.Spec.Selector = nil
 	}
 
 	marshalled, err := json.Marshal(obj)

@@ -44,6 +44,9 @@ type UnitedDaemonSetSpec struct {
 	// +optional
 	WorkloadTemplate WorkloadTemplate `json:"workloadTemplate,omitempty"`
 
+	//
+	ServiceTemplate *ServiceTemplate `json:"serviceTemplate,omitempty"`
+
 	// NodePoolSelector is a label query over nodepool that should match the replica count.
 	// It must match the nodepool's labels.
 	NodePoolSelector *metav1.LabelSelector `json:"nodepoolSelector"`
@@ -52,6 +55,13 @@ type UnitedDaemonSetSpec struct {
 	// If unspecified, defaults to 10.
 	// +optional
 	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty"`
+}
+
+// ServiceTemplate defines the service template
+type ServiceTemplate struct {
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              corev1.ServiceSpec `json:"spec,omitempty"`
 }
 
 // UnitedDaemonSetStatus defines the observed state of UnitedDaemonSet.
