@@ -22,8 +22,8 @@ import (
 	utilpointer "k8s.io/utils/pointer"
 )
 
-// SetDefaults_UnitedDaemonSet set default values for UnitedDaemonset.
-func SetDefaultsUnitedDaemonSet(obj *YurtAppDaemon) {
+// SetDefaultsYurtAppDaemon set default values for YurtAppDaemon.
+func SetDefaultsYurtAppDaemon(obj *YurtAppDaemon) {
 
 	if obj.Spec.RevisionHistoryLimit == nil {
 		obj.Spec.RevisionHistoryLimit = utilpointer.Int32Ptr(10)

@@ -57,27 +57,27 @@ type YurtAppDaemonSpec struct {
 // YurtAppDaemonStatus defines the observed state of YurtAppDaemon.
 type YurtAppDaemonStatus struct {
 	// ObservedGeneration is the most recent generation observed for this YurtAppDaemon. It corresponds to the
-	// UnitedDaemonSet's generation, which is updated on mutation by the API Server.
+	// YurtAppDaemon's generation, which is updated on mutation by the API Server.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
-	// Count of hash collisions for the UnitedDaemonSet. The UnitedDaemonSet controller
+	// Count of hash collisions for the YurtAppDaemon. The YurtAppDaemon controller
 	// uses this field as a collision avoidance mechanism when it needs to
 	// create the name for the newest ControllerRevision.
 	// +optional
 	CollisionCount *int32 `json:"collisionCount,omitempty"`
 
-	// CurrentRevision, if not empty, indicates the current version of the UnitedDaemonSet.
+	// CurrentRevision, if not empty, indicates the current version of the YurtAppDaemon.
 	CurrentRevision string `json:"currentRevision"`
 
-	// Represents the latest available observations of a UnitedDaemonSet's current state.
+	// Represents the latest available observations of a YurtAppDaemon's current state.
 	// +optional
 	Conditions []YurtAppDaemonCondition `json:"conditions,omitempty"`
 
 	// TemplateType indicates the type of PoolTemplate
 	TemplateType TemplateType `json:"templateType"`
 
-	// NodePools indicates the list of node pools selected by UnitedDaemonSet
+	// NodePools indicates the list of node pools selected by YurtAppDaemon
 	NodePools []string `json:"nodepools,omitempty"`
 }
 
@@ -102,7 +102,7 @@ type YurtAppDaemonCondition struct {
 // +genclient
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:shortName=udd
+// +kubebuilder:resource:shortName=yad
 // +kubebuilder:printcolumn:name="WorkloadTemplate",type="string",JSONPath=".status.templateType",description="The WorkloadTemplate Type."
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp",description="CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC."
 

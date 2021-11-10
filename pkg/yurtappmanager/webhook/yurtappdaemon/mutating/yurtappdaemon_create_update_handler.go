@@ -42,7 +42,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	unitv1alpha1.SetDefaultsUnitedDaemonSet(obj)
+	unitv1alpha1.SetDefaultsYurtAppDaemon(obj)
 	obj.Status = unitv1alpha1.YurtAppDaemonStatus{}
 
 	statefulSetTemp := obj.Spec.WorkloadTemplate.StatefulSetTemplate
@@ -62,7 +62,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 
 	resp := admission.PatchResponseFromRaw(req.AdmissionRequest.Object.Raw, marshalled)
 	if len(resp.Patches) > 0 {
-		klog.V(5).Infof("Admit UnitedDaemonSet %s/%s patches: %v", obj.Namespace, obj.Name, util.DumpJSON(resp.Patches))
+		klog.V(5).Infof("Admit YurtAppDaemon %s/%s patches: %v", obj.Namespace, obj.Name, util.DumpJSON(resp.Patches))
 	}
 	return resp
 }

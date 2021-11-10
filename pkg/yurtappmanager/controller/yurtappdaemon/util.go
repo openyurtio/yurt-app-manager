@@ -1,4 +1,4 @@
-package uniteddaemonset
+package yurtappdaemon
 
 import (
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -18,8 +18,8 @@ func IsTolerationsAllTaints(tolerations []corev1.Toleration, taints []corev1.Tai
 	return true
 }
 
-// NewUnitedDaemonSetCondition creates a new UnitedDaemonSet condition.
-func NewUnitedDaemonSetCondition(condType unitv1alpha1.YurtAppDaemonConditionType, status corev1.ConditionStatus, reason, message string) *unitv1alpha1.YurtAppDaemonCondition {
+// NewYurtAppDaemonCondition creates a new YurtAppDaemon condition.
+func NewYurtAppDaemonCondition(condType unitv1alpha1.YurtAppDaemonConditionType, status corev1.ConditionStatus, reason, message string) *unitv1alpha1.YurtAppDaemonCondition {
 	return &unitv1alpha1.YurtAppDaemonCondition{
 		Type:               condType,
 		Status:             status,
@@ -29,8 +29,8 @@ func NewUnitedDaemonSetCondition(condType unitv1alpha1.YurtAppDaemonConditionTyp
 	}
 }
 
-// GetUnitedDaemonSetCondition returns the condition with the provided type.
-func GetUnitedDaemonSetCondition(status unitv1alpha1.YurtAppDaemonStatus, condType unitv1alpha1.YurtAppDaemonConditionType) *unitv1alpha1.YurtAppDaemonCondition {
+// GetYurtAppDaemonCondition returns the condition with the provided type.
+func GetYurtAppDaemonCondition(status unitv1alpha1.YurtAppDaemonStatus, condType unitv1alpha1.YurtAppDaemonConditionType) *unitv1alpha1.YurtAppDaemonCondition {
 	for i := range status.Conditions {
 		c := status.Conditions[i]
 		if c.Type == condType {
@@ -40,10 +40,10 @@ func GetUnitedDaemonSetCondition(status unitv1alpha1.YurtAppDaemonStatus, condTy
 	return nil
 }
 
-// SetUnitedDaemonSetCondition updates the UnitedDaemonSet to include the provided condition. If the condition that
+// SetYurtAppDaemonCondition updates the YurtAppDaemon to include the provided condition. If the condition that
 // we are about to add already exists and has the same status, reason and message then we are not going to update.
-func SetUnitedDaemonSetCondition(status *unitv1alpha1.YurtAppDaemonStatus, condition *unitv1alpha1.YurtAppDaemonCondition) {
-	currentCond := GetUnitedDaemonSetCondition(*status, condition.Type)
+func SetYurtAppDaemonCondition(status *unitv1alpha1.YurtAppDaemonStatus, condition *unitv1alpha1.YurtAppDaemonCondition) {
+	currentCond := GetYurtAppDaemonCondition(*status, condition.Type)
 	if currentCond != nil && currentCond.Status == condition.Status && currentCond.Reason == condition.Reason {
 		return
 	}
@@ -53,11 +53,6 @@ func SetUnitedDaemonSetCondition(status *unitv1alpha1.YurtAppDaemonStatus, condi
 	}
 	newConditions := filterOutCondition(status.Conditions, condition.Type)
 	status.Conditions = append(newConditions, *condition)
-}
-
-// RemoveUnitedDaemonSetCondition removes the UnitedDaemonSet condition with the provided type.
-func RemoveUnitedDaemonSetCondition(status *unitv1alpha1.YurtAppDaemonStatus, condType unitv1alpha1.YurtAppDaemonConditionType) {
-	status.Conditions = filterOutCondition(status.Conditions, condType)
 }
 
 func filterOutCondition(conditions []unitv1alpha1.YurtAppDaemonCondition, condType unitv1alpha1.YurtAppDaemonConditionType) []unitv1alpha1.YurtAppDaemonCondition {

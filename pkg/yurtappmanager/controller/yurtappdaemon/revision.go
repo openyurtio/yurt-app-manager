@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package uniteddaemonset
+package yurtappdaemon
 
 import (
 	"bytes"
@@ -35,7 +35,7 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/refmanager"
 )
 
-func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.YurtAppDaemon) ([]*apps.ControllerRevision, error) {
+func (r *ReconcileYurtAppDaemon) controlledHistories(ud *appsalphav1.YurtAppDaemon) ([]*apps.ControllerRevision, error) {
 	// List all histories to include those that don't match the selector anymore
 	// but have a ControllerRef pointing to the controller.
 	selector, err := metav1.LabelSelectorAsSelector(ud.Spec.Selector)
@@ -47,7 +47,7 @@ func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.YurtAppDa
 	if err != nil {
 		return nil, err
 	}
-	klog.V(1).Infof("List controller revision of UnitedDaemonset %s/%s: count %d\n", ud.Namespace, ud.Name, len(histories.Items))
+	klog.V(1).Infof("List controller revision of YurtAppDaemon %s/%s: count %d\n", ud.Namespace, ud.Name, len(histories.Items))
 
 	// Use ControllerRefManager to adopt/orphan as needed.
 	cm, err := refmanager.New(r.Client, ud.Spec.Selector, ud, r.scheme)
@@ -72,7 +72,7 @@ func (r *ReconcileUnitedDaemonSet) controlledHistories(ud *appsalphav1.YurtAppDa
 	return claimHistories, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) constructUnitedDaemonSetRevisions(ud *appsalphav1.YurtAppDaemon) (*apps.ControllerRevision, *apps.ControllerRevision, int32, error) {
+func (r *ReconcileYurtAppDaemon) constructYurtAppDaemonRevisions(ud *appsalphav1.YurtAppDaemon) (*apps.ControllerRevision, *apps.ControllerRevision, int32, error) {
 	var currentRevision, updateRevision *apps.ControllerRevision
 
 	revisions, err := r.controlledHistories(ud)
@@ -146,7 +146,7 @@ func (r *ReconcileUnitedDaemonSet) constructUnitedDaemonSetRevisions(ud *appsalp
 	return currentRevision, updateRevision, collisionCount, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) cleanExpiredRevision(ud *appsalphav1.YurtAppDaemon,
+func (r *ReconcileYurtAppDaemon) cleanExpiredRevision(ud *appsalphav1.YurtAppDaemon,
 	sortedRevisions *[]*apps.ControllerRevision) (*[]*apps.ControllerRevision, error) {
 
 	exceedNum := len(*sortedRevisions) - int(*ud.Spec.RevisionHistoryLimit)
@@ -176,7 +176,7 @@ func (r *ReconcileUnitedDaemonSet) cleanExpiredRevision(ud *appsalphav1.YurtAppD
 }
 
 // createControllerRevision creates the controller revision owned by the parent.
-func (r *ReconcileUnitedDaemonSet) createControllerRevision(parent metav1.Object, revision *apps.ControllerRevision, collisionCount *int32) (*apps.ControllerRevision, error) {
+func (r *ReconcileYurtAppDaemon) createControllerRevision(parent metav1.Object, revision *apps.ControllerRevision, collisionCount *int32) (*apps.ControllerRevision, error) {
 	if collisionCount == nil {
 		return nil, fmt.Errorf("collisionCount should not be nil")
 	}
@@ -211,8 +211,8 @@ func (r *ReconcileUnitedDaemonSet) createControllerRevision(parent metav1.Object
 // The Revision of the returned ControllerRevision is set to revision. If the returned error is nil, the returned
 // ControllerRevision is valid. StatefulSet revisions are stored as patches that re-apply the current state of set
 // to a new StatefulSet using a strategic merge patch to replace the saved state of the new StatefulSet.
-func (r *ReconcileUnitedDaemonSet) newRevision(ud *appsalphav1.YurtAppDaemon, revision int64, collisionCount *int32) (*apps.ControllerRevision, error) {
-	patch, err := getUnitedDaemonSetPatch(ud)
+func (r *ReconcileYurtAppDaemon) newRevision(ud *appsalphav1.YurtAppDaemon, revision int64, collisionCount *int32) (*apps.ControllerRevision, error) {
+	patch, err := getYurtAppDaemonPatch(ud)
 	if err != nil {
 		return nil, err
 	}
@@ -229,8 +229,8 @@ func (r *ReconcileUnitedDaemonSet) newRevision(ud *appsalphav1.YurtAppDaemon, re
 	case ud.Spec.WorkloadTemplate.DeploymentTemplate != nil:
 		selectedLabels = ud.Spec.WorkloadTemplate.DeploymentTemplate.Labels
 	default:
-		klog.Errorf("UnitedDaemonSet(%s/%s) need specific WorkloadTemplate", ud.GetNamespace(), ud.GetName())
-		return nil, fmt.Errorf("UnitedDaemonSet(%s/%s) need specific WorkloadTemplate", ud.GetNamespace(), ud.GetName())
+		klog.Errorf("YurtAppDaemon(%s/%s) need specific WorkloadTemplate", ud.GetNamespace(), ud.GetName())
+		return nil, fmt.Errorf("YurtAppDaemon(%s/%s) need specific WorkloadTemplate", ud.GetNamespace(), ud.GetName())
 	}
 
 	cr, err := history.NewControllerRevision(ud,
@@ -258,7 +258,7 @@ func nextRevision(revisions []*apps.ControllerRevision) int64 {
 	return revisions[count-1].Revision + 1
 }
 
-func getUnitedDaemonSetPatch(ud *appsalphav1.YurtAppDaemon) ([]byte, error) {
+func getYurtAppDaemonPatch(ud *appsalphav1.YurtAppDaemon) ([]byte, error) {
 	dsBytes, err := json.Marshal(ud)
 	if err != nil {
 		return nil, err
@@ -271,7 +271,7 @@ func getUnitedDaemonSetPatch(ud *appsalphav1.YurtAppDaemon) ([]byte, error) {
 	objCopy := make(map[string]interface{})
 	specCopy := make(map[string]interface{})
 
-	// Create a patch of the UnitedDaemonset that replaces spec.template
+	// Create a patch of the YurtAppDaemon that replaces spec.template
 	spec := raw["spec"].(map[string]interface{})
 	template := spec["workloadTemplate"].(map[string]interface{})
 	specCopy["workloadTemplate"] = template

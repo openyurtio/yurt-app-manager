@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package uniteddaemonset
+package yurtappdaemon
 
 import (
 	"context"
@@ -28,41 +28,41 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type EnqueueUnitedDaemonsetForNodePool struct {
+type EnqueueYurtAppDaemonForNodePool struct {
 	client client.Client
 }
 
-func (e *EnqueueUnitedDaemonsetForNodePool) Create(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
-	e.addAllUnitedDaemonsetToWorkQueue(limitingInterface)
+func (e *EnqueueYurtAppDaemonForNodePool) Create(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
+	e.addAllYurtAppDaemonToWorkQueue(limitingInterface)
 }
 
-func (e *EnqueueUnitedDaemonsetForNodePool) Update(event event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
-	e.addAllUnitedDaemonsetToWorkQueue(limitingInterface)
+func (e *EnqueueYurtAppDaemonForNodePool) Update(event event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
+	e.addAllYurtAppDaemonToWorkQueue(limitingInterface)
 }
 
-func (e *EnqueueUnitedDaemonsetForNodePool) Delete(event event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
-	e.addAllUnitedDaemonsetToWorkQueue(limitingInterface)
+func (e *EnqueueYurtAppDaemonForNodePool) Delete(event event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
+	e.addAllYurtAppDaemonToWorkQueue(limitingInterface)
 }
 
-func (e *EnqueueUnitedDaemonsetForNodePool) Generic(event event.GenericEvent, limitingInterface workqueue.RateLimitingInterface) {
+func (e *EnqueueYurtAppDaemonForNodePool) Generic(event event.GenericEvent, limitingInterface workqueue.RateLimitingInterface) {
 	return
 }
 
-func (e *EnqueueUnitedDaemonsetForNodePool) addAllUnitedDaemonsetToWorkQueue(limitingInterface workqueue.RateLimitingInterface) {
-	udds := &v1alpha1.YurtAppDaemonList{}
-	if err := e.client.List(context.TODO(), udds); err != nil {
+func (e *EnqueueYurtAppDaemonForNodePool) addAllYurtAppDaemonToWorkQueue(limitingInterface workqueue.RateLimitingInterface) {
+	ydas := &v1alpha1.YurtAppDaemonList{}
+	if err := e.client.List(context.TODO(), ydas); err != nil {
 		return
 	}
 
-	for _, ud := range udds.Items {
-		addUnitedDaemonsetToWorkQueue(ud.GetNamespace(), ud.GetName(), limitingInterface)
+	for _, ud := range ydas.Items {
+		addYurtAppDaemonToWorkQueue(ud.GetNamespace(), ud.GetName(), limitingInterface)
 	}
 }
 
-var _ handler.EventHandler = &EnqueueUnitedDaemonsetForNodePool{}
+var _ handler.EventHandler = &EnqueueYurtAppDaemonForNodePool{}
 
-// addUnitedDaemonsetToWorkQueue adds the unitedDaemonset the reconciler's workqueue
-func addUnitedDaemonsetToWorkQueue(namespace, name string,
+// addYurtAppDaemonToWorkQueue adds the YurtAppDaemon the reconciler's workqueue
+func addYurtAppDaemonToWorkQueue(namespace, name string,
 	q workqueue.RateLimitingInterface) {
 	q.Add(reconcile.Request{
 		NamespacedName: types.NamespacedName{Name: name, Namespace: namespace},

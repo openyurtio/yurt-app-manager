@@ -26,7 +26,7 @@ spec:
     listKind: YurtAppDaemonList
     plural: yurtappdaemons
     shortNames:
-    - udd
+    - yad
     singular: yurtappdaemon
   scope: Namespaced
   subresources:
@@ -178,13 +178,13 @@ spec:
           description: YurtAppDaemonStatus defines the observed state of YurtAppDaemon.
           properties:
             collisionCount:
-              description: Count of hash collisions for the UnitedDaemonSet. The UnitedDaemonSet
+              description: Count of hash collisions for the YurtAppDaemon. The YurtAppDaemon
                 controller uses this field as a collision avoidance mechanism when
                 it needs to create the name for the newest ControllerRevision.
               format: int32
               type: integer
             conditions:
-              description: Represents the latest available observations of a UnitedDaemonSet's
+              description: Represents the latest available observations of a YurtAppDaemon's
                 current state.
               items:
                 description: YurtAppDaemonCondition describes current state of a YurtAppDaemon.
@@ -211,17 +211,17 @@ spec:
               type: array
             currentRevision:
               description: CurrentRevision, if not empty, indicates the current version
-                of the UnitedDaemonSet.
+                of the YurtAppDaemon.
               type: string
             nodepools:
               description: NodePools indicates the list of node pools selected by
-                UnitedDaemonSet
+                YurtAppDaemon
               items:
                 type: string
               type: array
             observedGeneration:
               description: ObservedGeneration is the most recent generation observed
-                for this YurtAppDaemon. It corresponds to the UnitedDaemonSet's generation,
+                for this YurtAppDaemon. It corresponds to the YurtAppDaemon's generation,
                 which is updated on mutation by the API Server.
               format: int64
               type: integer

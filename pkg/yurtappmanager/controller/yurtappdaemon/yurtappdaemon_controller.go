@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package uniteddaemonset
+package yurtappdaemon
 
 import (
 	"context"
@@ -60,10 +60,10 @@ const (
 )
 
 func init() {
-	flag.IntVar(&concurrentReconciles, "yurtappdaemon-workers", concurrentReconciles, "Max concurrent workers for UnitedDaemonSet controller.")
+	flag.IntVar(&concurrentReconciles, "yurtappdaemon-workers", concurrentReconciles, "Max concurrent workers for YurtAppDaemon controller.")
 }
 
-// Add creates a new UnitedDaemonSet Controller and adds it to the Manager with default RBAC.
+// Add creates a new YurtAppDaemon Controller and adds it to the Manager with default RBAC.
 // The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, _ context.Context) error {
@@ -81,24 +81,24 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to UnitedDaemonSet
+	// Watch for changes to YurtAppDaemon
 	err = c.Watch(&source.Kind{Type: &unitv1alpha1.YurtAppDaemon{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
 	// Watch for changes to NodePool
-	err = c.Watch(&source.Kind{Type: &unitv1alpha1.NodePool{}}, &EnqueueUnitedDaemonsetForNodePool{client: mgr.GetClient()})
+	err = c.Watch(&source.Kind{Type: &unitv1alpha1.NodePool{}}, &EnqueueYurtAppDaemonForNodePool{client: mgr.GetClient()})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileUnitedDaemonSet{}
+var _ reconcile.Reconciler = &ReconcileYurtAppDaemon{}
 
-// ReconcileUnitedDaemonSet reconciles a UnitedDaemonSet object
-type ReconcileUnitedDaemonSet struct {
+// ReconcileYurtAppDaemon reconciles a YurtAppDaemon object
+type ReconcileYurtAppDaemon struct {
 	client.Client
 	scheme *runtime.Scheme
 
@@ -108,7 +108,7 @@ type ReconcileUnitedDaemonSet struct {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileUnitedDaemonSet{
+	return &ReconcileYurtAppDaemon{
 		Client: mgr.GetClient(),
 		scheme: mgr.GetScheme(),
 
@@ -120,14 +120,14 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	}
 }
 
-// +kubebuilder:rbac:groups=apps.openyurt.io,resources=uniteddaemonsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=apps.openyurt.io,resources=uniteddaemonsets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps.openyurt.io,resources=yurtappdaemons,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps.openyurt.io,resources=yurtappdaemons/status,verbs=get;update;patch
 
-// Reconcile reads that state of the cluster for a UnitedDaemonSet object and makes changes based on the state read
-// and what is in the UnitedDaemonSet.Spec
-func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcile.Request) (reconcile.Result, error) {
-	klog.V(4).Infof("Reconcile UnitedDaemonSet %s/%s", request.Namespace, request.Name)
-	// Fetch the UnitedDaemonSet instance
+// Reconcile reads that state of the cluster for a YurtAppDaemon object and makes changes based on the state read
+// and what is in the YurtAppDaemon.Spec
+func (r *ReconcileYurtAppDaemon) Reconcile(_ context.Context, request reconcile.Request) (reconcile.Result, error) {
+	klog.V(4).Infof("Reconcile YurtAppDaemon %s/%s", request.Namespace, request.Name)
+	// Fetch the YurtAppDaemon instance
 	instance := &unitv1alpha1.YurtAppDaemon{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
@@ -143,9 +143,9 @@ func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcil
 
 	oldStatus := instance.Status.DeepCopy()
 
-	currentRevision, updatedRevision, collisionCount, err := r.constructUnitedDaemonSetRevisions(instance)
+	currentRevision, updatedRevision, collisionCount, err := r.constructYurtAppDaemonRevisions(instance)
 	if err != nil {
-		klog.Errorf("Fail to construct controller revision of UnitedDaemonSet %s/%s: %s", instance.Namespace, instance.Name, err)
+		klog.Errorf("Fail to construct controller revision of YurtAppDaemon %s/%s: %s", instance.Namespace, instance.Name, err)
 		r.recorder.Event(instance.DeepCopy(), corev1.EventTypeWarning, fmt.Sprintf("Failed%s", eventTypeRevisionProvision), err.Error())
 		return reconcile.Result{}, err
 	}
@@ -155,7 +155,7 @@ func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcil
 		expectedRevision = updatedRevision
 	}
 
-	klog.Infof("UnitedDaemonSet [%s/%s] get expectRevision %v collisionCount %v", instance.GetNamespace(), instance.GetName(),
+	klog.Infof("YurtAppDaemon [%s/%s] get expectRevision %v collisionCount %v", instance.GetNamespace(), instance.GetName(),
 		expectedRevision.Name, collisionCount)
 
 	control, templateType, err := r.getTemplateControls(instance)
@@ -166,13 +166,13 @@ func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcil
 
 	currentNPToWorkload, err := r.getNodePoolToWorkLoad(instance, control)
 	if err != nil {
-		klog.Errorf("UnitedDaemonSet [%s/%s] Fail to get nodePoolWorkload, error: %s", instance.Namespace, instance.Name, err)
+		klog.Errorf("YurtAppDaemon[%s/%s] Fail to get nodePoolWorkload, error: %s", instance.Namespace, instance.Name, err)
 		return reconcile.Result{}, nil
 	}
 
 	allNameToNodePools, err := r.getNameToNodePools(instance)
 	if err != nil {
-		klog.Errorf("UnitedDaemonSet [%s/%s] Fail to get nameToNodePools, error: %s", instance.Namespace, instance.Name, err)
+		klog.Errorf("YurtAppDaemon[%s/%s] Fail to get nameToNodePools, error: %s", instance.Namespace, instance.Name, err)
 		return reconcile.Result{}, nil
 	}
 
@@ -184,32 +184,32 @@ func (r *ReconcileUnitedDaemonSet) Reconcile(_ context.Context, request reconcil
 	return r.updateStatus(instance, newStatus, oldStatus, currentRevision, collisionCount, templateType)
 }
 
-func (r *ReconcileUnitedDaemonSet) updateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus, oldStatus *unitv1alpha1.YurtAppDaemonStatus,
+func (r *ReconcileYurtAppDaemon) updateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus, oldStatus *unitv1alpha1.YurtAppDaemonStatus,
 	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) (reconcile.Result, error) {
 
 	newStatus = r.calculateStatus(instance, newStatus, currentRevision, collisionCount, templateType)
-	_, err := r.updateUnitedDaemonSet(instance, oldStatus, newStatus)
+	_, err := r.updateYurtAppDaemon(instance, oldStatus, newStatus)
 
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.YurtAppDaemon, oldStatus, newStatus *unitv1alpha1.YurtAppDaemonStatus) (*unitv1alpha1.YurtAppDaemon, error) {
+func (r *ReconcileYurtAppDaemon) updateYurtAppDaemon(yad *unitv1alpha1.YurtAppDaemon, oldStatus, newStatus *unitv1alpha1.YurtAppDaemonStatus) (*unitv1alpha1.YurtAppDaemon, error) {
 	if oldStatus.CurrentRevision == newStatus.CurrentRevision &&
 		*oldStatus.CollisionCount == *newStatus.CollisionCount &&
 		oldStatus.TemplateType == newStatus.TemplateType &&
-		udd.Generation == newStatus.ObservedGeneration &&
+		yad.Generation == newStatus.ObservedGeneration &&
 		reflect.DeepEqual(oldStatus.NodePools, newStatus.NodePools) &&
 		reflect.DeepEqual(oldStatus.Conditions, newStatus.Conditions) {
-		klog.Infof("UnitedDaemonSet[%s/%s] oldStatus==newStatus, no need to update status", udd.GetNamespace(), udd.GetName())
-		return udd, nil
+		klog.Infof("YurtAppDaemon[%s/%s] oldStatus==newStatus, no need to update status", yad.GetNamespace(), yad.GetName())
+		return yad, nil
 	}
 
-	newStatus.ObservedGeneration = udd.Generation
+	newStatus.ObservedGeneration = yad.Generation
 
 	var getErr, updateErr error
-	for i, obj := 0, udd; ; i++ {
-		klog.V(4).Infof(fmt.Sprintf("UnitedDaemonSet[%s/%s] The %d th time updating status for %v[%s/%s], ",
-			udd.GetNamespace(), udd.GetName(), i, obj.Kind, obj.Namespace, obj.Name) +
+	for i, obj := 0, yad; ; i++ {
+		klog.V(4).Infof(fmt.Sprintf("YurtAppDaemon[%s/%s] The %d th time updating status for %v[%s/%s], ",
+			yad.GetNamespace(), yad.GetName(), i, obj.Kind, obj.Namespace, obj.Name) +
 			fmt.Sprintf("sequence No: %v->%v", obj.Status.ObservedGeneration, newStatus.ObservedGeneration))
 
 		obj.Status = *newStatus
@@ -228,11 +228,11 @@ func (r *ReconcileUnitedDaemonSet) updateUnitedDaemonSet(udd *unitv1alpha1.YurtA
 		obj = tmpObj
 	}
 
-	klog.Errorf("fail to update UnitedDaemonSet %s/%s status: %s", udd.Namespace, udd.Name, updateErr)
+	klog.Errorf("fail to update YurtAppDaemon %s/%s status: %s", yad.Namespace, yad.Name, updateErr)
 	return nil, updateErr
 }
 
-func (r *ReconcileUnitedDaemonSet) calculateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus *unitv1alpha1.YurtAppDaemonStatus,
+func (r *ReconcileYurtAppDaemon) calculateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus *unitv1alpha1.YurtAppDaemonStatus,
 	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) *unitv1alpha1.YurtAppDaemonStatus {
 
 	newStatus.CollisionCount = &collisionCount
@@ -247,7 +247,7 @@ func (r *ReconcileUnitedDaemonSet) calculateStatus(instance *unitv1alpha1.YurtAp
 	return newStatus
 }
 
-func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
+func (r *ReconcileYurtAppDaemon) manageWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
 	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string, templateType unitv1alpha1.TemplateType) (newStatus *unitv1alpha1.YurtAppDaemonStatus, updateErr error) {
 
 	newStatus = instance.Status.DeepCopy()
@@ -261,12 +261,12 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.YurtAp
 	needDeleted, needUpdate, needCreate := r.classifyWorkloads(instance, currentNodepoolToWorkload, allNameToNodePools, expectedRevision)
 	provision, err := r.manageWorkloadsProvision(instance, allNameToNodePools, expectedRevision, templateType, needDeleted, needCreate)
 	if err != nil {
-		SetUnitedDaemonSetCondition(newStatus, NewUnitedDaemonSetCondition(unitv1alpha1.WorkLoadProvisioned, corev1.ConditionFalse, "Error", err.Error()))
+		SetYurtAppDaemonCondition(newStatus, NewYurtAppDaemonCondition(unitv1alpha1.WorkLoadProvisioned, corev1.ConditionFalse, "Error", err.Error()))
 		return newStatus, fmt.Errorf("fail to manage workload provision: %v", err)
 	}
 
 	if provision {
-		SetUnitedDaemonSetCondition(newStatus, NewUnitedDaemonSetCondition(unitv1alpha1.WorkLoadProvisioned, corev1.ConditionTrue, "", ""))
+		SetYurtAppDaemonCondition(newStatus, NewYurtAppDaemonCondition(unitv1alpha1.WorkLoadProvisioned, corev1.ConditionTrue, "", ""))
 	}
 
 	if len(needUpdate) > 0 {
@@ -276,7 +276,7 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.YurtAp
 			if updateWorkloadErr != nil {
 				r.recorder.Event(instance.DeepCopy(), corev1.EventTypeWarning, fmt.Sprintf("Failed %s", eventTypeWorkloadsUpdated),
 					fmt.Sprintf("Error updating workload type(%s) %s when updating: %s", templateType, u.Name, updateWorkloadErr))
-				klog.Errorf("UnitedDaemonset[%s/%s] update workload[%s/%s/%s] error %v", instance.GetNamespace(), instance.GetName(),
+				klog.Errorf("YurtAppDaemon[%s/%s] update workload[%s/%s/%s] error %v", instance.GetNamespace(), instance.GetName(),
 					templateType, u.Namespace, u.Name, err)
 			}
 			return updateWorkloadErr
@@ -284,15 +284,15 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloads(instance *unitv1alpha1.YurtAp
 	}
 
 	if updateErr == nil {
-		SetUnitedDaemonSetCondition(newStatus, NewUnitedDaemonSetCondition(unitv1alpha1.WorkLoadUpdated, corev1.ConditionTrue, "", ""))
+		SetYurtAppDaemonCondition(newStatus, NewYurtAppDaemonCondition(unitv1alpha1.WorkLoadUpdated, corev1.ConditionTrue, "", ""))
 	} else {
-		SetUnitedDaemonSetCondition(newStatus, NewUnitedDaemonSetCondition(unitv1alpha1.WorkLoadUpdated, corev1.ConditionFalse, "Error", updateErr.Error()))
+		SetYurtAppDaemonCondition(newStatus, NewYurtAppDaemonCondition(unitv1alpha1.WorkLoadUpdated, corev1.ConditionFalse, "Error", updateErr.Error()))
 	}
 
 	return newStatus, updateErr
 }
 
-func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alpha1.YurtAppDaemon,
+func (r *ReconcileYurtAppDaemon) manageWorkloadsProvision(instance *unitv1alpha1.YurtAppDaemon,
 	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string, templateType unitv1alpha1.TemplateType,
 	needDeleted []*workloadcontroller.Workload, needCreate []string) (bool, error) {
 	// 针对于Create 的 需要创建
@@ -307,14 +307,14 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alph
 			err := r.controls[templateType].CreateWorkload(instance, allNameToNodePools[nodepoolName], expectedRevision)
 			//err := r.poolControls[workloadType].CreatePool(ud, poolName, revision, replicas)
 			if err != nil {
-				klog.Errorf("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s error: %s",
+				klog.Errorf("YurtAppDaemon[%s/%s] templatetype %s create workload by nodepool %s error: %s",
 					instance.GetNamespace(), instance.GetName(), templateType, nodepoolName, err.Error())
 				if !errors.IsTimeout(err) {
-					return fmt.Errorf("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s error: %s",
+					return fmt.Errorf("YurtAppDaemon[%s/%s] templatetype %s create workload by nodepool %s error: %s",
 						instance.GetNamespace(), instance.GetName(), templateType, nodepoolName, err.Error())
 				}
 			}
-			klog.Infof("UnitedDaemonset[%s/%s] templatetype %s create workload by nodepool %s success",
+			klog.Infof("YurtAppDaemon[%s/%s] templatetype %s create workload by nodepool %s success",
 				instance.GetNamespace(), instance.GetName(), templateType, nodepoolName)
 			return nil
 		})
@@ -331,7 +331,7 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alph
 		// need deleted
 		for _, d := range needDeleted {
 			if err := r.controls[templateType].DeleteWorkload(instance, d); err != nil {
-				deleteErrs = append(deleteErrs, fmt.Errorf("UnitedDaemonset[%s/%s] delete workload[%s/%s/%s] error %v",
+				deleteErrs = append(deleteErrs, fmt.Errorf("YurtAppDaemon[%s/%s] delete workload[%s/%s/%s] error %v",
 					instance.GetNamespace(), instance.GetName(), templateType, d.Namespace, d.Name, err))
 			}
 		}
@@ -345,55 +345,41 @@ func (r *ReconcileUnitedDaemonSet) manageWorkloadsProvision(instance *unitv1alph
 	return len(needCreate) > 0 || len(needDeleted) > 0, utilerrors.NewAggregate(errs)
 }
 
-func (r *ReconcileUnitedDaemonSet) classifyWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
+func (r *ReconcileYurtAppDaemon) classifyWorkloads(instance *unitv1alpha1.YurtAppDaemon, currentNodepoolToWorkload map[string]*workloadcontroller.Workload,
 	allNameToNodePools map[string]unitv1alpha1.NodePool, expectedRevision string) (needDeleted, needUpdate []*workloadcontroller.Workload,
 	needCreate []string) {
 
 	for npName, load := range currentNodepoolToWorkload {
-		find := false
-		for vnp, np := range allNameToNodePools {
-			if vnp == npName {
-				find = true
-				match := true
-				// judge workload NodeSelector
-				if !reflect.DeepEqual(load.GetNodeSelector(), workloadcontroller.CreateNodeSelectorByNodepoolName(npName)) {
-					match = false
-				}
-				// judge workload whether toleration all taints
-				match = IsTolerationsAllTaints(load.GetToleration(), np.Spec.Taints)
-
-				// judge revision
-				if load.GetRevision() != expectedRevision {
-					match = false
-				}
-
-				if !match {
-					klog.V(4).Infof("UnitedDaemonSet[%s/%s] need update [%s/%s/%s]", instance.GetNamespace(),
-						instance.GetName(), load.GetKind(), load.Namespace, load.Name)
-					needUpdate = append(needUpdate, load)
-				}
-
-				break
+		if np, ok := allNameToNodePools[npName]; ok {
+			match := true
+			// judge workload NodeSelector
+			if !reflect.DeepEqual(load.GetNodeSelector(), workloadcontroller.CreateNodeSelectorByNodepoolName(npName)) {
+				match = false
 			}
-		}
-		if !find {
+			// judge workload whether toleration all taints
+			match = IsTolerationsAllTaints(load.GetToleration(), np.Spec.Taints)
+
+			// judge revision
+			if load.GetRevision() != expectedRevision {
+				match = false
+			}
+
+			if !match {
+				klog.V(4).Infof("YurtAppDaemon[%s/%s] need update [%s/%s/%s]", instance.GetNamespace(),
+					instance.GetName(), load.GetKind(), load.Namespace, load.Name)
+				needUpdate = append(needUpdate, load)
+			}
+		} else {
 			needDeleted = append(needDeleted, load)
-			klog.V(4).Infof("UnitedDaemonSet[%s/%s] need delete [%s/%s/%s]", instance.GetNamespace(),
+			klog.V(4).Infof("YurtAppDaemon[%s/%s] need delete [%s/%s/%s]", instance.GetNamespace(),
 				instance.GetName(), load.GetKind(), load.Namespace, load.Name)
 		}
 	}
 
 	for vnp, _ := range allNameToNodePools {
-		find := false
-		for np, _ := range currentNodepoolToWorkload {
-			if vnp == np {
-				find = true
-				break
-			}
-		}
-		if !find {
+		if _, ok := currentNodepoolToWorkload[vnp]; !ok {
 			needCreate = append(needCreate, vnp)
-			klog.V(4).Infof("UnitedDaemonSet[%s/%s] need create new workload by nodepool %s", instance.GetNamespace(),
+			klog.V(4).Infof("YurtAppDaemon[%s/%s] need create new workload by nodepool %s", instance.GetNamespace(),
 				instance.GetName(), vnp)
 		}
 	}
@@ -401,8 +387,8 @@ func (r *ReconcileUnitedDaemonSet) classifyWorkloads(instance *unitv1alpha1.Yurt
 	return
 }
 
-func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.YurtAppDaemon) (map[string]unitv1alpha1.NodePool, error) {
-	klog.V(4).Infof("UnitedDaemonSet [%s/%s] prepare to get associated nodepools",
+func (r *ReconcileYurtAppDaemon) getNameToNodePools(instance *unitv1alpha1.YurtAppDaemon) (map[string]unitv1alpha1.NodePool, error) {
+	klog.V(4).Infof("YurtAppDaemon [%s/%s] prepare to get associated nodepools",
 		instance.Namespace, instance.Name)
 
 	nodepoolSelector, err := metav1.LabelSelectorAsSelector(instance.Spec.NodePoolSelector)
@@ -412,7 +398,7 @@ func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.Yur
 
 	nodepools := unitv1alpha1.NodePoolList{}
 	if err := r.Client.List(context.TODO(), &nodepools, &client.ListOptions{LabelSelector: nodepoolSelector}); err != nil {
-		klog.Errorf("UnitedDaemonSet [%s/%s] Fail to get NodePoolList", instance.GetNamespace(),
+		klog.Errorf("YurtAppDaemon [%s/%s] Fail to get NodePoolList", instance.GetNamespace(),
 			instance.GetName())
 		return nil, nil
 	}
@@ -420,7 +406,7 @@ func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.Yur
 	indexs := make(map[string]unitv1alpha1.NodePool)
 	for i, v := range nodepools.Items {
 		indexs[v.GetName()] = v
-		klog.V(4).Infof("UnitedDaemonSet [%s/%s] get %d's associated nodepools %s",
+		klog.V(4).Infof("YurtAppDaemon [%s/%s] get %d's associated nodepools %s",
 			instance.Namespace, instance.Name, i, v.Name)
 
 	}
@@ -428,7 +414,7 @@ func (r *ReconcileUnitedDaemonSet) getNameToNodePools(instance *unitv1alpha1.Yur
 	return indexs, nil
 }
 
-func (r *ReconcileUnitedDaemonSet) getTemplateControls(instance *unitv1alpha1.YurtAppDaemon) (workloadcontroller.WorkloadControllor,
+func (r *ReconcileYurtAppDaemon) getTemplateControls(instance *unitv1alpha1.YurtAppDaemon) (workloadcontroller.WorkloadControllor,
 	unitv1alpha1.TemplateType, error) {
 	switch {
 	case instance.Spec.WorkloadTemplate.StatefulSetTemplate != nil:
@@ -442,13 +428,13 @@ func (r *ReconcileUnitedDaemonSet) getTemplateControls(instance *unitv1alpha1.Yu
 	}
 }
 
-func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.YurtAppDaemon, c workloadcontroller.WorkloadControllor) (map[string]*workloadcontroller.Workload, error) {
-	klog.V(4).Infof("UnitedDaemonSet [%s/%s/%s] prepare to get all workload", c.GetTemplateType(), instance.Namespace, instance.Name)
+func (r *ReconcileYurtAppDaemon) getNodePoolToWorkLoad(instance *unitv1alpha1.YurtAppDaemon, c workloadcontroller.WorkloadControllor) (map[string]*workloadcontroller.Workload, error) {
+	klog.V(4).Infof("YurtAppDaemon [%s/%s/%s] prepare to get all workload", c.GetTemplateType(), instance.Namespace, instance.Name)
 
 	nodePoolsToWorkloads := make(map[string]*workloadcontroller.Workload)
 	workloads, err := c.GetAllWorkloads(instance)
 	if err != nil {
-		klog.Errorf("Get all workloads for UnitedDaemonSet[%s/%s] error %v", instance.GetNamespace(),
+		klog.Errorf("Get all workloads for YurtAppDaemon[%s/%s] error %v", instance.GetNamespace(),
 			instance.GetName(), err)
 		return nil, err
 	}
@@ -456,34 +442,14 @@ func (r *ReconcileUnitedDaemonSet) getNodePoolToWorkLoad(instance *unitv1alpha1.
 	for i, w := range workloads {
 		if w.GetNodePoolName() != "" {
 			nodePoolsToWorkloads[w.GetNodePoolName()] = workloads[i]
-			klog.V(4).Infof("UnitedDaemonSet [%s/%s] get %d's workload[%s/%s/%s]",
+			klog.V(4).Infof("YurtAppDaemon [%s/%s] get %d's workload[%s/%s/%s]",
 				instance.Namespace, instance.Name, i, c.GetTemplateType(), w.Namespace, w.Name)
 		} else {
-			klog.Warningf("UnitedDaemonSet [%s/%s] %d's workload[%s/%s/%s] has no nodepool annotation",
+			klog.Warningf("YurtAppDaemon [%s/%s] %d's workload[%s/%s/%s] has no nodepool annotation",
 				instance.Namespace, instance.Name, i, c.GetTemplateType(), w.Namespace, w.Name)
 		}
 	}
-	klog.V(4).Infof("UnitedDaemonSet [%s/%s] get %d %s workloads",
+	klog.V(4).Infof("YurtAppDaemon [%s/%s] get %d %s workloads",
 		instance.Namespace, instance.Name, len(nodePoolsToWorkloads), c.GetTemplateType())
 	return nodePoolsToWorkloads, nil
-}
-
-func (r *ReconcileUnitedDaemonSet) getOwnedServices(instance *unitv1alpha1.YurtAppDaemon) (*corev1.ServiceList, error) {
-	svcList := &corev1.ServiceList{}
-
-	labelSelector := &metav1.LabelSelector{
-		MatchLabels: map[string]string{
-			unitv1alpha1.LabelCurrentYurtAppDaemon: instance.GetName(),
-		},
-	}
-	// 获得YurtAppDaemon 对应的 所有的service
-	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
-	if err != nil {
-		return nil, err
-	}
-	// List all Service to include
-	if err := r.Client.List(context.TODO(), svcList, &client.ListOptions{LabelSelector: selector}); err != nil {
-		return nil, err
-	}
-	return svcList, nil
 }

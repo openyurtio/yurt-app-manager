@@ -20,14 +20,14 @@ import (
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
-// validateUnitedDaemonSet validates a UnitedDaemonSet.
-func validateUnitedDaemonSet(c client.Client, unitedDaemonSet *unitv1alpha1.YurtAppDaemon) field.ErrorList {
-	allErrs := apivalidation.ValidateObjectMeta(&unitedDaemonSet.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateYurtAppDaemonSpec(c, &unitedDaemonSet.Spec, field.NewPath("spec"))...)
+// validateYurtAppDaemon validates a YurtAppDaemon.
+func validateYurtAppDaemon(c client.Client, yad *unitv1alpha1.YurtAppDaemon) field.ErrorList {
+	allErrs := apivalidation.ValidateObjectMeta(&yad.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
+	allErrs = append(allErrs, validateYurtAppDaemonSpec(c, &yad.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
 
-// validateYurtAppDaemonSpec tests if required fields in the UnitedDaemonSet spec are set.
+// validateYurtAppDaemonSpec tests if required fields in the YurtAppDaemon spec are set.
 func validateYurtAppDaemonSpec(c client.Client, spec *unitv1alpha1.YurtAppDaemonSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -104,10 +104,10 @@ func validateWorkLoadTemplate(template *unitv1alpha1.WorkloadTemplate, selector 
 	return allErrs
 }
 
-// ValidateUnitedDaemonSetUpdate tests if required fields in the UnitedDaemonSet are set.
-func ValidateUnitedDaemonSetUpdate(unitedDaemonSet, oldUnitedDaemonSet *unitv1alpha1.YurtAppDaemon) field.ErrorList {
-	allErrs := apivalidation.ValidateObjectMetaUpdate(&unitedDaemonSet.ObjectMeta, &oldUnitedDaemonSet.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateYurtAppDaemonSpecUpdate(&unitedDaemonSet.Spec, &oldUnitedDaemonSet.Spec, field.NewPath("spec"))...)
+// ValidateYurtAppDaemonUpdate tests if required fields in the YurtAppDaemon are set.
+func ValidateYurtAppDaemonUpdate(yad, oldYad *unitv1alpha1.YurtAppDaemon) field.ErrorList {
+	allErrs := apivalidation.ValidateObjectMetaUpdate(&yad.ObjectMeta, &oldYad.ObjectMeta, field.NewPath("metadata"))
+	allErrs = append(allErrs, validateYurtAppDaemonSpecUpdate(&yad.Spec, &oldYad.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
 

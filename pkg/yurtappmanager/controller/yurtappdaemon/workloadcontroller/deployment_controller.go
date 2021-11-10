@@ -43,9 +43,9 @@ func (d *DeploymentControllor) GetTemplateType() v1alpha1.TemplateType {
 	return v1alpha1.DeploymentTemplateType
 }
 
-func (d *DeploymentControllor) DeleteWorkload(udd *v1alpha1.YurtAppDaemon, load *Workload) error {
-	klog.Infof("UnitedDaemonset[%s/%s] prepare delete Deployment[%s/%s]", udd.GetNamespace(),
-		udd.GetName(), load.Namespace, load.Name)
+func (d *DeploymentControllor) DeleteWorkload(yda *v1alpha1.YurtAppDaemon, load *Workload) error {
+	klog.Infof("YurtAppDaemon[%s/%s] prepare delete Deployment[%s/%s]", yda.GetNamespace(),
+		yda.GetName(), load.Namespace, load.Name)
 
 	set := load.Spec.Ref.(runtime.Object)
 	cliSet, ok := set.(client.Object)
@@ -55,16 +55,16 @@ func (d *DeploymentControllor) DeleteWorkload(udd *v1alpha1.YurtAppDaemon, load 
 	return d.Delete(context.TODO(), cliSet, client.PropagationPolicy(metav1.DeletePropagationBackground))
 }
 
-// ApplyTemplate updates the object to the latest revision, depending on the UnitedDaemonSet.
-func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string, set *appsv1.Deployment) error {
+// ApplyTemplate updates the object to the latest revision, depending on the YurtAppDaemon.
+func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, yad *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string, set *appsv1.Deployment) error {
 
 	if set.Labels == nil {
 		set.Labels = map[string]string{}
 	}
-	for k, v := range udd.Spec.WorkloadTemplate.DeploymentTemplate.Labels {
+	for k, v := range yad.Spec.WorkloadTemplate.DeploymentTemplate.Labels {
 		set.Labels[k] = v
 	}
-	for k, v := range udd.Spec.Selector.MatchLabels {
+	for k, v := range yad.Spec.Selector.MatchLabels {
 		set.Labels[k] = v
 	}
 	set.Labels[v1alpha1.ControllerRevisionHashLabelKey] = revision
@@ -73,15 +73,15 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alph
 	if set.Annotations == nil {
 		set.Annotations = map[string]string{}
 	}
-	for k, v := range udd.Spec.WorkloadTemplate.DeploymentTemplate.Annotations {
+	for k, v := range yad.Spec.WorkloadTemplate.DeploymentTemplate.Annotations {
 		set.Annotations[k] = v
 	}
 	set.Annotations[v1alpha1.AnnotationRefNodePool] = nodepool.GetName()
 
-	set.Namespace = udd.GetNamespace()
-	set.GenerateName = getWorkloadPrefix(udd.GetName(), nodepool.GetName())
+	set.Namespace = yad.GetNamespace()
+	set.GenerateName = getWorkloadPrefix(yad.GetName(), nodepool.GetName())
 
-	set.Spec = *udd.Spec.WorkloadTemplate.DeploymentTemplate.Spec.DeepCopy()
+	set.Spec = *yad.Spec.WorkloadTemplate.DeploymentTemplate.Spec.DeepCopy()
 	set.Spec.Selector.MatchLabels[v1alpha1.PoolNameLabelKey] = nodepool.GetName()
 
 	// set RequiredDuringSchedulingIgnoredDuringExecution nil
@@ -101,7 +101,7 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, udd *v1alph
 	// toleration
 	set.Spec.Template.Spec.Tolerations = TaintsToTolerations(nodepool.Spec.Taints)
 
-	if err := controllerutil.SetControllerReference(udd, set, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(yad, set, scheme); err != nil {
 		return err
 	}
 	return nil
@@ -114,9 +114,9 @@ func (d *DeploymentControllor) ObjectKey(load *Workload) client.ObjectKey {
 	}
 }
 
-func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
-	klog.Infof("UnitedDaemonset[%s/%s] prepare update Deployment[%s/%s]", udd.GetNamespace(),
-		udd.GetName(), load.Namespace, load.Name)
+func (d *DeploymentControllor) UpdateWorkload(load *Workload, yad *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
+	klog.Infof("YurtAppDaemon[%s/%s] prepare update Deployment[%s/%s]", yad.GetNamespace(),
+		yad.GetName(), load.Namespace, load.Name)
 
 	deploy := &appsv1.Deployment{}
 	var updateError error
@@ -126,7 +126,7 @@ func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.Yurt
 			return getError
 		}
 
-		if err := d.applyTemplate(d.Scheme, udd, nodepool, revision, deploy); err != nil {
+		if err := d.applyTemplate(d.Scheme, yad, nodepool, revision, deploy); err != nil {
 			return err
 		}
 		updateError = d.Client.Update(context.TODO(), deploy)
@@ -138,13 +138,13 @@ func (d *DeploymentControllor) UpdateWorkload(load *Workload, udd *v1alpha1.Yurt
 	return updateError
 }
 
-func (d *DeploymentControllor) CreateWorkload(udd *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
-	klog.Infof("UnitedDaemonset[%s/%s] prepare create new deployment by nodepool %s ", udd.GetNamespace(), udd.GetName(), nodepool.GetName())
+func (d *DeploymentControllor) CreateWorkload(yad *v1alpha1.YurtAppDaemon, nodepool v1alpha1.NodePool, revision string) error {
+	klog.Infof("YurtAppDaemon[%s/%s] prepare create new deployment by nodepool %s ", yad.GetNamespace(), yad.GetName(), nodepool.GetName())
 
 	deploy := appsv1.Deployment{}
-	if err := d.applyTemplate(d.Scheme, udd, nodepool, revision, &deploy); err != nil {
-		klog.Errorf("UnitedDaemonSet[%s/%s] faild to apply template, when create deployment: %v", udd.GetNamespace(),
-			udd.GetName(), err)
+	if err := d.applyTemplate(d.Scheme, yad, nodepool, revision, &deploy); err != nil {
+		klog.Errorf("YurtAppDaemon[%s/%s] faild to apply template, when create deployment: %v", yad.GetNamespace(),
+			yad.GetName(), err)
 		return err
 	}
 	return d.Client.Create(context.TODO(), &deploy)
@@ -152,7 +152,7 @@ func (d *DeploymentControllor) CreateWorkload(udd *v1alpha1.YurtAppDaemon, nodep
 
 func (d *DeploymentControllor) GetAllWorkloads(set *v1alpha1.YurtAppDaemon) ([]*Workload, error) {
 	allDeployments := appsv1.DeploymentList{}
-	// 获得UnitedDaemonset 对应的 所有Deployment, 根据OwnerRef
+	// 获得 YurtAppDaemon 对应的 所有Deployment, 根据OwnerRef
 	selector, err := metav1.LabelSelectorAsSelector(set.Spec.Selector)
 	if err != nil {
 		return nil, err

@@ -14,7 +14,7 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// YurtAppDaemonCreateUpdateHandler handles UnitedDaemonSet
+// YurtAppDaemonCreateUpdateHandler handles YurtAppDaemon
 type YurtAppDaemonCreateUpdateHandler struct {
 	// To use the client, you need to do the following:
 	// - uncomment it
@@ -37,7 +37,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) SetOptions(options webhookutil.Option
 func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
 	obj := &unitv1alpha1.YurtAppDaemon{}
 
-	klog.V(2).Infof("prepare to valid united daemonset ...")
+	klog.V(2).Infof("prepare to valid yurtappdaemon ...")
 	err := h.Decoder.Decode(req, obj)
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
@@ -45,7 +45,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 
 	switch req.AdmissionRequest.Operation {
 	case admissionv1.Create:
-		if allErrs := validateUnitedDaemonSet(h.Client, obj); len(allErrs) > 0 {
+		if allErrs := validateYurtAppDaemon(h.Client, obj); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity, allErrs.ToAggregate())
 		}
 	case admissionv1.Update:
@@ -54,8 +54,8 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 
-		validationErrorList := validateUnitedDaemonSet(h.Client, obj)
-		updateErrorList := ValidateUnitedDaemonSetUpdate(obj, oldObj)
+		validationErrorList := validateYurtAppDaemon(h.Client, obj)
+		updateErrorList := ValidateYurtAppDaemonUpdate(obj, oldObj)
 		if allErrs := append(validationErrorList, updateErrorList...); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity, allErrs.ToAggregate())
 		}
