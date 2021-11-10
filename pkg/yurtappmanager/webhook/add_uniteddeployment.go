@@ -22,18 +22,9 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/gate"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/uniteddeployment/mutating"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/uniteddeployment/validating"
-	"k8s.io/kubernetes/pkg/capabilities"
 )
 
 func init() {
-	capabilities.Initialize(capabilities.Capabilities{
-		AllowPrivileged: true,
-		PrivilegedSources: capabilities.PrivilegedSources{
-			HostNetworkSources: []string{},
-			HostPIDSources:     []string{},
-			HostIPCSources:     []string{},
-		},
-	})
 	if !gate.ResourceEnabled(&unitv1alpha1.UnitedDeployment{}) {
 		return
 	}

@@ -19,6 +19,7 @@ package webhook
 
 import (
 	"fmt"
+	"k8s.io/kubernetes/pkg/capabilities"
 	"time"
 
 	"k8s.io/klog"
@@ -37,6 +38,17 @@ var (
 
 	Checker = health.Checker
 )
+
+func init() {
+	capabilities.Initialize(capabilities.Capabilities{
+		AllowPrivileged: true,
+		PrivilegedSources: capabilities.PrivilegedSources{
+			HostNetworkSources: []string{},
+			HostPIDSources:     []string{},
+			HostIPCSources:     []string{},
+		},
+	})
+}
 
 func addHandlers(m map[string]webhookutil.Handler) {
 	for path, handler := range m {
