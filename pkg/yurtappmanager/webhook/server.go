@@ -19,10 +19,10 @@ package webhook
 
 import (
 	"fmt"
-	"k8s.io/kubernetes/pkg/capabilities"
 	"time"
 
 	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/capabilities"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
