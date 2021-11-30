@@ -42,6 +42,24 @@ webhooks:
     - UPDATE
     resources:
     - uniteddeployments
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-apps-openyurt-io-v1alpha1-yurtappdaemon
+  failurePolicy: Fail
+  name: myurtappdaemon.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - yurtappdaemons
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
@@ -87,3 +105,21 @@ webhooks:
     - UPDATE
     resources:
     - uniteddeployments
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-apps-openyurt-io-v1alpha1-yurtappdaemon
+  failurePolicy: Fail
+  name: vyurtappdaemon.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - yurtappdaemons

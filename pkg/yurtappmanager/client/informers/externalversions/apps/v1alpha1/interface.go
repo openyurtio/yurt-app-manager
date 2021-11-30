@@ -28,6 +28,8 @@ type Interface interface {
 	NodePools() NodePoolInformer
 	// UnitedDeployments returns a UnitedDeploymentInformer.
 	UnitedDeployments() UnitedDeploymentInformer
+	// YurtAppDaemons returns a YurtAppDaemonInformer.
+	YurtAppDaemons() YurtAppDaemonInformer
 }
 
 type version struct {
@@ -49,4 +51,9 @@ func (v *version) NodePools() NodePoolInformer {
 // UnitedDeployments returns a UnitedDeploymentInformer.
 func (v *version) UnitedDeployments() UnitedDeploymentInformer {
 	return &unitedDeploymentInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// YurtAppDaemons returns a YurtAppDaemonInformer.
+func (v *version) YurtAppDaemons() YurtAppDaemonInformer {
+	return &yurtAppDaemonInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

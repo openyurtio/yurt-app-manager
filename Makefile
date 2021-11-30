@@ -20,7 +20,6 @@ all: test build
 build: 
 	bash hack/make-rules/build.sh
 
-
 # Run test
 test: fmt vet
 	go test ./pkg/... ./cmd/... -coverprofile cover.out

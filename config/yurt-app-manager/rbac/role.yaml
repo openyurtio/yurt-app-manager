@@ -123,6 +123,26 @@ rules:
   - patch
   - update
 - apiGroups:
+  - apps.openyurt.io
+  resources:
+  - yurtappdaemons
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps.openyurt.io
+  resources:
+  - yurtappdaemons/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - coordination.k8s.io
   resources:
   - leases

@@ -33,6 +33,8 @@ const (
 
 	// AnnotationPatchKey indicates the patch for every sub pool
 	AnnotationPatchKey = "apps.openyurt.io/patch"
+
+	AnnotationRefNodePool = "apps.openyurt.io/ref-nodepool"
 )
 
 // NodePool related labels and annotations
@@ -43,6 +45,10 @@ const (
 	// LabelCurrentNodePool indicates which nodepool the node is currently
 	// belonging to
 	LabelCurrentNodePool = "apps.openyurt.io/nodepool"
+
+	// LabelCurrentYurtAppDaemon indicates which service the yurtappdaemon is currently
+	// belonging to
+	LabelCurrentYurtAppDaemon = "apps.openyurt.io/yurtappdaemon"
 
 	AnnotationPrevAttrs = "nodepool.openyurt.io/previous-attributes"
 

@@ -106,14 +106,14 @@ func Run(opts *options.YurtAppOptions) {
 	setRestConfig(cfg)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                  scheme,
-		MetricsBindAddress:      opts.MetricsAddr,
-		HealthProbeBindAddress:  opts.HealthProbeAddr,
-		LeaderElection:          opts.EnableLeaderElection,
-		LeaderElectionID:        "yurt-app-manager",
-		LeaderElectionNamespace: opts.LeaderElectionNamespace,
+		Scheme:                     scheme,
+		MetricsBindAddress:         opts.MetricsAddr,
+		HealthProbeBindAddress:     opts.HealthProbeAddr,
+		LeaderElection:             opts.EnableLeaderElection,
+		LeaderElectionID:           "yurt-app-manager",
+		LeaderElectionNamespace:    opts.LeaderElectionNamespace,
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock, // use lease to election
-		Namespace:               opts.Namespace,
+		Namespace:                  opts.Namespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
