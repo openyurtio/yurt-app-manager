@@ -284,7 +284,7 @@ func removePoolRelatedAttrs(node *corev1.Node) error {
 		}
 	}
 
-	for ak, av := range npra.Labels {
+	for ak, av := range npra.Annotations {
 		if node.Annotations[ak] == av {
 			delete(node.Annotations, ak)
 		}
