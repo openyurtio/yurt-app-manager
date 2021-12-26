@@ -27,12 +27,13 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/nodepool"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment"
 	yurtappdaemon "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappdaemon"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtingress"
 )
 
 var controllerAddFuncs []func(manager.Manager, context.Context) error
 
 func init() {
-	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, nodepool.Add, yurtappdaemon.Add)
+	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, nodepool.Add, yurtappdaemon.Add, yurtingress.Add)
 }
 
 func SetupWithManager(m manager.Manager, ctx context.Context) error {

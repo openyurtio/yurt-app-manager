@@ -37,3 +37,7 @@ type YurtAppDaemonListerExpansion interface{}
 // YurtAppDaemonNamespaceListerExpansion allows custom methods to be added to
 // YurtAppDaemonNamespaceLister.
 type YurtAppDaemonNamespaceListerExpansion interface{}
+
+// YurtIngressListerExpansion allows custom methods to be added to
+// YurtIngressLister.
+type YurtIngressListerExpansion interface{}
