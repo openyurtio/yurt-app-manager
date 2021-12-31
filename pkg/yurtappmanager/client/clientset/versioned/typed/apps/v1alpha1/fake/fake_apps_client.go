@@ -40,6 +40,10 @@ func (c *FakeAppsV1alpha1) YurtAppDaemons(namespace string) v1alpha1.YurtAppDaem
 	return &FakeYurtAppDaemons{c, namespace}
 }
 
+func (c *FakeAppsV1alpha1) YurtIngresses() v1alpha1.YurtIngressInterface {
+	return &FakeYurtIngresses{c}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeAppsV1alpha1) RESTClient() rest.Interface {

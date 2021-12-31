@@ -40,6 +40,7 @@ import (
 	"k8s.io/klog"
 	"k8s.io/klog/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -105,6 +106,10 @@ func Run(opts *options.YurtAppOptions) {
 	cfg := ctrl.GetConfigOrDie()
 	setRestConfig(cfg)
 
+	cacheDisableObjs := []client.Object{
+		&appsv1alpha1.YurtIngress{},
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                     scheme,
 		MetricsBindAddress:         opts.MetricsAddr,
@@ -114,6 +119,7 @@ func Run(opts *options.YurtAppOptions) {
 		LeaderElectionNamespace:    opts.LeaderElectionNamespace,
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock, // use lease to election
 		Namespace:                  opts.Namespace,
+		ClientDisableCacheFor:      cacheDisableObjs,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -30,6 +30,8 @@ type Interface interface {
 	UnitedDeployments() UnitedDeploymentInformer
 	// YurtAppDaemons returns a YurtAppDaemonInformer.
 	YurtAppDaemons() YurtAppDaemonInformer
+	// YurtIngresses returns a YurtIngressInformer.
+	YurtIngresses() YurtIngressInformer
 }
 
 type version struct {
@@ -56,4 +58,9 @@ func (v *version) UnitedDeployments() UnitedDeploymentInformer {
 // YurtAppDaemons returns a YurtAppDaemonInformer.
 func (v *version) YurtAppDaemons() YurtAppDaemonInformer {
 	return &yurtAppDaemonInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// YurtIngresses returns a YurtIngressInformer.
+func (v *version) YurtIngresses() YurtIngressInformer {
+	return &yurtIngressInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
