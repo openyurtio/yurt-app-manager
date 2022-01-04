@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"k8s.io/klog"
+	"k8s.io/kubernetes/pkg/capabilities"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -37,6 +38,17 @@ var (
 
 	Checker = health.Checker
 )
+
+func init() {
+	capabilities.Initialize(capabilities.Capabilities{
+		AllowPrivileged: true,
+		PrivilegedSources: capabilities.PrivilegedSources{
+			HostNetworkSources: []string{},
+			HostPIDSources:     []string{},
+			HostIPCSources:     []string{},
+		},
+	})
+}
 
 func addHandlers(m map[string]webhookutil.Handler) {
 	for path, handler := range m {
