@@ -160,6 +160,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			}
 			notReadyPool := appsv1alpha1.IngressNotReadyPool{Name: pool, Info: nil}
 			instance.Status.Conditions.IngressNotReadyPools = append(instance.Status.Conditions.IngressNotReadyPools, notReadyPool)
+			instance.Status.UnreadyNum += 1
 		}
 	}
 	if removedPools != nil {
@@ -175,7 +176,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 					return ctrl.Result{}, err
 				}
 			}
-			if !removePoolfromCondition(instance, pool) {
+			if desiredPoolNames != nil && !removePoolfromCondition(instance, pool) {
 				klog.V(4).Infof("Pool/%s is not found from conditions!", pool)
 			}
 		}
@@ -183,6 +184,10 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
+			instance.Status.Conditions.IngressReadyPools = nil
+			instance.Status.Conditions.IngressNotReadyPools = nil
+			instance.Status.ReadyNum = 0
+			instance.Status.UnreadyNum = 0
 		}
 	}
 	if unchangedPools != nil {
@@ -255,13 +260,10 @@ func removePoolfromCondition(ying *appsv1alpha1.YurtIngress, poolname string) bo
 		if pool == poolname {
 			length := len(ying.Status.Conditions.IngressReadyPools)
 			if i == length-1 {
-				if length == 1 {
-					ying.Status.Conditions.IngressReadyPools = nil
-				} else {
-					ying.Status.Conditions.IngressReadyPools = ying.Status.Conditions.IngressReadyPools[:i-1]
-				}
+				ying.Status.Conditions.IngressReadyPools = ying.Status.Conditions.IngressReadyPools[:i]
 			} else {
-				ying.Status.Conditions.IngressReadyPools[i] = ying.Status.Conditions.IngressReadyPools[i+1]
+				ying.Status.Conditions.IngressReadyPools = append(ying.Status.Conditions.IngressReadyPools[:i],
+					ying.Status.Conditions.IngressReadyPools[i+1:]...)
 			}
 			if ying.Status.ReadyNum >= 1 {
 				ying.Status.ReadyNum -= 1
@@ -273,13 +275,10 @@ func removePoolfromCondition(ying *appsv1alpha1.YurtIngress, poolname string) bo
 		if pool.Name == poolname {
 			length := len(ying.Status.Conditions.IngressNotReadyPools)
 			if i == length-1 {
-				if length == 1 {
-					ying.Status.Conditions.IngressNotReadyPools = nil
-				} else {
-					ying.Status.Conditions.IngressNotReadyPools = ying.Status.Conditions.IngressNotReadyPools[:i-1]
-				}
+				ying.Status.Conditions.IngressNotReadyPools = ying.Status.Conditions.IngressNotReadyPools[:i]
 			} else {
-				ying.Status.Conditions.IngressNotReadyPools[i] = ying.Status.Conditions.IngressNotReadyPools[i+1]
+				ying.Status.Conditions.IngressNotReadyPools = append(ying.Status.Conditions.IngressNotReadyPools[:i],
+					ying.Status.Conditions.IngressNotReadyPools[i+1:]...)
 			}
 			if ying.Status.UnreadyNum >= 1 {
 				ying.Status.UnreadyNum -= 1
@@ -357,7 +356,7 @@ func prepareDeploymentOwnerReferences(instance *appsv1alpha1.YurtIngress) *metav
 	isController := true
 	isBlockOwnerDeletion := true
 	ownerRef := metav1.OwnerReference{
-		//TODO: optimze the APIVersion/Kind with instance values
+		//TODO: optimize the APIVersion/Kind with instance values
 		APIVersion:         "apps.openyurt.io/v1alpha1",
 		Kind:               "YurtIngress",
 		Name:               instance.Name,
