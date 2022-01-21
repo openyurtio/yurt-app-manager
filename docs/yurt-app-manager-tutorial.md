@@ -320,8 +320,4 @@ Patch solves the problem of single attribute upgrade and full release of nodepoo
  For details please see the [tutorial](./YurtAppDaemon.md).
 
  ### YurtIngress
- For details please see the links below:  
- English Version:  
- https://github.com/openyurtio/openyurt.io/blob/master/versioned_docs/version-v0.5.0/user-manuals/network/edge-ingress.md.  
- Chinese Version:  
- https://github.com/openyurtio/openyurt.io/blob/master/i18n/zh/docusaurus-plugin-content-docs/version-v0.5.0/user-manuals/network/edge-ingress.md.
+ For details please see the [tutorial](https://github.com/openyurtio/openyurt.io/blob/master/docs/user-manuals/network/edge-ingress.md).
