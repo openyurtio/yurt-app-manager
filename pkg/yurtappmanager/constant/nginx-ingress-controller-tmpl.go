@@ -445,6 +445,8 @@ spec:
         apps.openyurt.io/nodepool: {{.nodepool_name}}
       serviceAccountName: ingress-nginx
       terminationGracePeriodSeconds: 300
+      tolerations:
+      - operator: Exists
 `
 	NginxIngressAdmissionWebhookDeployment = `
 # Source: ingress-nginx/templates/controller-deployment.yaml
