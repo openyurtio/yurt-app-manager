@@ -23,6 +23,7 @@ import (
 
 	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -88,6 +89,14 @@ func (a *DeploymentAdapter) ApplyPoolTemplate(ud *alpha1.UnitedDeployment, poolN
 	if poolConfig == nil {
 		return fmt.Errorf("fail to find pool config %s", poolName)
 	}
+
+	edgeToleration := []corev1.Toleration{corev1.Toleration{
+		Key:      "node-role.openyurt.io/edge",
+		Effect:   corev1.TaintEffectNoSchedule,
+		Operator: corev1.TolerationOpEqual,
+	},
+	}
+	poolConfig.Tolerations = MergeTolerations(edgeToleration, poolConfig.Tolerations)
 
 	set.Namespace = ud.Namespace
 
