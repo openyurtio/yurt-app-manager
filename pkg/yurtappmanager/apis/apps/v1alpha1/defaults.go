@@ -45,8 +45,8 @@ func SetDefaultsYurtAppDaemon(obj *YurtAppDaemon) {
 
 }
 
-// SetDefaults_UnitedDeployment set default values for UnitedDeployment.
-func SetDefaultsUnitedDeployment(obj *UnitedDeployment) {
+// SetDefaults_YurtAppSet set default values for YurtAppSet.
+func SetDefaultsYurtAppSet(obj *YurtAppSet) {
 
 	if obj.Spec.RevisionHistoryLimit == nil {
 		obj.Spec.RevisionHistoryLimit = utilpointer.Int32Ptr(10)

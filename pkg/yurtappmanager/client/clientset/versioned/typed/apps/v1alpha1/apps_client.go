@@ -27,7 +27,7 @@ import (
 type AppsV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	NodePoolsGetter
-	UnitedDeploymentsGetter
+	YurtAppSetsGetter
 	YurtAppDaemonsGetter
 	YurtIngressesGetter
 }
@@ -41,8 +41,8 @@ func (c *AppsV1alpha1Client) NodePools() NodePoolInterface {
 	return newNodePools(c)
 }
 
-func (c *AppsV1alpha1Client) UnitedDeployments(namespace string) UnitedDeploymentInterface {
-	return newUnitedDeployments(c, namespace)
+func (c *AppsV1alpha1Client) YurtAppSets(namespace string) YurtAppSetInterface {
+	return newYurtAppSets(c, namespace)
 }
 
 func (c *AppsV1alpha1Client) YurtAppDaemons(namespace string) YurtAppDaemonInterface {

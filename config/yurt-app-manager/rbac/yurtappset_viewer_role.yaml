@@ -1,0 +1,20 @@
+# permissions for end users to view yurtappsets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: yurtappset-viewer-role
+rules:
+- apiGroups:
+  - apps.openyurt.io
+  resources:
+  - yurtappsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.openyurt.io
+  resources:
+  - yurtappsets/status
+  verbs:
+  - get

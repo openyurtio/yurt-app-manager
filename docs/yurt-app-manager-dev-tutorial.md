@@ -43,7 +43,7 @@ make push REPO=registry.cn-your-registry.com/edge-kubernetes
 
 if REPO value is assigned `registry.cn-your-registry.com/edge-kubernetes`， the `make push ` command will eventually build an image named registry.cn-your-registry.com/edge-kubernetes/yurt-app-manager:{git commit id} and push it into your  own repository. And `make push` command will also create a file named `yurt-app-manager.yaml` in _output/yamls dir. You need to set the REPO variable correctly。
 
-## install nodepool and uniteddeployment controller
+## install nodepool and yurtappset controller
 ```
 kubectl apply -f _output/yamls/yurt-app-manager.yaml
 ```
@@ -54,7 +54,7 @@ kubectl apply -f _output/yamls/yurt-app-manager.yaml
 ```
 # kubectl get crd
 nodepools.apps.openyurt.io                       2021-04-23T08:54:31Z
-uniteddeployments.apps.openyurt.io               2021-04-23T08:54:31Z
+yurtappsets.apps.openyurt.io               2021-04-23T08:54:31Z
 ```
 
 > use `kubectl get pod -n kube-system` command to check whether the yurt-app-manager pod is running 

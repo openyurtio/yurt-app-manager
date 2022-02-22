@@ -46,7 +46,7 @@ $ kubectl get pod -n kube-system |grep yurt-app-manager
 
 ## How to Use
 
-The Examples of NodePool and UnitedDeployment are in `config/yurt-app-manager/samples/` directory
+The Examples of NodePool and YurtAppSet are in `config/yurt-app-manager/samples/` directory
 
 ### NodePool 
 
@@ -167,33 +167,33 @@ status:
 ***
 ```
 
-### UnitedDeployment
+### YurtAppSet
 
-#### use unitedDeployment
-- 1 create an uniteddeployment which use deployment template
+#### use yurtAppset
+- 1 create an yurtappset which use deployment template
 
 ```bash
 $ cat <<EOF | kubectl apply -f -
 apiVersion: apps.openyurt.io/v1alpha1
-kind: UnitedDeployment
+kind: YurtAppSet
 metadata:
   labels:
     controller-tools.k8s.io: "1.0"
-  name: ud-test
+  name: yas-test
 spec:
   selector:
     matchLabels:
-      app: ud-test
+      app: yas-test
   workloadTemplate:
     deploymentTemplate:
       metadata:
         labels:
-          app: ud-test
+          app: yas-test
       spec:
         template:
           metadata:
             labels:
-              app: ud-test
+              app: yas-test
           spec:
             containers:
               - name: nginx
@@ -232,12 +232,12 @@ EOF
 
 ```
 
-- 2 Get UnitedDeployment
+- 2 Get YurtAppSet
 ```bash
-$ kubectl get ud
+$ kubectl get yas
 
 NAME      READY   WORKLOADTEMPLATE   AGE
-ud-test   3       Deployment         120m
+yas-test   3       Deployment         120m
 ```
 
 check the sub deployment created by yurt-app-manager controller
@@ -245,22 +245,22 @@ check the sub deployment created by yurt-app-manager controller
 $ kubectl get deploy
 
 NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
-ud-test-beijing-fp58z    1/1     1            1           122m
-ud-test-hangzhou-xv454   2/2     2            2           122m
+yas-test-beijing-fp58z    1/1     1            1           122m
+yas-test-hangzhou-xv454   2/2     2            2           122m
 ```
 
 ```bash
-$ kubectl get pod -l app=ud-test
+$ kubectl get pod -l app=yas-test
 
   NAME                                      READY   STATUS    RESTARTS   AGE
-ud-test-beijing-fp58z-787d5b6b54-g4jk6    1/1     Running   0          100m
-ud-test-hangzhou-xv454-5cd9c4f6b5-b5tsr   1/1     Running   0          124m
-ud-test-hangzhou-xv454-5cd9c4f6b5-gmbgp   1/1     Running   0          124m
+yas-test-beijing-fp58z-787d5b6b54-g4jk6    1/1     Running   0          100m
+yas-test-hangzhou-xv454-5cd9c4f6b5-b5tsr   1/1     Running   0          124m
+yas-test-hangzhou-xv454-5cd9c4f6b5-gmbgp   1/1     Running   0          124m
 ```
-#### unitedDeployment add patch
-- 1 in 'config/yurt-app-manager/samples/uniteddeployment/uniteddeployment_deployment_test.yaml' file’s 35 to 41 lines
+#### yurtAppSet add patch
+- 1 in 'config/yurt-app-manager/samples/yurtappset/yurtappset_deployment_test.yaml' file’s 35 to 41 lines
 ```bash
-$ kubectl get ud ud-test -o yaml
+$ kubectl get yas yas-test -o yaml
    
   topology:
     pools:
@@ -290,26 +290,26 @@ $ kubectl get ud ud-test -o yaml
       tolerations:
   *** 
 ```
-- 2 Patch makes the image of deployment and pod named beijing created by unitedDeployment `nginx:1.19.0`,Other images used are `nginx:1.19.3`.
+- 2 Patch makes the image of deployment and pod named beijing created by yurtAppSet `nginx:1.19.0`,Other images used are `nginx:1.19.3`.
 ```bash
-$ kubectl get deploy ud-test-beijing-fp58z -o yaml
+$ kubectl get deploy yas-test-beijing-fp58z -o yaml
 
 containers:
   - image: nginx:1.19.0
-$ kubectl get deploy ud-test-hangzhou-xv454 -o yaml
+$ kubectl get deploy yas-test-hangzhou-xv454 -o yaml
 
 containers:
   - image: nginx:1.19.3
 ```
 The result of pod is consistent with that of deployment.
 
-- 3 After deleting this file, all the pods created by UnitedDeployment use the same image: `nginx:1.19.3`. 
+- 3 After deleting this file, all the pods created by YurtAppSet use the same image: `nginx:1.19.3`. 
 ```bash
-$ kubectl get pod ud-test-beijing-fp58z-787d5b6b54-g4jk6 -o yaml
+$ kubectl get pod yas-test-beijing-fp58z-787d5b6b54-g4jk6 -o yaml
 
 containers:
   - image: nginx:1.19.3
-$ kubectl get pod ud-test-hangzhou-xv454-5cd9c4f6b5-b5tsr -o yaml
+$ kubectl get pod yas-test-hangzhou-xv454-5cd9c4f6b5-b5tsr -o yaml
 containers:
   - image: nginx:1.19.3
 ```

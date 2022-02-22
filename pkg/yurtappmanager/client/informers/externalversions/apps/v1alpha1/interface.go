@@ -26,8 +26,8 @@ import (
 type Interface interface {
 	// NodePools returns a NodePoolInformer.
 	NodePools() NodePoolInformer
-	// UnitedDeployments returns a UnitedDeploymentInformer.
-	UnitedDeployments() UnitedDeploymentInformer
+	// YurtAppSets returns a YurtAppSetInformer.
+	YurtAppSets() YurtAppSetInformer
 	// YurtAppDaemons returns a YurtAppDaemonInformer.
 	YurtAppDaemons() YurtAppDaemonInformer
 	// YurtIngresses returns a YurtIngressInformer.
@@ -50,9 +50,9 @@ func (v *version) NodePools() NodePoolInformer {
 	return &nodePoolInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
-// UnitedDeployments returns a UnitedDeploymentInformer.
-func (v *version) UnitedDeployments() UnitedDeploymentInformer {
-	return &unitedDeploymentInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+// YurtAppSets returns a YurtAppSetInformer.
+func (v *version) YurtAppSets() YurtAppSetInformer {
+	return &yurtAppSetInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // YurtAppDaemons returns a YurtAppDaemonInformer.

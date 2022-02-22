@@ -2,7 +2,7 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/apps.openyurt.io_uniteddeployments.yaml
+- bases/apps.openyurt.io_yurtappsets.yaml
 - bases/apps.openyurt.io_nodepools.yaml
 - bases/apps.openyurt.io_yurtappdaemons.yaml
 - bases/apps.openyurt.io_yurtingresses.yaml
@@ -14,7 +14,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_broadcastjobs.yaml
 #- patches/webhook_in_sidecarsets.yaml
 #- patches/webhook_in_statefulsets.yaml
-#- patches/webhook_in_uniteddeployments.yaml
+#- patches/webhook_in_yurtappsets.yaml
 #- patches/webhook_in_daemonsets.yaml
 #- patches/webhook_in_nodeimages.yaml
 #- patches/webhook_in_imagepulljobs.yaml
@@ -27,7 +27,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_broadcastjobs.yaml
 #- patches/cainjection_in_sidecarsets.yaml
 #- patches/cainjection_in_statefulsets.yaml
-#- patches/cainjection_in_uniteddeployments.yaml
+#- patches/cainjection_in_yurtappsets.yaml
 #- patches/cainjection_in_daemonsets.yaml
 #- patches/cainjection_in_nodeimages.yaml
 #- patches/cainjection_in_imagepulljobs.yaml

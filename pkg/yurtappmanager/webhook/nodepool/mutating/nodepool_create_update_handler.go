@@ -30,7 +30,7 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// NodePoolCreateUpdateHandler handles UnitedDeployment
+// NodePoolCreateUpdateHandler handles YurtAppSet
 type NodePoolCreateUpdateHandler struct {
 	// Decoder decodes objects
 	Decoder *admission.Decoder
@@ -69,7 +69,7 @@ func (h *NodePoolCreateUpdateHandler) Handle(ctx context.Context, req admission.
 
 var _ admission.DecoderInjector = &NodePoolCreateUpdateHandler{}
 
-// InjectDecoder injects the decoder into the UnitedDeploymentCreateUpdateHandler
+// InjectDecoder injects the decoder into the YurtAppSetCreateUpdateHandler
 func (h *NodePoolCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
 	h.Decoder = d
 	return nil
