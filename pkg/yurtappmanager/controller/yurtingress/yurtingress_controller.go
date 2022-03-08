@@ -48,6 +48,8 @@ const (
 
 const updateRetries = 5
 
+var concurrentReconciles = 3
+
 // YurtIngressReconciler reconciles a YurtIngress object
 type YurtIngressReconciler struct {
 	client.Client
@@ -77,7 +79,12 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New(controllerName, mgr, controller.Options{Reconciler: r})
+	c, err := controller.New(
+		controllerName,
+		mgr,
+		controller.Options{
+			Reconciler:              r,
+			MaxConcurrentReconciles: concurrentReconciles})
 	if err != nil {
 		return err
 	}
@@ -113,9 +120,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	klog.V(4).Infof("Reconcile YurtIngress: %s", req.Name)
-	if req.Name != appsv1alpha1.SingletonYurtIngressInstanceName {
-		return ctrl.Result{}, nil
-	}
 	// Fetch the YurtIngress instance
 	instance := &appsv1alpha1.YurtIngress{}
 	err := r.Get(context.TODO(), req.NamespacedName, instance)
@@ -148,7 +152,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		klog.V(4).Infof("added pool list is %s", addedPools)
 		isIngressCRChanged = true
 		ownerRef := prepareDeploymentOwnerReferences(instance)
-		if currentPoolNames == nil {
+		if currentPoolNames == nil && isOnlyYurtIngressCR(r.Client) {
 			if err := yurtapputil.CreateNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -180,7 +184,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 				klog.V(4).Infof("Pool/%s is not found from conditions!", pool)
 			}
 		}
-		if desiredPoolNames == nil {
+		if desiredPoolNames == nil && isOnlyYurtIngressCR(r.Client) {
 			if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -333,14 +337,17 @@ func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ing
 
 func (r *YurtIngressReconciler) cleanupIngressResources(instance *appsv1alpha1.YurtIngress) (ctrl.Result, error) {
 	pools := getDesiredPoolNames(instance)
+	isOnly := isOnlyYurtIngressCR(r.Client)
 	if pools != nil {
 		for _, pool := range pools {
-			if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool, true); err != nil {
+			if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool, isOnly); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
-		if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
-			return ctrl.Result{}, err
+		if isOnly {
+			if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 	}
 	if controllerutil.ContainsFinalizer(instance, appsv1alpha1.YurtIngressFinalizer) {
@@ -425,4 +432,14 @@ func getUnreadyDeploymentCondition(dply *appsv1.Deployment) (info *appsv1alpha1.
 	conditionInfo.Message = condition.Message
 	conditionInfo.Reason = condition.Reason
 	return &conditionInfo
+}
+
+func isOnlyYurtIngressCR(c client.Client) bool {
+	ingressList := appsv1alpha1.YurtIngressList{}
+	err := c.List(context.TODO(), &ingressList, &client.ListOptions{})
+	if err != nil {
+		klog.V(4).Infof("Get yurtingress list err: %v", err)
+		return false
+	}
+	return len(ingressList.Items) == 1
 }

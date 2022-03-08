@@ -26,9 +26,7 @@ const (
 	DefaultIngressControllerReplicasPerPool int32 = 1
 	// NginxIngressControllerVersion defines the nginx ingress controller version
 	NginxIngressControllerVersion = "0.48.1"
-	// SingletonYurtIngressInstanceName defines the singleton instance name of YurtIngress
-	SingletonYurtIngressInstanceName = "yurtingress-singleton"
-	// YurtIngressFinalizer is used to cleanup ingress resources when singleton YurtIngress CR is deleted
+	// YurtIngressFinalizer is used to cleanup ingress resources when YurtIngress CR is deleted
 	YurtIngressFinalizer = "ingress.operator.openyurt.io"
 )
 
