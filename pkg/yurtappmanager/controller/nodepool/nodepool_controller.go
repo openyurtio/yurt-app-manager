@@ -59,7 +59,7 @@ type NodePoolReconciler struct {
 	createDefaultPool bool
 }
 
-type NodePoolRelatedAttributes struct {
+type RelatedAttributes struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 	Taints      []corev1.Taint    `json:"taints,omitempty"`
@@ -233,8 +233,18 @@ func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctr
 			notReadyNode += 1
 		}
 
+		nodeAttributes := RelatedAttributes{
+			Labels:      node.Labels,
+			Annotations: node.Annotations,
+			Taints:      node.Spec.Taints,
+		}
+		err := cacheNodeAttrs(&node, nodeAttributes)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
 		attrUpdated, err := conciliatePoolRelatedAttrs(&node,
-			NodePoolRelatedAttributes{
+			RelatedAttributes{
 				Labels:      nodePool.Spec.Labels,
 				Annotations: nodePool.Spec.Annotations,
 				Taints:      nodePool.Spec.Taints,
@@ -266,37 +276,23 @@ func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctr
 // removePoolRelatedAttrs removes attributes(label/annotation/taint) that
 // relate to nodepool
 func removePoolRelatedAttrs(node *corev1.Node) error {
-	var npra NodePoolRelatedAttributes
+	var ra RelatedAttributes
 
-	if _, exist := node.Annotations[appsv1alpha1.AnnotationPrevAttrs]; !exist {
+	if _, exist := node.Annotations[appsv1alpha1.AnnotationNodePrevAttrs]; !exist {
 		return nil
 	}
 
 	if err := json.Unmarshal(
-		[]byte(node.Annotations[appsv1alpha1.AnnotationPrevAttrs]),
-		&npra); err != nil {
+		[]byte(node.Annotations[appsv1alpha1.AnnotationNodePrevAttrs]),
+		&ra); err != nil {
 		return err
 	}
 
-	for lk, lv := range npra.Labels {
-		if node.Labels[lk] == lv {
-			delete(node.Labels, lk)
-		}
-	}
+	node.Labels = ra.Labels
+	node.Annotations = ra.Annotations
+	node.Spec.Taints = ra.Taints
 
-	for ak, av := range npra.Annotations {
-		if node.Annotations[ak] == av {
-			delete(node.Annotations, ak)
-		}
-	}
-
-	for _, t := range npra.Taints {
-		if i, exist := containTaint(t, node.Spec.Taints); exist {
-			node.Spec.Taints = append(
-				node.Spec.Taints[:i],
-				node.Spec.Taints[i+1:]...)
-		}
-	}
+	delete(node.Annotations, appsv1alpha1.AnnotationNodePrevAttrs)
 	delete(node.Annotations, appsv1alpha1.AnnotationPrevAttrs)
 	delete(node.Labels, appsv1alpha1.LabelCurrentNodePool)
 
@@ -306,7 +302,7 @@ func removePoolRelatedAttrs(node *corev1.Node) error {
 // conciliatePoolRelatedAttrs will update the node's attributes that related to
 // the nodepool
 func conciliatePoolRelatedAttrs(node *corev1.Node,
-	npra NodePoolRelatedAttributes) (bool, error) {
+	npra RelatedAttributes) (bool, error) {
 	var attrUpdated bool
 	preAttrs, exist := node.Annotations[appsv1alpha1.AnnotationPrevAttrs]
 	if !exist {
@@ -328,7 +324,7 @@ func conciliatePoolRelatedAttrs(node *corev1.Node,
 		attrUpdated = true
 		return attrUpdated, nil
 	}
-	var preNpra NodePoolRelatedAttributes
+	var preNpra RelatedAttributes
 	if err := json.Unmarshal([]byte(preAttrs), &preNpra); err != nil {
 		return attrUpdated, err
 	}
@@ -463,18 +459,34 @@ func removeTaint(taint corev1.Taint, taints []corev1.Taint) []corev1.Taint {
 	return taints
 }
 
-// cachePrevPoolAttrs caches the nodepool-related attributes to the
+func addNodeAnnotation(node *corev1.Node, key string, val string) {
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[key] = val
+}
+
+// cacheNodeAttrs caches the node attributes to the
 // node's annotation
-func cachePrevPoolAttrs(node *corev1.Node,
-	npra NodePoolRelatedAttributes) error {
+func cacheNodeAttrs(node *corev1.Node,
+	npra RelatedAttributes) error {
 	npraJson, err := json.Marshal(npra)
 	if err != nil {
 		return err
 	}
-	if node.Annotations == nil {
-		node.Annotations = make(map[string]string)
+	addNodeAnnotation(node, appsv1alpha1.AnnotationNodePrevAttrs, string(npraJson))
+	return nil
+}
+
+// cachePrevPoolAttrs caches the nodepool-related attributes to the
+// node's annotation
+func cachePrevPoolAttrs(node *corev1.Node,
+	npra RelatedAttributes) error {
+	npraJson, err := json.Marshal(npra)
+	if err != nil {
+		return err
 	}
-	node.Annotations[appsv1alpha1.AnnotationPrevAttrs] = string(npraJson)
+	addNodeAnnotation(node, appsv1alpha1.AnnotationPrevAttrs, string(npraJson))
 	return nil
 }
 

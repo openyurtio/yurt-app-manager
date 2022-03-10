@@ -50,6 +50,8 @@ const (
 	// belonging to
 	LabelCurrentYurtAppDaemon = "apps.openyurt.io/yurtappdaemon"
 
+	AnnotationNodePrevAttrs = "nodepool.openyurt.io/node-attributes"
+
 	AnnotationPrevAttrs = "nodepool.openyurt.io/previous-attributes"
 
 	// DefaultCloudNodePoolName defines the name of the default cloud nodepool
