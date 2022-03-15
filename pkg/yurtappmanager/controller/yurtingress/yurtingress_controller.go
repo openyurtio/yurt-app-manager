@@ -140,26 +140,36 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		return r.cleanupIngressResources(instance)
 	}
-	// Set the default version at current stage
-	instance.Status.Version = appsv1alpha1.NginxIngressControllerVersion
 
 	var desiredPools, currentPools []appsv1alpha1.IngressPool
 	desiredPools = getDesiredPools(instance)
 	currentPools = getCurrentPools(instance)
-	isIngressCRChanged := false
+	isYurtIngressCRChanged := false
+	if instance.Spec.IngressControllerImage == "" {
+		instance.Spec.IngressControllerImage = appsv1alpha1.DefaultNginxIngressControllerImage
+	}
+	if instance.Spec.IngressWebhookCertGenImage == "" {
+		instance.Spec.IngressWebhookCertGenImage = appsv1alpha1.DefaultNginxIngressWebhookCertGenImage
+	}
+	if instance.Spec.Replicas == 0 {
+		klog.V(4).Infof("set default per-pool replicas to 1")
+		instance.Spec.Replicas = 1
+	}
 	addedPools, removedPools, unchangedPools := getPools(desiredPools, currentPools)
 	if addedPools != nil {
 		klog.V(4).Infof("added pool list is %s", addedPools)
-		isIngressCRChanged = true
+		isYurtIngressCRChanged = true
 		ownerRef := prepareDeploymentOwnerReferences(instance)
 		if currentPools == nil && isOnlyYurtIngressCR(r.Client) {
 			if err := yurtapputil.CreateNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
+		replicas := instance.Spec.Replicas
+		ingress_controller_image := instance.Spec.IngressControllerImage
+		ingress_webhook_certgen_image := instance.Spec.IngressWebhookCertGenImage
 		for _, pool := range addedPools {
-			replicas := instance.Spec.Replicas
-			if err := yurtapputil.CreateNginxIngressSpecificResource(r.Client, pool.Name, &pool.IngressIPs, replicas, ownerRef); err != nil {
+			if err := yurtapputil.CreateNginxIngressSpecificResource(r.Client, pool.Name, &pool.IngressIPs, ingress_controller_image, ingress_webhook_certgen_image, replicas, ownerRef); err != nil {
 				return ctrl.Result{}, err
 			}
 			notReadyPool := appsv1alpha1.IngressNotReadyPool{Pool: appsv1alpha1.IngressPool{Name: pool.Name, IngressIPs: pool.IngressIPs}, Info: nil}
@@ -169,7 +179,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 	if removedPools != nil {
 		klog.V(4).Infof("removed pool list is %s", removedPools)
-		isIngressCRChanged = true
+		isYurtIngressCRChanged = true
 		for _, pool := range removedPools {
 			if desiredPools == nil {
 				if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool.Name, true); err != nil {
@@ -198,17 +208,42 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		klog.V(4).Infof("unchanged pool list is %s", unchangedPools)
 		desiredReplicas := instance.Spec.Replicas
 		currentReplicas := instance.Status.Replicas
-		for _, pool := range unchangedPools {
-			if desiredReplicas != currentReplicas {
-				klog.V(4).Infof("Per-Pool ingress controller replicas is changed!")
-				isIngressCRChanged = true
+		desiredIngressControllerImage := instance.Spec.IngressControllerImage
+		currentIngressControllerImage := instance.Status.IngressControllerImage
+		desiredNginxWebhookCertGenImage := instance.Spec.IngressWebhookCertGenImage
+		currentNginxWebhookCertGenImage := instance.Status.IngressWebhookCertGenImage
+		if desiredIngressControllerImage != currentIngressControllerImage {
+			klog.V(4).Infof("Ingress controller image is changed!")
+			isYurtIngressCRChanged = true
+			instance.Status.ReadyNum = 0
+			instance.Status.UnreadyNum = int32(len(instance.Spec.Pools))
+			for _, pool := range unchangedPools {
+				if err := yurtapputil.UpdateNginxIngressControllerDeploymment(r.Client, pool.Name, desiredReplicas, desiredIngressControllerImage); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		} else if desiredReplicas != currentReplicas {
+			klog.V(4).Infof("Ingress controller replicas is changed!")
+			isYurtIngressCRChanged = true
+			for _, pool := range unchangedPools {
 				if err := yurtapputil.ScaleNginxIngressControllerDeploymment(r.Client, pool.Name, desiredReplicas); err != nil {
 					return ctrl.Result{}, err
 				}
 			}
+		}
+		if desiredNginxWebhookCertGenImage != currentNginxWebhookCertGenImage {
+			klog.V(4).Infof("Nginx ingress controller webhook certgen image is changed!")
+			isYurtIngressCRChanged = true
+			for _, pool := range unchangedPools {
+				if err := yurtapputil.RecreateNginxWebhookJob(r.Client, pool.Name, desiredNginxWebhookCertGenImage); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		}
+		for _, pool := range unchangedPools {
 			currentPool := getCurrentPool(instance, pool.Name)
 			if currentPool != nil {
-				if !isEqual(pool.IngressIPs, currentPool.IngressIPs) {
+				if !isStrArrayEqual(pool.IngressIPs, currentPool.IngressIPs) {
 					klog.V(4).Infof("pool %s ingressIPs is changed", pool.Name)
 					if err := yurtapputil.UpdateNginxServiceExternalIPs(r.Client, pool.Name, pool.IngressIPs); err != nil {
 						return ctrl.Result{}, err
@@ -217,11 +252,11 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			}
 		}
 	}
-	r.updateStatus(instance, isIngressCRChanged)
+	r.updateStatus(instance, isYurtIngressCRChanged)
 	return ctrl.Result{}, nil
 }
 
-func isEqual(strList1, strList2 []string) bool {
+func isStrArrayEqual(strList1, strList2 []string) bool {
 	if len(strList1) != len(strList2) {
 		return false
 	}
@@ -335,6 +370,8 @@ func removePoolfromCondition(ying *appsv1alpha1.YurtIngress, poolname string) bo
 
 func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ingressCRChanged bool) error {
 	ying.Status.Replicas = ying.Spec.Replicas
+	ying.Status.IngressControllerImage = ying.Spec.IngressControllerImage
+	ying.Status.IngressWebhookCertGenImage = ying.Spec.IngressWebhookCertGenImage
 	if !ingressCRChanged {
 		deployments, err := r.getAllDeployments(ying)
 		if err != nil {

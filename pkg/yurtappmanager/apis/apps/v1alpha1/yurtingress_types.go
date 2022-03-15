@@ -22,12 +22,12 @@ import (
 
 // Define the default nodepool ingress related values
 const (
-	// DefaultIngressControllerReplicasPerPool defines the default ingress controller replicas per pool
-	DefaultIngressControllerReplicasPerPool int32 = 1
-	// NginxIngressControllerVersion defines the nginx ingress controller version
-	NginxIngressControllerVersion = "0.48.1"
+	// DefaultNginxIngressControllerImage defines the default nginx ingress controller image
+	DefaultNginxIngressControllerImage string = "k8s.gcr.io/ingress-nginx/controller:v0.48.1"
+	// DefaultNginxIngressWebhookCertGenImage defines the default nginx ingress controller webhook certgen image
+	DefaultNginxIngressWebhookCertGenImage string = "docker.io/jettech/kube-webhook-certgen:v1.5.1"
 	// YurtIngressFinalizer is used to cleanup ingress resources when YurtIngress CR is deleted
-	YurtIngressFinalizer = "ingress.operator.openyurt.io"
+	YurtIngressFinalizer string = "ingress.operator.openyurt.io"
 )
 
 type IngressNotReadyType string
@@ -76,6 +76,14 @@ type YurtIngressSpec struct {
 	// +optional
 	Replicas int32 `json:"ingress_controller_replicas_per_pool,omitempty"`
 
+	// Indicates the ingress controller image url.
+	// +optional
+	IngressControllerImage string `json:"ingress_controller_image,omitempty"`
+
+	// Indicates the ingress webhook image url.
+	// +optional
+	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image,omitempty"`
+
 	// Indicates all the nodepools on which to enable ingress.
 	// +optional
 	Pools []IngressPool `json:"pools,omitempty"`
@@ -100,9 +108,13 @@ type YurtIngressStatus struct {
 	// +optional
 	Conditions YurtIngressCondition `json:"conditions,omitempty"`
 
-	// Indicates the nginx ingress controller version deployed under all the specified nodepools.
+	// Indicates the ingress controller image url.
 	// +optional
-	Version string `json:"nginx_ingress_controller_version,omitempty"`
+	IngressControllerImage string `json:"ingress_controller_image"`
+
+	// Indicates the ingress webhook image url.
+	// +optional
+	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image"`
 
 	// Total number of ready pools on which ingress is enabled.
 	// +optional
@@ -115,7 +127,6 @@ type YurtIngressStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,path=yurtingresses,shortName=ying,categories=all
-// +kubebuilder:printcolumn:name="Nginx-Ingress-Version",type="string",JSONPath=".status.nginx_ingress_controller_version",description="The nginx ingress controller version"
 // +kubebuilder:printcolumn:name="Replicas-Per-Pool",type="integer",JSONPath=".status.ingress_controller_replicas_per_pool",description="The nginx ingress controller replicas per pool"
 // +kubebuilder:printcolumn:name="ReadyNum",type="integer",JSONPath=".status.readyNum",description="The number of pools on which ingress is enabled"
 // +kubebuilder:printcolumn:name="NotReadyNum",type="integer",JSONPath=".status.unreadyNum",description="The number of pools on which ingress is enabling or enable failed"

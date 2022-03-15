@@ -62,7 +62,7 @@ func CreateNamespaceFromYaml(client client.Client, crTmpl string) error {
 			return fmt.Errorf("fail to create the namespace/%s: %v", ns.Name, err)
 		}
 	}
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Second)
 	klog.V(4).Infof("namespace/%s is created", ns.Name)
 	return nil
 }
@@ -328,7 +328,7 @@ func DeleteConfigMapFromYaml(client client.Client, cmTmpl string) error {
 }
 
 // CreateDeployFromYaml creates the Deployment from the yaml template.
-func CreateDeployFromYaml(client client.Client, dplyTmpl string, replicas int32, ownerRef *metav1.OwnerReference, ctx interface{}) error {
+func CreateDeployFromYaml(client client.Client, dplyTmpl, image string, replicas int32, ownerRef *metav1.OwnerReference, ctx interface{}) error {
 	dp, err := SubsituteTemplate(dplyTmpl, ctx)
 	if err != nil {
 		return err
@@ -347,6 +347,9 @@ func CreateDeployFromYaml(client client.Client, dplyTmpl string, replicas int32,
 		dply.ObjectMeta.SetOwnerReferences(ownerRefs)
 	}
 	dply.Spec.Replicas = &replicas
+	if image != "" {
+		dply.Spec.Template.Spec.Containers[len(dply.Spec.Template.Spec.Containers)-1].Image = image
+	}
 	err = client.Create(context.Background(), dply)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -382,7 +385,7 @@ func DeleteDeployFromYaml(client client.Client, dplyTmpl string, ctx interface{}
 }
 
 // UpdateDeployFromYaml updates the Deployment from the yaml template.
-func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32, ctx interface{}) error {
+func UpdateDeployFromYaml(cli client.Client, dplyTmpl, image string, replicas *int32, ctx interface{}) error {
 	dp, err := SubsituteTemplate(dplyTmpl, ctx)
 	if err != nil {
 		return err
@@ -395,8 +398,15 @@ func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32
 	if !ok {
 		return fmt.Errorf("fail to assert deployment")
 	}
+	if cli.Get(context.Background(), client.ObjectKey{Namespace: dply.Namespace, Name: dply.Name}, dply) != nil {
+		klog.V(4).Infof("get deployment/%s failed", dply.Name)
+		return nil
+	}
 	dply.Spec.Replicas = replicas
-	err = client.Update(context.Background(), dply)
+	if image != "" {
+		dply.Spec.Template.Spec.Containers[len(dply.Spec.Template.Spec.Containers)-1].Image = image
+	}
+	err = cli.Update(context.Background(), dply)
 	if err != nil {
 		return fmt.Errorf("fail to update the deployment/%s: %v", dply.Name, err)
 	}
@@ -469,7 +479,7 @@ func UpdateServiceFromYaml(cli client.Client, svcTmpl string, externalIPs *[]str
 	if !ok {
 		return fmt.Errorf("fail to assert service")
 	}
-	if cli.Get(context.TODO(), client.ObjectKey{Namespace: svc.Namespace, Name: svc.Name}, svc) != nil {
+	if cli.Get(context.Background(), client.ObjectKey{Namespace: svc.Namespace, Name: svc.Name}, svc) != nil {
 		klog.V(4).Infof("get service/%s failed", svc.Name)
 		return nil
 	}
@@ -531,7 +541,7 @@ func DeleteValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 }
 
 // CreateJobFromYaml creates the Job from the yaml template.
-func CreateJobFromYaml(client client.Client, jobTmpl string, ctx interface{}) error {
+func CreateJobFromYaml(client client.Client, jobTmpl, image string, ctx interface{}) error {
 	jb, err := SubsituteTemplate(jobTmpl, ctx)
 	if err != nil {
 		return err
@@ -543,6 +553,9 @@ func CreateJobFromYaml(client client.Client, jobTmpl string, ctx interface{}) er
 	job, ok := jbObj.(*batchv1.Job)
 	if !ok {
 		return fmt.Errorf("fail to assert job")
+	}
+	if image != "" {
+		job.Spec.Template.Spec.Containers[len(job.Spec.Template.Spec.Containers)-1].Image = image
 	}
 	err = client.Create(context.Background(), job)
 	if err != nil {

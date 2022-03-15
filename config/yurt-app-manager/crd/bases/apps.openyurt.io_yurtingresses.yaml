@@ -9,10 +9,6 @@ metadata:
   name: yurtingresses.apps.openyurt.io
 spec:
   additionalPrinterColumns:
-  - JSONPath: .status.nginx_ingress_controller_version
-    description: The nginx ingress controller version
-    name: Nginx-Ingress-Version
-    type: string
   - JSONPath: .status.ingress_controller_replicas_per_pool
     description: The nginx ingress controller replicas per pool
     name: Replicas-Per-Pool
@@ -60,11 +56,17 @@ spec:
         spec:
           description: YurtIngressSpec defines the desired state of YurtIngress
           properties:
+            ingress_controller_image:
+              description: Indicates the ingress controller image url.
+              type: string
             ingress_controller_replicas_per_pool:
               description: Indicates the number of the ingress controllers to be deployed
                 under all the specified nodepools.
               format: int32
               type: integer
+            ingress_webhook_certgen_image:
+              description: Indicates the ingress webhook image url.
+              type: string
             pools:
               description: Indicates all the nodepools on which to enable ingress.
               items:
@@ -155,14 +157,16 @@ spec:
                     type: object
                   type: array
               type: object
+            ingress_controller_image:
+              description: Indicates the ingress controller image url.
+              type: string
             ingress_controller_replicas_per_pool:
               description: Indicates the number of the ingress controllers deployed
                 under all the specified nodepools.
               format: int32
               type: integer
-            nginx_ingress_controller_version:
-              description: Indicates the nginx ingress controller version deployed
-                under all the specified nodepools.
+            ingress_webhook_certgen_image:
+              description: Indicates the ingress webhook image url.
               type: string
             readyNum:
               description: Total number of ready pools on which ingress is enabled.

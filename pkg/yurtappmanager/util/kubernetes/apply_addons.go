@@ -17,6 +17,8 @@ limitations under the License.
 package kubernetes
 
 import (
+	"time"
+
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -159,10 +161,11 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 	return nil
 }
 
-func CreateNginxIngressSpecificResource(client client.Client, poolname string, externalIPs *[]string, replicas int32, ownerRef *metav1.OwnerReference) error {
+func CreateNginxIngressSpecificResource(client client.Client, poolname string, externalIPs *[]string, ingress_controller_image, ingress_webhook_certgen_image string, replicas int32, ownerRef *metav1.OwnerReference) error {
 	// 1. Create Deployment
 	if err := CreateDeployFromYaml(client,
 		constant.NginxIngressControllerNodePoolDeployment,
+		ingress_controller_image,
 		replicas,
 		ownerRef,
 		map[string]string{
@@ -172,6 +175,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, e
 	}
 	if err := CreateDeployFromYaml(client,
 		constant.NginxIngressAdmissionWebhookDeployment,
+		ingress_controller_image,
 		1,
 		nil,
 		map[string]string{
@@ -207,6 +211,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, e
 	// 4. Create Job
 	if err := CreateJobFromYaml(client,
 		constant.NginxIngressAdmissionWebhookJob,
+		ingress_webhook_certgen_image,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)
@@ -215,6 +220,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, e
 	// 5. Create Job Patch
 	if err := CreateJobFromYaml(client,
 		constant.NginxIngressAdmissionWebhookJobPatch,
+		ingress_webhook_certgen_image,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)
@@ -286,6 +292,7 @@ func DeleteNginxIngressSpecificResource(client client.Client, poolname string, c
 func ScaleNginxIngressControllerDeploymment(client client.Client, poolname string, replicas int32) error {
 	if err := UpdateDeployFromYaml(client,
 		constant.NginxIngressControllerNodePoolDeployment,
+		"",
 		&replicas,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
@@ -299,6 +306,66 @@ func UpdateNginxServiceExternalIPs(client client.Client, poolname string, extern
 	if err := UpdateServiceFromYaml(client,
 		constant.NginxIngressControllerService,
 		&externalIPs,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	return nil
+}
+
+func UpdateNginxIngressControllerDeploymment(client client.Client, poolname string, replicas int32, image string) error {
+	var webhook_replicas int32 = 1
+	if err := UpdateDeployFromYaml(client,
+		constant.NginxIngressControllerNodePoolDeployment,
+		image,
+		&replicas,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	if err := UpdateDeployFromYaml(client,
+		constant.NginxIngressAdmissionWebhookDeployment,
+		image,
+		&webhook_replicas,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	return nil
+}
+
+func RecreateNginxWebhookJob(client client.Client, poolname string, image string) error {
+	if err := DeleteJobFromYaml(client,
+		constant.NginxIngressAdmissionWebhookJob,
+		false,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	if err := DeleteJobFromYaml(client,
+		constant.NginxIngressAdmissionWebhookJobPatch,
+		false,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	time.Sleep(3 * time.Second)
+	if err := CreateJobFromYaml(client,
+		constant.NginxIngressAdmissionWebhookJob,
+		image,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	if err := CreateJobFromYaml(client,
+		constant.NginxIngressAdmissionWebhookJobPatch,
+		image,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)
