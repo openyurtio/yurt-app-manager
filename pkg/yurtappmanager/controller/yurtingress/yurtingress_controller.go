@@ -143,26 +143,26 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// Set the default version at current stage
 	instance.Status.Version = appsv1alpha1.NginxIngressControllerVersion
 
-	var desiredPoolNames, currentPoolNames []string
-	desiredPoolNames = getDesiredPoolNames(instance)
-	currentPoolNames = getCurrentPoolNames(instance)
+	var desiredPools, currentPools []appsv1alpha1.IngressPool
+	desiredPools = getDesiredPools(instance)
+	currentPools = getCurrentPools(instance)
 	isIngressCRChanged := false
-	addedPools, removedPools, unchangedPools := getPools(desiredPoolNames, currentPoolNames)
+	addedPools, removedPools, unchangedPools := getPools(desiredPools, currentPools)
 	if addedPools != nil {
 		klog.V(4).Infof("added pool list is %s", addedPools)
 		isIngressCRChanged = true
 		ownerRef := prepareDeploymentOwnerReferences(instance)
-		if currentPoolNames == nil && isOnlyYurtIngressCR(r.Client) {
+		if currentPools == nil && isOnlyYurtIngressCR(r.Client) {
 			if err := yurtapputil.CreateNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 		for _, pool := range addedPools {
 			replicas := instance.Spec.Replicas
-			if err := yurtapputil.CreateNginxIngressSpecificResource(r.Client, pool, replicas, ownerRef); err != nil {
+			if err := yurtapputil.CreateNginxIngressSpecificResource(r.Client, pool.Name, &pool.IngressIPs, replicas, ownerRef); err != nil {
 				return ctrl.Result{}, err
 			}
-			notReadyPool := appsv1alpha1.IngressNotReadyPool{Name: pool, Info: nil}
+			notReadyPool := appsv1alpha1.IngressNotReadyPool{Pool: appsv1alpha1.IngressPool{Name: pool.Name, IngressIPs: pool.IngressIPs}, Info: nil}
 			instance.Status.Conditions.IngressNotReadyPools = append(instance.Status.Conditions.IngressNotReadyPools, notReadyPool)
 			instance.Status.UnreadyNum += 1
 		}
@@ -171,20 +171,20 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		klog.V(4).Infof("removed pool list is %s", removedPools)
 		isIngressCRChanged = true
 		for _, pool := range removedPools {
-			if desiredPoolNames == nil {
-				if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool, true); err != nil {
+			if desiredPools == nil {
+				if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool.Name, true); err != nil {
 					return ctrl.Result{}, err
 				}
 			} else {
-				if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool, false); err != nil {
+				if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool.Name, false); err != nil {
 					return ctrl.Result{}, err
 				}
 			}
-			if desiredPoolNames != nil && !removePoolfromCondition(instance, pool) {
-				klog.V(4).Infof("Pool/%s is not found from conditions!", pool)
+			if desiredPools != nil && !removePoolfromCondition(instance, pool.Name) {
+				klog.V(4).Infof("Pool/%s is not found from conditions!", pool.Name)
 			}
 		}
-		if desiredPoolNames == nil && isOnlyYurtIngressCR(r.Client) {
+		if desiredPools == nil && isOnlyYurtIngressCR(r.Client) {
 			if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -198,12 +198,21 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		klog.V(4).Infof("unchanged pool list is %s", unchangedPools)
 		desiredReplicas := instance.Spec.Replicas
 		currentReplicas := instance.Status.Replicas
-		if desiredReplicas != currentReplicas {
-			klog.V(4).Infof("Per-Pool ingress controller replicas is changed!")
-			isIngressCRChanged = true
-			for _, pool := range unchangedPools {
-				if err := yurtapputil.ScaleNginxIngressControllerDeploymment(r.Client, pool, desiredReplicas); err != nil {
+		for _, pool := range unchangedPools {
+			if desiredReplicas != currentReplicas {
+				klog.V(4).Infof("Per-Pool ingress controller replicas is changed!")
+				isIngressCRChanged = true
+				if err := yurtapputil.ScaleNginxIngressControllerDeploymment(r.Client, pool.Name, desiredReplicas); err != nil {
 					return ctrl.Result{}, err
+				}
+			}
+			currentPool := getCurrentPool(instance, pool.Name)
+			if currentPool != nil {
+				if !isEqual(pool.IngressIPs, currentPool.IngressIPs) {
+					klog.V(4).Infof("pool %s ingressIPs is changed", pool.Name)
+					if err := yurtapputil.UpdateNginxServiceExternalIPs(r.Client, pool.Name, pool.IngressIPs); err != nil {
+						return ctrl.Result{}, err
+					}
 				}
 			}
 		}
@@ -212,25 +221,40 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func getPools(desired, current []string) (added, removed, unchanged []string) {
+func isEqual(strList1, strList2 []string) bool {
+	if len(strList1) != len(strList2) {
+		return false
+	}
+	if len(strList1) == 0 && len(strList2) == 0 {
+		return true
+	}
+	for i, str := range strList1 {
+		if str != strList2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func getPools(desired, current []appsv1alpha1.IngressPool) (added, removed, unchanged []appsv1alpha1.IngressPool) {
 	swap := false
 	for i := 0; i < 2; i++ {
-		for _, s1 := range desired {
+		for _, p1 := range desired {
 			found := false
-			for _, s2 := range current {
-				if s1 == s2 {
+			for _, p2 := range current {
+				if p1.Name == p2.Name {
 					found = true
 					if !swap {
-						unchanged = append(unchanged, s1)
+						unchanged = append(unchanged, p1)
 					}
 					break
 				}
 			}
 			if !found {
 				if !swap {
-					added = append(added, s1)
+					added = append(added, p1)
 				} else {
-					removed = append(removed, s1)
+					removed = append(removed, p1)
 				}
 			}
 		}
@@ -242,26 +266,42 @@ func getPools(desired, current []string) (added, removed, unchanged []string) {
 	return added, removed, unchanged
 }
 
-func getDesiredPoolNames(ying *appsv1alpha1.YurtIngress) []string {
-	var desiredPoolNames []string
-	for _, pool := range ying.Spec.Pools {
-		desiredPoolNames = append(desiredPoolNames, pool.Name)
-	}
-	return desiredPoolNames
+func getDesiredPools(ying *appsv1alpha1.YurtIngress) []appsv1alpha1.IngressPool {
+	return ying.Spec.Pools
 }
 
-func getCurrentPoolNames(ying *appsv1alpha1.YurtIngress) []string {
-	var currentPoolNames []string
-	currentPoolNames = ying.Status.Conditions.IngressReadyPools
+func getCurrentPools(ying *appsv1alpha1.YurtIngress) []appsv1alpha1.IngressPool {
+	var currentPools []appsv1alpha1.IngressPool
+	currentPools = ying.Status.Conditions.IngressReadyPools
 	for _, pool := range ying.Status.Conditions.IngressNotReadyPools {
-		currentPoolNames = append(currentPoolNames, pool.Name)
+		currentPools = append(currentPools, pool.Pool)
 	}
-	return currentPoolNames
+	return currentPools
+}
+
+func getDesiredPool(ying *appsv1alpha1.YurtIngress, poolname string) *appsv1alpha1.IngressPool {
+	for _, pool := range ying.Spec.Pools {
+		if pool.Name == poolname {
+			return &pool
+		}
+	}
+	klog.V(4).Infof("Can not find desired pool %s", poolname)
+	return nil
+}
+
+func getCurrentPool(ying *appsv1alpha1.YurtIngress, poolname string) *appsv1alpha1.IngressPool {
+	for _, pool := range getCurrentPools(ying) {
+		if pool.Name == poolname {
+			return &pool
+		}
+	}
+	klog.V(4).Infof("Can not find current pool %s", poolname)
+	return nil
 }
 
 func removePoolfromCondition(ying *appsv1alpha1.YurtIngress, poolname string) bool {
 	for i, pool := range ying.Status.Conditions.IngressReadyPools {
-		if pool == poolname {
+		if pool.Name == poolname {
 			length := len(ying.Status.Conditions.IngressReadyPools)
 			if i == length-1 {
 				ying.Status.Conditions.IngressReadyPools = ying.Status.Conditions.IngressReadyPools[:i]
@@ -276,7 +316,7 @@ func removePoolfromCondition(ying *appsv1alpha1.YurtIngress, poolname string) bo
 		}
 	}
 	for i, pool := range ying.Status.Conditions.IngressNotReadyPools {
-		if pool.Name == poolname {
+		if pool.Pool.Name == poolname {
 			length := len(ying.Status.Conditions.IngressNotReadyPools)
 			if i == length-1 {
 				ying.Status.Conditions.IngressNotReadyPools = ying.Status.Conditions.IngressNotReadyPools[:i]
@@ -309,14 +349,15 @@ func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ing
 			if dply.Status.ReadyReplicas == ying.Spec.Replicas {
 				klog.V(4).Infof("Ingress on pool %s is ready!", pool)
 				ying.Status.ReadyNum += 1
-				ying.Status.Conditions.IngressReadyPools = append(ying.Status.Conditions.IngressReadyPools, pool)
+				readyPool := getDesiredPool(ying, pool)
+				ying.Status.Conditions.IngressReadyPools = append(ying.Status.Conditions.IngressReadyPools, *readyPool)
 			} else {
 				klog.V(4).Infof("Ingress on pool %s is NOT ready!", pool)
 				condition := getUnreadyDeploymentCondition(dply)
 				if condition == nil {
 					klog.V(4).Infof("Get deployment/%s conditions nil!", dply.GetName())
 				} else {
-					notReadyPool := appsv1alpha1.IngressNotReadyPool{Name: pool, Info: condition}
+					notReadyPool := appsv1alpha1.IngressNotReadyPool{Pool: *getDesiredPool(ying, pool), Info: condition}
 					ying.Status.Conditions.IngressNotReadyPools = append(ying.Status.Conditions.IngressNotReadyPools, notReadyPool)
 				}
 			}
@@ -336,11 +377,11 @@ func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ing
 }
 
 func (r *YurtIngressReconciler) cleanupIngressResources(instance *appsv1alpha1.YurtIngress) (ctrl.Result, error) {
-	pools := getDesiredPoolNames(instance)
+	pools := getDesiredPools(instance)
 	isOnly := isOnlyYurtIngressCR(r.Client)
 	if pools != nil {
 		for _, pool := range pools {
-			if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool, isOnly); err != nil {
+			if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool.Name, isOnly); err != nil {
 				return ctrl.Result{}, err
 			}
 		}

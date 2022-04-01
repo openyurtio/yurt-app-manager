@@ -70,6 +70,12 @@ spec:
               items:
                 description: IngressPool defines the details of a Pool for ingress
                 properties:
+                  ingress_ips:
+                    description: IngressIPs is a list of IP addresses for which nodes
+                      will also accept traffic for this service.
+                    items:
+                      type: string
+                    type: array
                   name:
                     description: Indicates the pool name.
                     type: string
@@ -88,7 +94,20 @@ spec:
                   description: Indicates the pools that ingress controller is deployed
                     successfully.
                   items:
-                    type: string
+                    description: IngressPool defines the details of a Pool for ingress
+                    properties:
+                      ingress_ips:
+                        description: IngressIPs is a list of IP addresses for which
+                          nodes will also accept traffic for this service.
+                        items:
+                          type: string
+                        type: array
+                      name:
+                        description: Indicates the pool name.
+                        type: string
+                    required:
+                    - name
+                    type: object
                   type: array
                 ingressunreadypools:
                   description: Indicates the pools that ingress controller is being
@@ -97,10 +116,22 @@ spec:
                     description: IngressNotReadyPool defines the condition details
                       of an ingress not ready Pool
                     properties:
-                      name:
-                        description: Indicates the pool name.
-                        type: string
-                      poolinfo:
+                      pool:
+                        description: Indicates the base pool info.
+                        properties:
+                          ingress_ips:
+                            description: IngressIPs is a list of IP addresses for
+                              which nodes will also accept traffic for this service.
+                            items:
+                              type: string
+                            type: array
+                          name:
+                            description: Indicates the pool name.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      unreadyinfo:
                         description: Info of ingress not ready condition.
                         properties:
                           lastTransitionTime:
@@ -120,7 +151,7 @@ spec:
                             type: string
                         type: object
                     required:
-                    - name
+                    - pool
                     type: object
                   type: array
               type: object

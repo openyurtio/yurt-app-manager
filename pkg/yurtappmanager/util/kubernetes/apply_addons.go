@@ -159,7 +159,7 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 	return nil
 }
 
-func CreateNginxIngressSpecificResource(client client.Client, poolname string, replicas int32, ownerRef *metav1.OwnerReference) error {
+func CreateNginxIngressSpecificResource(client client.Client, poolname string, externalIPs *[]string, replicas int32, ownerRef *metav1.OwnerReference) error {
 	// 1. Create Deployment
 	if err := CreateDeployFromYaml(client,
 		constant.NginxIngressControllerNodePoolDeployment,
@@ -182,6 +182,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, r
 	// 2. Create Service
 	if err := CreateServiceFromYaml(client,
 		constant.NginxIngressControllerService,
+		externalIPs,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)
@@ -189,6 +190,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, r
 	}
 	if err := CreateServiceFromYaml(client,
 		constant.NginxIngressAdmissionWebhookService,
+		nil,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)
@@ -285,6 +287,18 @@ func ScaleNginxIngressControllerDeploymment(client client.Client, poolname strin
 	if err := UpdateDeployFromYaml(client,
 		constant.NginxIngressControllerNodePoolDeployment,
 		&replicas,
+		map[string]string{
+			"nodepool_name": poolname}); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	return nil
+}
+
+func UpdateNginxServiceExternalIPs(client client.Client, poolname string, externalIPs []string) error {
+	if err := UpdateServiceFromYaml(client,
+		constant.NginxIngressControllerService,
+		&externalIPs,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)

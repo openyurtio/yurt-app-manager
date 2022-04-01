@@ -405,7 +405,7 @@ func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32
 }
 
 // CreateServiceFromYaml creates the Service from the yaml template.
-func CreateServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}) error {
+func CreateServiceFromYaml(client client.Client, svcTmpl string, externalIPs *[]string, ctx interface{}) error {
 	sv, err := SubsituteTemplate(svcTmpl, ctx)
 	if err != nil {
 		return err
@@ -417,6 +417,9 @@ func CreateServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}
 	svc, ok := svcObj.(*corev1.Service)
 	if !ok {
 		return fmt.Errorf("fail to assert service")
+	}
+	if externalIPs != nil {
+		svc.Spec.ExternalIPs = *externalIPs
 	}
 	err = client.Create(context.Background(), svc)
 	if err != nil {
@@ -449,6 +452,33 @@ func DeleteServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}
 		}
 	}
 	klog.V(4).Infof("service/%s is deleted", svc.Name)
+	return nil
+}
+
+// UpdateServiceFromYaml updates the Service from the yaml template.
+func UpdateServiceFromYaml(cli client.Client, svcTmpl string, externalIPs *[]string, ctx interface{}) error {
+	sv, err := SubsituteTemplate(svcTmpl, ctx)
+	if err != nil {
+		return err
+	}
+	svcObj, err := YamlToObject([]byte(sv))
+	if err != nil {
+		return err
+	}
+	svc, ok := svcObj.(*corev1.Service)
+	if !ok {
+		return fmt.Errorf("fail to assert service")
+	}
+	if cli.Get(context.TODO(), client.ObjectKey{Namespace: svc.Namespace, Name: svc.Name}, svc) != nil {
+		klog.V(4).Infof("get service/%s failed", svc.Name)
+		return nil
+	}
+	svc.Spec.ExternalIPs = *externalIPs
+	err = cli.Update(context.Background(), svc)
+	if err != nil {
+		return fmt.Errorf("fail to update the service/%s: %v", svc.Name, err)
+	}
+	klog.V(4).Infof("service/%s is updated", svc.Name)
 	return nil
 }
 

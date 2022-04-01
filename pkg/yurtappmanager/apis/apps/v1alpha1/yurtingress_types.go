@@ -42,7 +42,8 @@ type IngressPool struct {
 	// Indicates the pool name.
 	Name string `json:"name"`
 
-	// Pool specific configuration will be supported in future.
+	// IngressIPs is a list of IP addresses for which nodes will also accept traffic for this service.
+	IngressIPs []string `json:"ingress_ips,omitempty"`
 }
 
 // IngressNotReadyConditionInfo defines the details info of an ingress not ready Pool
@@ -62,11 +63,11 @@ type IngressNotReadyConditionInfo struct {
 
 // IngressNotReadyPool defines the condition details of an ingress not ready Pool
 type IngressNotReadyPool struct {
-	// Indicates the pool name.
-	Name string `json:"name"`
+	// Indicates the base pool info.
+	Pool IngressPool `json:"pool"`
 
 	// Info of ingress not ready condition.
-	Info *IngressNotReadyConditionInfo `json:"poolinfo,omitempty"`
+	Info *IngressNotReadyConditionInfo `json:"unreadyinfo,omitempty"`
 }
 
 // YurtIngressSpec defines the desired state of YurtIngress
@@ -83,7 +84,7 @@ type YurtIngressSpec struct {
 // YurtIngressCondition describes current state of a YurtIngress
 type YurtIngressCondition struct {
 	// Indicates the pools that ingress controller is deployed successfully.
-	IngressReadyPools []string `json:"ingressreadypools,omitempty"`
+	IngressReadyPools []IngressPool `json:"ingressreadypools,omitempty"`
 
 	// Indicates the pools that ingress controller is being deployed or deployed failed.
 	IngressNotReadyPools []IngressNotReadyPool `json:"ingressunreadypools,omitempty"`
