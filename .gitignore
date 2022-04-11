@@ -6,4 +6,3 @@ dockerbuild
 
 *.out
 logs
-test-prow
