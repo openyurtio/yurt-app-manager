@@ -41,8 +41,7 @@ func validateYurtIngressSpec(c client.Client, ingressName string, spec *appsv1al
 		}
 
 		//get all the nodepools with ingress enabled
-		var npIngressMap map[string]string
-		npIngressMap = make(map[string]string)
+		var npIngressMap map[string]string = make(map[string]string)
 		if !isdelete && len(ingressList.Items) > 0 {
 			for _, ingress := range ingressList.Items { //go through all the yurtingress
 				for _, np := range ingress.Spec.Pools { //get all the nodepools with ingress enabled
@@ -60,12 +59,7 @@ func validateYurtIngressSpec(c client.Client, ingressName string, spec *appsv1al
 		}
 
 		// validate whether the nodepool exist
-		if len(nps.Items) <= 0 {
-			errmsg = "No nodepool is created in the cluster!"
-			klog.Errorf(errmsg)
-			return field.ErrorList([]*field.Error{
-				field.Forbidden(field.NewPath("spec").Child("pools"), errmsg)})
-		} else {
+		if len(nps.Items) > 0 {
 			var found = false
 			for _, snp := range spec.Pools { //go through the nodepools setting in yaml
 				for _, cnp := range nps.Items { //go through the nodepools in cluster

@@ -17,76 +17,108 @@ limitations under the License.
 package kubernetes
 
 import (
+	"context"
 	"time"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func CreateNginxIngressCommonResource(client client.Client) error {
+func IsIngressNamespaceReady(cli client.Client) bool {
+	ns := new(corev1.Namespace)
+	err := cli.Get(context.Background(), client.ObjectKey{Namespace: "", Name: "ingress-nginx"}, ns)
+	if err != nil {
+		return false
+	}
+	return ns.Status.Phase == corev1.NamespaceActive
+}
+
+func CreateNginxIngressCommonResource(cli client.Client) error {
+	//Set common ingress resources ownerreference to yurt-app-manager-role so they can be gabage collected
+	//when yurt-app-manager is deleted.
+	cr := new(rbacv1.ClusterRole)
+	err := cli.Get(context.Background(), client.ObjectKey{Namespace: "", Name: "yurt-app-manager-role"}, cr)
+	if err != nil {
+		klog.V(4).Infof("fail get yurt-app-manager role: %v", err)
+	}
+	isController := true
+	isBlockOwnerDeletion := true
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         cr.APIVersion,
+		Kind:               cr.Kind,
+		Name:               cr.Name,
+		UID:                cr.UID,
+		Controller:         &isController,
+		BlockOwnerDeletion: &isBlockOwnerDeletion,
+	}
+	var ownerRefs []metav1.OwnerReference
+	ownerRefs = append(ownerRefs, ownerRef)
+
 	// 1. Create Namespace
-	if err := CreateNamespaceFromYaml(client, constant.NginxIngressControllerNamespace); err != nil {
+	if err := CreateNamespaceFromYaml(cli, constant.NginxIngressControllerNamespace, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 2. Create ClusterRole
-	if err := CreateClusterRoleFromYaml(client, constant.NginxIngressControllerClusterRole); err != nil {
+	if err := CreateClusterRoleFromYaml(cli, constant.NginxIngressControllerClusterRole, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
-	if err := CreateClusterRoleFromYaml(client, constant.NginxIngressAdmissionWebhookClusterRole); err != nil {
+	if err := CreateClusterRoleFromYaml(cli, constant.NginxIngressAdmissionWebhookClusterRole, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 3. Create ClusterRoleBinding
-	if err := CreateClusterRoleBindingFromYaml(client,
-		constant.NginxIngressControllerClusterRoleBinding); err != nil {
+	if err := CreateClusterRoleBindingFromYaml(cli,
+		constant.NginxIngressControllerClusterRoleBinding, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
-	if err := CreateClusterRoleBindingFromYaml(client,
-		constant.NginxIngressAdmissionWebhookClusterRoleBinding); err != nil {
+	if err := CreateClusterRoleBindingFromYaml(cli,
+		constant.NginxIngressAdmissionWebhookClusterRoleBinding, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 4. Create Role
-	if err := CreateRoleFromYaml(client,
-		constant.NginxIngressControllerRole); err != nil {
+	if err := CreateRoleFromYaml(cli,
+		constant.NginxIngressControllerRole, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
-	if err := CreateRoleFromYaml(client,
-		constant.NginxIngressAdmissionWebhookRole); err != nil {
+	if err := CreateRoleFromYaml(cli,
+		constant.NginxIngressAdmissionWebhookRole, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 5. Create RoleBinding
-	if err := CreateRoleBindingFromYaml(client,
-		constant.NginxIngressControllerRoleBinding); err != nil {
+	if err := CreateRoleBindingFromYaml(cli,
+		constant.NginxIngressControllerRoleBinding, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
-	if err := CreateRoleBindingFromYaml(client,
-		constant.NginxIngressAdmissionWebhookRoleBinding); err != nil {
+	if err := CreateRoleBindingFromYaml(cli,
+		constant.NginxIngressAdmissionWebhookRoleBinding, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 6. Create ServiceAccount
-	if err := CreateServiceAccountFromYaml(client,
-		constant.NginxIngressControllerServiceAccount); err != nil {
+	if err := CreateServiceAccountFromYaml(cli,
+		constant.NginxIngressControllerServiceAccount, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
-	if err := CreateServiceAccountFromYaml(client,
-		constant.NginxIngressAdmissionWebhookServiceAccount); err != nil {
+	if err := CreateServiceAccountFromYaml(cli,
+		constant.NginxIngressAdmissionWebhookServiceAccount, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	// 7. Create Configmap
-	if err := CreateConfigMapFromYaml(client,
-		constant.NginxIngressControllerConfigMap); err != nil {
+	if err := CreateConfigMapFromYaml(cli,
+		constant.NginxIngressControllerConfigMap, ownerRefs); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
@@ -100,18 +132,7 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 		klog.Errorf("%v", err)
 		return err
 	}
-	// 2. Delete ServiceAccount
-	if err := DeleteServiceAccountFromYaml(client,
-		constant.NginxIngressControllerServiceAccount); err != nil {
-		klog.Errorf("%v", err)
-		return err
-	}
-	if err := DeleteServiceAccountFromYaml(client,
-		constant.NginxIngressAdmissionWebhookServiceAccount); err != nil {
-		klog.Errorf("%v", err)
-		return err
-	}
-	// 3. Delete RoleBinding
+	// 2. Delete RoleBinding
 	if err := DeleteRoleBindingFromYaml(client,
 		constant.NginxIngressControllerRoleBinding); err != nil {
 		klog.Errorf("%v", err)
@@ -122,7 +143,7 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 		klog.Errorf("%v", err)
 		return err
 	}
-	// 4. Delete Role
+	// 3. Delete Role
 	if err := DeleteRoleFromYaml(client,
 		constant.NginxIngressControllerRole); err != nil {
 		klog.Errorf("%v", err)
@@ -133,7 +154,7 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 		klog.Errorf("%v", err)
 		return err
 	}
-	// 5. Delete ClusterRoleBinding
+	// 4. Delete ClusterRoleBinding
 	if err := DeleteClusterRoleBindingFromYaml(client,
 		constant.NginxIngressControllerClusterRoleBinding); err != nil {
 		klog.Errorf("%v", err)
@@ -144,12 +165,23 @@ func DeleteNginxIngressCommonResource(client client.Client) error {
 		klog.Errorf("%v", err)
 		return err
 	}
-	// 6. Delete ClusterRole
+	// 5. Delete ClusterRole
 	if err := DeleteClusterRoleFromYaml(client, constant.NginxIngressControllerClusterRole); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
 	if err := DeleteClusterRoleFromYaml(client, constant.NginxIngressAdmissionWebhookClusterRole); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	// 6. Delete ServiceAccount
+	if err := DeleteServiceAccountFromYaml(client,
+		constant.NginxIngressControllerServiceAccount); err != nil {
+		klog.Errorf("%v", err)
+		return err
+	}
+	if err := DeleteServiceAccountFromYaml(client,
+		constant.NginxIngressAdmissionWebhookServiceAccount); err != nil {
 		klog.Errorf("%v", err)
 		return err
 	}
@@ -203,6 +235,7 @@ func CreateNginxIngressSpecificResource(client client.Client, poolname string, e
 	// 3. Create ValidatingWebhookConfiguration
 	if err := CreateValidatingWebhookConfigurationFromYaml(client,
 		constant.NginxIngressValidatingWebhookConfiguration,
+		ownerRef,
 		map[string]string{
 			"nodepool_name": poolname}); err != nil {
 		klog.Errorf("%v", err)

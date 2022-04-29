@@ -41,7 +41,6 @@ type YurtIngressCreateUpdateHandler struct {
 var _ webhookutil.Handler = &YurtIngressCreateUpdateHandler{}
 
 func (h *YurtIngressCreateUpdateHandler) SetOptions(options webhookutil.Options) {
-	return
 }
 
 // Handle handles admission requests.

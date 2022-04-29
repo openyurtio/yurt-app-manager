@@ -160,7 +160,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		klog.V(4).Infof("added pool list is %s", addedPools)
 		isYurtIngressCRChanged = true
 		ownerRef := prepareDeploymentOwnerReferences(instance)
-		if currentPools == nil && isOnlyYurtIngressCR(r.Client) {
+		if currentPools == nil && !yurtapputil.IsIngressNamespaceReady(r.Client) {
 			if err := yurtapputil.CreateNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -375,7 +375,7 @@ func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ing
 	if !ingressCRChanged {
 		deployments, err := r.getAllDeployments(ying)
 		if err != nil {
-			klog.V(4).Infof("Get all the ingress controller deployments err: %v", err)
+			klog.V(4).Infof("Fail to get all the ingress controller deployments: %v", err)
 			return err
 		}
 		ying.Status.Conditions.IngressReadyPools = nil
@@ -416,6 +416,13 @@ func (r *YurtIngressReconciler) updateStatus(ying *appsv1alpha1.YurtIngress, ing
 func (r *YurtIngressReconciler) cleanupIngressResources(instance *appsv1alpha1.YurtIngress) (ctrl.Result, error) {
 	pools := getDesiredPools(instance)
 	isOnly := isOnlyYurtIngressCR(r.Client)
+
+	if controllerutil.ContainsFinalizer(instance, appsv1alpha1.YurtIngressFinalizer) {
+		controllerutil.RemoveFinalizer(instance, appsv1alpha1.YurtIngressFinalizer)
+		if err := r.Update(context.TODO(), instance); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 	if pools != nil {
 		for _, pool := range pools {
 			if err := yurtapputil.DeleteNginxIngressSpecificResource(r.Client, pool.Name, isOnly); err != nil {
@@ -426,12 +433,6 @@ func (r *YurtIngressReconciler) cleanupIngressResources(instance *appsv1alpha1.Y
 			if err := yurtapputil.DeleteNginxIngressCommonResource(r.Client); err != nil {
 				return ctrl.Result{}, err
 			}
-		}
-	}
-	if controllerutil.ContainsFinalizer(instance, appsv1alpha1.YurtIngressFinalizer) {
-		controllerutil.RemoveFinalizer(instance, appsv1alpha1.YurtIngressFinalizer)
-		if err := r.Update(context.TODO(), instance); err != nil {
-			return ctrl.Result{}, err
 		}
 	}
 	return ctrl.Result{}, nil

@@ -47,7 +47,7 @@ func init() {
 }
 
 // CreateNamespaceFromYaml creates the Namespace from the yaml template.
-func CreateNamespaceFromYaml(client client.Client, crTmpl string) error {
+func CreateNamespaceFromYaml(cli client.Client, crTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crTmpl))
 	if err != nil {
 		return err
@@ -56,10 +56,15 @@ func CreateNamespaceFromYaml(client client.Client, crTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert namespace")
 	}
-	err = client.Create(context.Background(), ns)
+	ns.ObjectMeta.SetOwnerReferences(ownerRefs)
+
+	err = cli.Create(context.Background(), ns)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("fail to create the namespace/%s: %v", ns.Name, err)
+		}
+		if apierrors.IsAlreadyExists(err) && ns.Status.Phase != corev1.NamespaceActive {
+			return fmt.Errorf("namespace/%s is not active: %v", ns.Name, err)
 		}
 	}
 	time.Sleep(time.Second)
@@ -88,7 +93,7 @@ func DeleteNamespaceFromYaml(client client.Client, crTmpl string) error {
 }
 
 // CreateClusterRoleFromYaml creates the ClusterRole from the yaml template.
-func CreateClusterRoleFromYaml(client client.Client, crTmpl string) error {
+func CreateClusterRoleFromYaml(client client.Client, crTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crTmpl))
 	if err != nil {
 		return err
@@ -97,6 +102,7 @@ func CreateClusterRoleFromYaml(client client.Client, crTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert clusterrole")
 	}
+	cr.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), cr)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -128,7 +134,7 @@ func DeleteClusterRoleFromYaml(client client.Client, crTmpl string) error {
 }
 
 // CreateClusterRoleBindingFromYaml creates the ClusterRoleBinding from the yaml template.
-func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string) error {
+func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crbTmpl))
 	if err != nil {
 		return err
@@ -137,6 +143,7 @@ func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string) erro
 	if !ok {
 		return fmt.Errorf("fail to assert clusterrolebinding")
 	}
+	crb.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), crb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -168,7 +175,7 @@ func DeleteClusterRoleBindingFromYaml(client client.Client, crbTmpl string) erro
 }
 
 // CreateRoleFromYaml creates the Role from the yaml template.
-func CreateRoleFromYaml(client client.Client, rTmpl string) error {
+func CreateRoleFromYaml(client client.Client, rTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(rTmpl))
 	if err != nil {
 		return err
@@ -177,6 +184,7 @@ func CreateRoleFromYaml(client client.Client, rTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert role")
 	}
+	r.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), r)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -208,7 +216,7 @@ func DeleteRoleFromYaml(client client.Client, rTmpl string) error {
 }
 
 // CreateRoleBindingFromYaml creates the RoleBinding from the yaml template.
-func CreateRoleBindingFromYaml(client client.Client, rbTmpl string) error {
+func CreateRoleBindingFromYaml(client client.Client, rbTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(rbTmpl))
 	if err != nil {
 		return err
@@ -217,6 +225,7 @@ func CreateRoleBindingFromYaml(client client.Client, rbTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert rolebinding")
 	}
+	rb.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), rb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -248,7 +257,7 @@ func DeleteRoleBindingFromYaml(client client.Client, rbTmpl string) error {
 }
 
 // CreateServiceAccountFromYaml creates the ServiceAccount from the yaml template.
-func CreateServiceAccountFromYaml(client client.Client, saTmpl string) error {
+func CreateServiceAccountFromYaml(client client.Client, saTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(saTmpl))
 	if err != nil {
 		return err
@@ -257,6 +266,7 @@ func CreateServiceAccountFromYaml(client client.Client, saTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert serviceaccount")
 	}
+	sa.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), sa)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -288,7 +298,7 @@ func DeleteServiceAccountFromYaml(client client.Client, saTmpl string) error {
 }
 
 // CreateConfigMapFromYaml creates the ConfigMap from the yaml template.
-func CreateConfigMapFromYaml(client client.Client, cmTmpl string) error {
+func CreateConfigMapFromYaml(client client.Client, cmTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(cmTmpl))
 	if err != nil {
 		return err
@@ -297,6 +307,7 @@ func CreateConfigMapFromYaml(client client.Client, cmTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert configmap")
 	}
+	cm.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), cm)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -493,7 +504,7 @@ func UpdateServiceFromYaml(cli client.Client, svcTmpl string, externalIPs *[]str
 }
 
 // CreateValidatingWebhookConfigurationFromYaml creates the validatingwebhookconfiguration from the yaml template.
-func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl string, ctx interface{}) error {
+func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl string, ownerRef *metav1.OwnerReference, ctx interface{}) error {
 	vw, err := SubsituteTemplate(vwcTmpl, ctx)
 	if err != nil {
 		return err
@@ -505,6 +516,11 @@ func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 	vwc, ok := vwcObj.(*v1beta1.ValidatingWebhookConfiguration)
 	if !ok {
 		return fmt.Errorf("fail to assert validatingwebhookconfiguration")
+	}
+	if ownerRef != nil {
+		ownerRefs := vwc.ObjectMeta.GetOwnerReferences()
+		ownerRefs = append(ownerRefs, *ownerRef)
+		vwc.ObjectMeta.SetOwnerReferences(ownerRefs)
 	}
 	err = client.Create(context.Background(), vwc)
 	if err != nil {
