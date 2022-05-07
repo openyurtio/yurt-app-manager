@@ -27,6 +27,7 @@ readonly region=${REGION:-us}
 readonly yurt_component_image="${REPO}/${bin_target}:${TAG}"
 
 build_multi_arch_binaries() {
+    local docker_yurt_root="/opt/src"
     local docker_run_opts=(
         "-i"
         "--rm"
@@ -54,10 +55,11 @@ build_multi_arch_binaries() {
 
     local sub_commands="sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories; \
         apk --no-cache add bash git; \
-        cd /opt/src; umask 0022; \
-        rm -rf ${YURT_BIN_DIR}/* ;"
+        cd ${docker_yurt_root}; umask 0022; \
+        rm -rf ${YURT_BIN_DIR}/* ; \
+        git config --global --add safe.directory ${docker_yurt_root};"
     sub_commands+="GOARCH=amd64 bash ./hack/make-rules/build.sh ${bin_target}; "
-    sub_commands+="chown -R $(id -u):$(id -g) /opt/src/_output"
+    sub_commands+="chown -R $(id -u):$(id -g) ${docker_yurt_root}/_output"
 
     docker run ${docker_run_opts[@]} ${YURT_BUILD_IMAGE} ${docker_run_cmd[@]} "${sub_commands}"
 }
@@ -98,6 +100,11 @@ build_images() {
 push_images() {
     build_images
     docker push ${yurt_component_image}
+}
+
+kindload_images() {
+    build_images
+    kind load docker-image ${yurt_component_image} || { echo >&2 "kind not installed or error loading image: $(yurt_component_image)"; exit 1; }
 }
 
 # gen_yamls generates yaml files for the yurt-app-manager 

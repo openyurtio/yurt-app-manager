@@ -32,6 +32,16 @@ fmt:
 vet:
 	go vet ./pkg/... ./cmd/...
 
+# Build yurt-app-manager and load image to kind
+kind-load:
+	bash hack/make-rules/kindload-images.sh
+
+e2e-build:
+	hack/make-rules/build-e2e.sh
+
+e2e-test:
+	bash hack/run-e2e-tests.sh
+
 # Build binaries and docker images.  
 # NOTE: this rule can take time, as we build binaries inside containers
 #
@@ -117,3 +127,17 @@ CONTROLLER_GEN=$(GOPATH)/bin/controller-gen-openyurt
 else
 CONTROLLER_GEN=$(shell which controller-gen-openyurt)
 endif
+
+install-golint: ## check golint if not exist install golint tools
+ifeq (, $(shell which golangci-lint))
+	@{ \
+	set -e ;\
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.31.0 ;\
+	}
+GOLINT_BIN=$(shell go env GOPATH)/bin/golangci-lint
+else
+GOLINT_BIN=$(shell which golangci-lint)
+endif
+
+lint: install-golint ## Run go lint against code.
+	$(GOLINT_BIN) run -v

@@ -27,6 +27,12 @@ project_info() {
     echo "-X ${PROJECT_INFO_PKG}.buildDate=${BUILD_DATE}"
 }
 
+# get_binary_dir_with_arch generated the binary's directory with GOOS and GOARCH.
+# eg: ./_output/bin/darwin/arm64/
+get_binary_dir_with_arch(){
+    echo $1/$(go env GOOS)/$(go env GOARCH)/
+}
+
 
 build_binary() {
     local goflags goldflags gcflags

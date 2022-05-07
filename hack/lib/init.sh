@@ -22,6 +22,8 @@ YURT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 YURT_MOD="$(head -1 $YURT_ROOT/go.mod | awk '{print $2}')"
 YURT_OUTPUT_DIR=${YURT_ROOT}/_output
 YURT_BIN_DIR=${YURT_OUTPUT_DIR}/bin
+YURT_LOCAL_BIN_DIR=${YURT_OUTPUT_DIR}/local/bin
+YURT_E2E_TARGETS="test/e2e/yurt-e2e-test"
 
 PROJECT_PREFIX=${PROJECT_PREFIX:-yurt}
 LABEL_PREFIX=${LABEL_PREFIX:-openyurt.io}
