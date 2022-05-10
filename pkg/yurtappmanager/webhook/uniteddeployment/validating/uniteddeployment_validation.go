@@ -56,7 +56,7 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("selector"), spec.Selector, ""))
 	} else {
-		allErrs = append(allErrs, validatePoolTemplate(&(spec.WorkloadTemplate), spec, selector, fldPath.Child("template"))...)
+		allErrs = append(allErrs, validatePoolTemplate(&(spec.WorkloadTemplate), spec, selector, fldPath.Child("workloadTemplate"))...)
 	}
 
 	poolNames := sets.String{}
@@ -135,7 +135,7 @@ func convertPodTemplateSpec(template *v1.PodTemplateSpec) (*core.PodTemplateSpec
 
 func validateUnitedDeploymentSpecUpdate(spec, oldSpec *unitv1alpha1.UnitedDeploymentSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateWorkloadTemplateUpdate(&spec.WorkloadTemplate, &oldSpec.WorkloadTemplate, fldPath.Child("template"))...)
+	allErrs = append(allErrs, validateWorkloadTemplateUpdate(&spec.WorkloadTemplate, &oldSpec.WorkloadTemplate, fldPath.Child("workloadTemplate"))...)
 	allErrs = append(allErrs, validateUnitedDeploymentTopology(&spec.Topology, &oldSpec.Topology, fldPath.Child("topology"))...)
 	return allErrs
 }
