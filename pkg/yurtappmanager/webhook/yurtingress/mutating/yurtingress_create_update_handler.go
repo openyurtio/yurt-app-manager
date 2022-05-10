@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"k8s.io/klog"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -31,6 +32,12 @@ import (
 
 // YurtIngressCreateUpdateHandler handles YurtIngress
 type YurtIngressCreateUpdateHandler struct {
+	// To use the client, you need to do the following:
+	// - uncomment it
+	// - import sigs.k8s.io/controller-runtime/pkg/client
+	// - uncomment the InjectClient method at the bottom of this file.
+	Client client.Client
+
 	// Decoder decodes objects
 	Decoder *admission.Decoder
 }
@@ -38,25 +45,27 @@ type YurtIngressCreateUpdateHandler struct {
 var _ webhookutil.Handler = &YurtIngressCreateUpdateHandler{}
 
 func (h *YurtIngressCreateUpdateHandler) SetOptions(options webhookutil.Options) {
-	//return
+	h.Client = options.Client
 }
 
 // Handle handles admission requests.
 func (h *YurtIngressCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
-	np_ing := appsv1alpha1.YurtIngress{}
-	err := h.Decoder.Decode(req, &np_ing)
+	obj := &appsv1alpha1.YurtIngress{}
+	err := h.Decoder.Decode(req, obj)
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	marshalled, err := json.Marshal(&np_ing)
+	appsv1alpha1.SetDefaultsYurtIngress(obj)
+
+	marshalled, err := json.Marshal(&obj)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 	resp := admission.PatchResponseFromRaw(req.AdmissionRequest.Object.Raw,
 		marshalled)
 	if len(resp.Patches) > 0 {
-		klog.V(5).Infof("Admit YurtIngress %s patches: %v", np_ing.Name, util.DumpJSON(resp.Patches))
+		klog.V(5).Infof("Admit YurtIngress %s patches: %v", obj.Name, util.DumpJSON(resp.Patches))
 	}
 	return resp
 }

@@ -145,16 +145,7 @@ func (r *YurtIngressReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	desiredPools = getDesiredPools(instance)
 	currentPools = getCurrentPools(instance)
 	isYurtIngressCRChanged := false
-	if instance.Spec.IngressControllerImage == "" {
-		instance.Spec.IngressControllerImage = appsv1alpha1.DefaultNginxIngressControllerImage
-	}
-	if instance.Spec.IngressWebhookCertGenImage == "" {
-		instance.Spec.IngressWebhookCertGenImage = appsv1alpha1.DefaultNginxIngressWebhookCertGenImage
-	}
-	if instance.Spec.Replicas == 0 {
-		klog.V(4).Infof("set default per-pool replicas to 1")
-		instance.Spec.Replicas = 1
-	}
+
 	addedPools, removedPools, unchangedPools := getPools(desiredPools, currentPools)
 	if addedPools != nil {
 		klog.V(4).Infof("added pool list is %s", addedPools)

@@ -20,15 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Define the default nodepool ingress related values
-const (
-	// DefaultNginxIngressControllerImage defines the default nginx ingress controller image
-	DefaultNginxIngressControllerImage string = "k8s.gcr.io/ingress-nginx/controller:v0.48.1"
-	// DefaultNginxIngressWebhookCertGenImage defines the default nginx ingress controller webhook certgen image
-	DefaultNginxIngressWebhookCertGenImage string = "docker.io/jettech/kube-webhook-certgen:v1.5.1"
-	// YurtIngressFinalizer is used to cleanup ingress resources when YurtIngress CR is deleted
-	YurtIngressFinalizer string = "ingress.operator.openyurt.io"
-)
+// YurtIngressFinalizer is used to cleanup ingress resources when YurtIngress CR is deleted
+const YurtIngressFinalizer string = "ingress.operator.openyurt.io"
 
 type IngressNotReadyType string
 
