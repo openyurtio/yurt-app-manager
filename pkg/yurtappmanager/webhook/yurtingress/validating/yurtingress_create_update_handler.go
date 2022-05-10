@@ -41,19 +41,11 @@ type YurtIngressCreateUpdateHandler struct {
 var _ webhookutil.Handler = &YurtIngressCreateUpdateHandler{}
 
 func (h *YurtIngressCreateUpdateHandler) SetOptions(options webhookutil.Options) {
-	return
 }
 
 // Handle handles admission requests.
 func (h *YurtIngressCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
 	ingress := appsv1alpha1.YurtIngress{}
-
-	// singleton node pool validating
-	if req.Name != appsv1alpha1.SingletonYurtIngressInstanceName {
-		var msg = "please name YurtIngress with " + appsv1alpha1.SingletonYurtIngressInstanceName + " instead of " + req.Name
-		klog.Errorf(msg)
-		return admission.ValidationResponse(false, msg)
-	}
 
 	switch req.AdmissionRequest.Operation {
 	case admissionv1.Create:
@@ -62,7 +54,7 @@ func (h *YurtIngressCreateUpdateHandler) Handle(ctx context.Context, req admissi
 		if err := h.Decoder.Decode(req, &ingress); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
-		if allErrs := validateYurtIngressSpec(h.Client, &ingress.Spec); len(allErrs) > 0 {
+		if allErrs := validateYurtIngressSpec(h.Client, ingress.ObjectMeta.Name, &ingress.Spec, false); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity,
 				allErrs.ToAggregate())
 		}
@@ -76,7 +68,7 @@ func (h *YurtIngressCreateUpdateHandler) Handle(ctx context.Context, req admissi
 			return admission.Errored(http.StatusBadRequest, err)
 		}
 
-		if allErrs := validateYurtIngressSpecUpdate(h.Client, &ingress.Spec, &oingress.Spec); len(allErrs) > 0 {
+		if allErrs := validateYurtIngressSpecUpdate(h.Client, ingress.ObjectMeta.Name, &ingress.Spec, &oingress.Spec); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity,
 				allErrs.ToAggregate())
 		}
@@ -85,7 +77,7 @@ func (h *YurtIngressCreateUpdateHandler) Handle(ctx context.Context, req admissi
 		if err := h.Decoder.DecodeRaw(req.OldObject, &ingress); err != nil {
 			return admission.Errored(http.StatusBadRequest, err)
 		}
-		if allErrs := validateYurtIngressSpecDeletion(h.Client, &ingress.Spec); len(allErrs) > 0 {
+		if allErrs := validateYurtIngressSpecDeletion(h.Client, ingress.ObjectMeta.Name, &ingress.Spec); len(allErrs) > 0 {
 			return admission.Errored(http.StatusUnprocessableEntity,
 				allErrs.ToAggregate())
 		}

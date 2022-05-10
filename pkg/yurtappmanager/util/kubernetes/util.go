@@ -47,7 +47,7 @@ func init() {
 }
 
 // CreateNamespaceFromYaml creates the Namespace from the yaml template.
-func CreateNamespaceFromYaml(client client.Client, crTmpl string) error {
+func CreateNamespaceFromYaml(cli client.Client, crTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crTmpl))
 	if err != nil {
 		return err
@@ -56,13 +56,18 @@ func CreateNamespaceFromYaml(client client.Client, crTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert namespace")
 	}
-	err = client.Create(context.Background(), ns)
+	ns.ObjectMeta.SetOwnerReferences(ownerRefs)
+
+	err = cli.Create(context.Background(), ns)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("fail to create the namespace/%s: %v", ns.Name, err)
 		}
+		if apierrors.IsAlreadyExists(err) && ns.Status.Phase != corev1.NamespaceActive {
+			return fmt.Errorf("namespace/%s is not active: %v", ns.Name, err)
+		}
 	}
-	time.Sleep(1 * time.Second)
+	time.Sleep(time.Second)
 	klog.V(4).Infof("namespace/%s is created", ns.Name)
 	return nil
 }
@@ -88,7 +93,7 @@ func DeleteNamespaceFromYaml(client client.Client, crTmpl string) error {
 }
 
 // CreateClusterRoleFromYaml creates the ClusterRole from the yaml template.
-func CreateClusterRoleFromYaml(client client.Client, crTmpl string) error {
+func CreateClusterRoleFromYaml(client client.Client, crTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crTmpl))
 	if err != nil {
 		return err
@@ -97,6 +102,7 @@ func CreateClusterRoleFromYaml(client client.Client, crTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert clusterrole")
 	}
+	cr.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), cr)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -128,7 +134,7 @@ func DeleteClusterRoleFromYaml(client client.Client, crTmpl string) error {
 }
 
 // CreateClusterRoleBindingFromYaml creates the ClusterRoleBinding from the yaml template.
-func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string) error {
+func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(crbTmpl))
 	if err != nil {
 		return err
@@ -137,6 +143,7 @@ func CreateClusterRoleBindingFromYaml(client client.Client, crbTmpl string) erro
 	if !ok {
 		return fmt.Errorf("fail to assert clusterrolebinding")
 	}
+	crb.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), crb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -168,7 +175,7 @@ func DeleteClusterRoleBindingFromYaml(client client.Client, crbTmpl string) erro
 }
 
 // CreateRoleFromYaml creates the Role from the yaml template.
-func CreateRoleFromYaml(client client.Client, rTmpl string) error {
+func CreateRoleFromYaml(client client.Client, rTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(rTmpl))
 	if err != nil {
 		return err
@@ -177,6 +184,7 @@ func CreateRoleFromYaml(client client.Client, rTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert role")
 	}
+	r.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), r)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -208,7 +216,7 @@ func DeleteRoleFromYaml(client client.Client, rTmpl string) error {
 }
 
 // CreateRoleBindingFromYaml creates the RoleBinding from the yaml template.
-func CreateRoleBindingFromYaml(client client.Client, rbTmpl string) error {
+func CreateRoleBindingFromYaml(client client.Client, rbTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(rbTmpl))
 	if err != nil {
 		return err
@@ -217,6 +225,7 @@ func CreateRoleBindingFromYaml(client client.Client, rbTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert rolebinding")
 	}
+	rb.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), rb)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -248,7 +257,7 @@ func DeleteRoleBindingFromYaml(client client.Client, rbTmpl string) error {
 }
 
 // CreateServiceAccountFromYaml creates the ServiceAccount from the yaml template.
-func CreateServiceAccountFromYaml(client client.Client, saTmpl string) error {
+func CreateServiceAccountFromYaml(client client.Client, saTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(saTmpl))
 	if err != nil {
 		return err
@@ -257,6 +266,7 @@ func CreateServiceAccountFromYaml(client client.Client, saTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert serviceaccount")
 	}
+	sa.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), sa)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -288,7 +298,7 @@ func DeleteServiceAccountFromYaml(client client.Client, saTmpl string) error {
 }
 
 // CreateConfigMapFromYaml creates the ConfigMap from the yaml template.
-func CreateConfigMapFromYaml(client client.Client, cmTmpl string) error {
+func CreateConfigMapFromYaml(client client.Client, cmTmpl string, ownerRefs []metav1.OwnerReference) error {
 	obj, err := YamlToObject([]byte(cmTmpl))
 	if err != nil {
 		return err
@@ -297,6 +307,7 @@ func CreateConfigMapFromYaml(client client.Client, cmTmpl string) error {
 	if !ok {
 		return fmt.Errorf("fail to assert configmap")
 	}
+	cm.ObjectMeta.SetOwnerReferences(ownerRefs)
 	err = client.Create(context.Background(), cm)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -328,7 +339,7 @@ func DeleteConfigMapFromYaml(client client.Client, cmTmpl string) error {
 }
 
 // CreateDeployFromYaml creates the Deployment from the yaml template.
-func CreateDeployFromYaml(client client.Client, dplyTmpl string, replicas int32, ownerRef *metav1.OwnerReference, ctx interface{}) error {
+func CreateDeployFromYaml(client client.Client, dplyTmpl, image string, replicas int32, ownerRef *metav1.OwnerReference, ctx interface{}) error {
 	dp, err := SubsituteTemplate(dplyTmpl, ctx)
 	if err != nil {
 		return err
@@ -347,6 +358,9 @@ func CreateDeployFromYaml(client client.Client, dplyTmpl string, replicas int32,
 		dply.ObjectMeta.SetOwnerReferences(ownerRefs)
 	}
 	dply.Spec.Replicas = &replicas
+	if image != "" {
+		dply.Spec.Template.Spec.Containers[len(dply.Spec.Template.Spec.Containers)-1].Image = image
+	}
 	err = client.Create(context.Background(), dply)
 	if err != nil {
 		if !apierrors.IsAlreadyExists(err) {
@@ -382,7 +396,7 @@ func DeleteDeployFromYaml(client client.Client, dplyTmpl string, ctx interface{}
 }
 
 // UpdateDeployFromYaml updates the Deployment from the yaml template.
-func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32, ctx interface{}) error {
+func UpdateDeployFromYaml(cli client.Client, dplyTmpl, image string, replicas *int32, ctx interface{}) error {
 	dp, err := SubsituteTemplate(dplyTmpl, ctx)
 	if err != nil {
 		return err
@@ -395,8 +409,15 @@ func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32
 	if !ok {
 		return fmt.Errorf("fail to assert deployment")
 	}
+	if cli.Get(context.Background(), client.ObjectKey{Namespace: dply.Namespace, Name: dply.Name}, dply) != nil {
+		klog.V(4).Infof("get deployment/%s failed", dply.Name)
+		return nil
+	}
 	dply.Spec.Replicas = replicas
-	err = client.Update(context.Background(), dply)
+	if image != "" {
+		dply.Spec.Template.Spec.Containers[len(dply.Spec.Template.Spec.Containers)-1].Image = image
+	}
+	err = cli.Update(context.Background(), dply)
 	if err != nil {
 		return fmt.Errorf("fail to update the deployment/%s: %v", dply.Name, err)
 	}
@@ -405,7 +426,7 @@ func UpdateDeployFromYaml(client client.Client, dplyTmpl string, replicas *int32
 }
 
 // CreateServiceFromYaml creates the Service from the yaml template.
-func CreateServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}) error {
+func CreateServiceFromYaml(client client.Client, svcTmpl string, externalIPs *[]string, ctx interface{}) error {
 	sv, err := SubsituteTemplate(svcTmpl, ctx)
 	if err != nil {
 		return err
@@ -417,6 +438,9 @@ func CreateServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}
 	svc, ok := svcObj.(*corev1.Service)
 	if !ok {
 		return fmt.Errorf("fail to assert service")
+	}
+	if externalIPs != nil {
+		svc.Spec.ExternalIPs = *externalIPs
 	}
 	err = client.Create(context.Background(), svc)
 	if err != nil {
@@ -452,8 +476,35 @@ func DeleteServiceFromYaml(client client.Client, svcTmpl string, ctx interface{}
 	return nil
 }
 
+// UpdateServiceFromYaml updates the Service from the yaml template.
+func UpdateServiceFromYaml(cli client.Client, svcTmpl string, externalIPs *[]string, ctx interface{}) error {
+	sv, err := SubsituteTemplate(svcTmpl, ctx)
+	if err != nil {
+		return err
+	}
+	svcObj, err := YamlToObject([]byte(sv))
+	if err != nil {
+		return err
+	}
+	svc, ok := svcObj.(*corev1.Service)
+	if !ok {
+		return fmt.Errorf("fail to assert service")
+	}
+	if cli.Get(context.Background(), client.ObjectKey{Namespace: svc.Namespace, Name: svc.Name}, svc) != nil {
+		klog.V(4).Infof("get service/%s failed", svc.Name)
+		return nil
+	}
+	svc.Spec.ExternalIPs = *externalIPs
+	err = cli.Update(context.Background(), svc)
+	if err != nil {
+		return fmt.Errorf("fail to update the service/%s: %v", svc.Name, err)
+	}
+	klog.V(4).Infof("service/%s is updated", svc.Name)
+	return nil
+}
+
 // CreateValidatingWebhookConfigurationFromYaml creates the validatingwebhookconfiguration from the yaml template.
-func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl string, ctx interface{}) error {
+func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl string, ownerRef *metav1.OwnerReference, ctx interface{}) error {
 	vw, err := SubsituteTemplate(vwcTmpl, ctx)
 	if err != nil {
 		return err
@@ -465,6 +516,11 @@ func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 	vwc, ok := vwcObj.(*v1beta1.ValidatingWebhookConfiguration)
 	if !ok {
 		return fmt.Errorf("fail to assert validatingwebhookconfiguration")
+	}
+	if ownerRef != nil {
+		ownerRefs := vwc.ObjectMeta.GetOwnerReferences()
+		ownerRefs = append(ownerRefs, *ownerRef)
+		vwc.ObjectMeta.SetOwnerReferences(ownerRefs)
 	}
 	err = client.Create(context.Background(), vwc)
 	if err != nil {
@@ -501,7 +557,7 @@ func DeleteValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 }
 
 // CreateJobFromYaml creates the Job from the yaml template.
-func CreateJobFromYaml(client client.Client, jobTmpl string, ctx interface{}) error {
+func CreateJobFromYaml(client client.Client, jobTmpl, image string, ctx interface{}) error {
 	jb, err := SubsituteTemplate(jobTmpl, ctx)
 	if err != nil {
 		return err
@@ -513,6 +569,9 @@ func CreateJobFromYaml(client client.Client, jobTmpl string, ctx interface{}) er
 	job, ok := jbObj.(*batchv1.Job)
 	if !ok {
 		return fmt.Errorf("fail to assert job")
+	}
+	if image != "" {
+		job.Spec.Template.Spec.Containers[len(job.Spec.Template.Spec.Containers)-1].Image = image
 	}
 	err = client.Create(context.Background(), job)
 	if err != nil {

@@ -20,17 +20,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Define the default nodepool ingress related values
-const (
-	// DefaultIngressControllerReplicasPerPool defines the default ingress controller replicas per pool
-	DefaultIngressControllerReplicasPerPool int32 = 1
-	// NginxIngressControllerVersion defines the nginx ingress controller version
-	NginxIngressControllerVersion = "0.48.1"
-	// SingletonYurtIngressInstanceName defines the singleton instance name of YurtIngress
-	SingletonYurtIngressInstanceName = "yurtingress-singleton"
-	// YurtIngressFinalizer is used to cleanup ingress resources when singleton YurtIngress CR is deleted
-	YurtIngressFinalizer = "ingress.operator.openyurt.io"
-)
+// YurtIngressFinalizer is used to cleanup ingress resources when YurtIngress CR is deleted
+const YurtIngressFinalizer string = "ingress.operator.openyurt.io"
 
 type IngressNotReadyType string
 
@@ -44,7 +35,8 @@ type IngressPool struct {
 	// Indicates the pool name.
 	Name string `json:"name"`
 
-	// Pool specific configuration will be supported in future.
+	// IngressIPs is a list of IP addresses for which nodes will also accept traffic for this service.
+	IngressIPs []string `json:"ingress_ips,omitempty"`
 }
 
 // IngressNotReadyConditionInfo defines the details info of an ingress not ready Pool
@@ -64,11 +56,11 @@ type IngressNotReadyConditionInfo struct {
 
 // IngressNotReadyPool defines the condition details of an ingress not ready Pool
 type IngressNotReadyPool struct {
-	// Indicates the pool name.
-	Name string `json:"name"`
+	// Indicates the base pool info.
+	Pool IngressPool `json:"pool"`
 
 	// Info of ingress not ready condition.
-	Info *IngressNotReadyConditionInfo `json:"poolinfo,omitempty"`
+	Info *IngressNotReadyConditionInfo `json:"unreadyinfo,omitempty"`
 }
 
 // YurtIngressSpec defines the desired state of YurtIngress
@@ -76,6 +68,14 @@ type YurtIngressSpec struct {
 	// Indicates the number of the ingress controllers to be deployed under all the specified nodepools.
 	// +optional
 	Replicas int32 `json:"ingress_controller_replicas_per_pool,omitempty"`
+
+	// Indicates the ingress controller image url.
+	// +optional
+	IngressControllerImage string `json:"ingress_controller_image,omitempty"`
+
+	// Indicates the ingress webhook image url.
+	// +optional
+	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image,omitempty"`
 
 	// Indicates all the nodepools on which to enable ingress.
 	// +optional
@@ -85,7 +85,7 @@ type YurtIngressSpec struct {
 // YurtIngressCondition describes current state of a YurtIngress
 type YurtIngressCondition struct {
 	// Indicates the pools that ingress controller is deployed successfully.
-	IngressReadyPools []string `json:"ingressreadypools,omitempty"`
+	IngressReadyPools []IngressPool `json:"ingressreadypools,omitempty"`
 
 	// Indicates the pools that ingress controller is being deployed or deployed failed.
 	IngressNotReadyPools []IngressNotReadyPool `json:"ingressunreadypools,omitempty"`
@@ -101,9 +101,13 @@ type YurtIngressStatus struct {
 	// +optional
 	Conditions YurtIngressCondition `json:"conditions,omitempty"`
 
-	// Indicates the nginx ingress controller version deployed under all the specified nodepools.
+	// Indicates the ingress controller image url.
 	// +optional
-	Version string `json:"nginx_ingress_controller_version,omitempty"`
+	IngressControllerImage string `json:"ingress_controller_image"`
+
+	// Indicates the ingress webhook image url.
+	// +optional
+	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image"`
 
 	// Total number of ready pools on which ingress is enabled.
 	// +optional
@@ -116,7 +120,6 @@ type YurtIngressStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster,path=yurtingresses,shortName=ying,categories=all
-// +kubebuilder:printcolumn:name="Nginx-Ingress-Version",type="string",JSONPath=".status.nginx_ingress_controller_version",description="The nginx ingress controller version"
 // +kubebuilder:printcolumn:name="Replicas-Per-Pool",type="integer",JSONPath=".status.ingress_controller_replicas_per_pool",description="The nginx ingress controller replicas per pool"
 // +kubebuilder:printcolumn:name="ReadyNum",type="integer",JSONPath=".status.readyNum",description="The number of pools on which ingress is enabled"
 // +kubebuilder:printcolumn:name="NotReadyNum",type="integer",JSONPath=".status.unreadyNum",description="The number of pools on which ingress is enabling or enable failed"

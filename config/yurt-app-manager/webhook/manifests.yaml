@@ -60,6 +60,24 @@ webhooks:
     - UPDATE
     resources:
     - yurtappdaemons
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-apps-openyurt-io-v1alpha1-yurtingress
+  failurePolicy: Fail
+  name: myurtingress.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - yurtingresses
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
