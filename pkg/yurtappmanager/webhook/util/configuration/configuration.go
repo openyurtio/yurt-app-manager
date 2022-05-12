@@ -24,7 +24,7 @@ import (
 	"net/url"
 
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
-	"k8s.io/api/admissionregistration/v1beta1"
+	adminssionv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,11 +36,11 @@ const (
 )
 
 func Ensure(c client.Client, handlers map[string]webhookutil.Handler, caBundle []byte) error {
-	mutatingConfig := &v1beta1.MutatingWebhookConfiguration{}
+	mutatingConfig := &adminssionv1.MutatingWebhookConfiguration{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: mutatingWebhookConfigurationName}, mutatingConfig); err != nil {
 		return fmt.Errorf("not found MutatingWebhookConfiguration %s", mutatingWebhookConfigurationName)
 	}
-	validatingConfig := &v1beta1.ValidatingWebhookConfiguration{}
+	validatingConfig := &adminssionv1.ValidatingWebhookConfiguration{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: validatingWebhookConfigurationName}, validatingConfig); err != nil {
 		return fmt.Errorf("not found ValidatingWebhookConfiguration %s", validatingWebhookConfigurationName)
 	}
@@ -54,7 +54,7 @@ func Ensure(c client.Client, handlers map[string]webhookutil.Handler, caBundle [
 		return err
 	}
 
-	var mutatingWHs []v1beta1.MutatingWebhook
+	var mutatingWHs []adminssionv1.MutatingWebhook
 	for i := range mutatingTemplate {
 		wh := &mutatingTemplate[i]
 		wh.ClientConfig.CABundle = caBundle
@@ -77,7 +77,7 @@ func Ensure(c client.Client, handlers map[string]webhookutil.Handler, caBundle [
 	}
 	mutatingConfig.Webhooks = mutatingWHs
 
-	var validatingWHs []v1beta1.ValidatingWebhook
+	var validatingWHs []adminssionv1.ValidatingWebhook
 	for i := range validatingTemplate {
 		wh := &validatingTemplate[i]
 		wh.ClientConfig.CABundle = caBundle
@@ -110,7 +110,7 @@ func Ensure(c client.Client, handlers map[string]webhookutil.Handler, caBundle [
 	return nil
 }
 
-func getPath(clientConfig *v1beta1.WebhookClientConfig) (string, error) {
+func getPath(clientConfig *adminssionv1.WebhookClientConfig) (string, error) {
 	if clientConfig.Service != nil {
 		return *clientConfig.Service.Path, nil
 	} else if clientConfig.URL != nil {
@@ -123,15 +123,15 @@ func getPath(clientConfig *v1beta1.WebhookClientConfig) (string, error) {
 	return "", fmt.Errorf("invalid clientConfig: %+v", clientConfig)
 }
 
-func convertClientConfig(clientConfig *v1beta1.WebhookClientConfig, host string, port int) {
+func convertClientConfig(clientConfig *adminssionv1.WebhookClientConfig, host string, port int) {
 	url := fmt.Sprintf("https://%s:%d%s", host, port, *clientConfig.Service.Path)
 	clientConfig.URL = &url
 	clientConfig.Service = nil
 }
 
-func parseMutatingTemplate(mutatingConfig *v1beta1.MutatingWebhookConfiguration) ([]v1beta1.MutatingWebhook, error) {
+func parseMutatingTemplate(mutatingConfig *adminssionv1.MutatingWebhookConfiguration) ([]adminssionv1.MutatingWebhook, error) {
 	if templateStr := mutatingConfig.Annotations["template"]; len(templateStr) > 0 {
-		var mutatingWHs []v1beta1.MutatingWebhook
+		var mutatingWHs []adminssionv1.MutatingWebhook
 		if err := json.Unmarshal([]byte(templateStr), &mutatingWHs); err != nil {
 			return nil, err
 		}
@@ -149,9 +149,9 @@ func parseMutatingTemplate(mutatingConfig *v1beta1.MutatingWebhookConfiguration)
 	return mutatingConfig.Webhooks, nil
 }
 
-func parseValidatingTemplate(validatingConfig *v1beta1.ValidatingWebhookConfiguration) ([]v1beta1.ValidatingWebhook, error) {
+func parseValidatingTemplate(validatingConfig *adminssionv1.ValidatingWebhookConfiguration) ([]adminssionv1.ValidatingWebhook, error) {
 	if templateStr := validatingConfig.Annotations["template"]; len(templateStr) > 0 {
-		var validatingWHs []v1beta1.ValidatingWebhook
+		var validatingWHs []adminssionv1.ValidatingWebhook
 		if err := json.Unmarshal([]byte(templateStr), &validatingWHs); err != nil {
 			return nil, err
 		}

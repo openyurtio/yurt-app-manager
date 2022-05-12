@@ -156,7 +156,7 @@ func SetDefaultPodSpec(in *corev1.PodSpec) {
 		v1.SetDefaults_Container(a)
 		for j := range a.Ports {
 			b := &a.Ports[j]
-			v1.SetDefaults_ContainerPort(b)
+			SetDefaults_ContainerPort(b)
 		}
 		for j := range a.Env {
 			b := &a.Env[j]
@@ -202,7 +202,7 @@ func SetDefaultPodSpec(in *corev1.PodSpec) {
 		v1.SetDefaults_Container(a)
 		for j := range a.Ports {
 			b := &a.Ports[j]
-			v1.SetDefaults_ContainerPort(b)
+			SetDefaults_ContainerPort(b)
 		}
 		for j := range a.Env {
 			b := &a.Env[j]
@@ -238,5 +238,12 @@ func SetDefaultPodSpec(in *corev1.PodSpec) {
 				}
 			}
 		}
+	}
+}
+
+// TODO fix copy from https://github.com/contiv/client-go/blob/v2.0.0-alpha.1/pkg/api/v1/defaults.go#L104
+func SetDefaults_ContainerPort(obj *corev1.ContainerPort) {
+	if obj.Protocol == "" {
+		obj.Protocol = corev1.ProtocolTCP
 	}
 }

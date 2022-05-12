@@ -19,7 +19,7 @@ set -x
 YURT_IMAGE_DIR=${YURT_OUTPUT_DIR}/images
 YURTCTL_SERVANT_DIR=${YURT_ROOT}/config/yurtctl-servant
 DOCKER_BUILD_BASE_IDR=$YURT_ROOT/dockerbuild
-YURT_BUILD_IMAGE="golang:1.15-alpine"
+YURT_BUILD_IMAGE="golang:1.16-alpine"
 
 readonly SUPPORTED_OS=linux
 readonly bin_target=yurt-app-manager
@@ -102,8 +102,8 @@ push_images() {
 
 # gen_yamls generates yaml files for the yurt-app-manager 
 gen_yamls() {
-    local OUT_YAML_DIR=$YURT_ROOT/_output/yamls/
-    local BUILD_YAML_DIR=${OUT_YAML_DIR}/build/
+    local OUT_YAML_DIR=$YURT_ROOT/_output/yamls
+    local BUILD_YAML_DIR=${OUT_YAML_DIR}/build
     [ -f $BUILD_YAML_DIR ] || mkdir -p $BUILD_YAML_DIR
     mkdir -p ${BUILD_YAML_DIR}
     (

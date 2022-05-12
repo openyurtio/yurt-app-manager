@@ -80,7 +80,7 @@ func validateWorkLoadTemplate(template *unitv1alpha1.WorkloadTemplate, selector 
 			allErrs = append(allErrs, field.Invalid(fldPath.Root(), sstemplate, fmt.Sprintf("Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec failed: %v", err)))
 			return allErrs
 		}
-		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"))...)
+		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"),apivalidation.PodValidationOptions{})...)
 	}
 
 	if template.DeploymentTemplate != nil {
@@ -98,7 +98,7 @@ func validateWorkLoadTemplate(template *unitv1alpha1.WorkloadTemplate, selector 
 		}
 		allErrs = append(allErrs, validatePodTemplateSpec(coreTemplate, selector, fldPath.Child("deploymentTemplate", "spec", "template"))...)
 		allErrs = append(allErrs, apivalidation.ValidatePodTemplateSpec(coreTemplate,
-			fldPath.Child("deploymentTemplate", "spec", "template"))...)
+			fldPath.Child("deploymentTemplate", "spec", "template"),apivalidation.PodValidationOptions{})...)
 	}
 
 	return allErrs

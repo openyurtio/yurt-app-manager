@@ -23,7 +23,7 @@ import (
 	"text/template"
 	"time"
 
-	"k8s.io/api/admissionregistration/v1beta1"
+	admissionv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -513,7 +513,7 @@ func CreateValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 	if err != nil {
 		return err
 	}
-	vwc, ok := vwcObj.(*v1beta1.ValidatingWebhookConfiguration)
+	vwc, ok := vwcObj.(*admissionv1.ValidatingWebhookConfiguration)
 	if !ok {
 		return fmt.Errorf("fail to assert validatingwebhookconfiguration")
 	}
@@ -542,7 +542,7 @@ func DeleteValidatingWebhookConfigurationFromYaml(client client.Client, vwcTmpl 
 	if err != nil {
 		return err
 	}
-	vwc, ok := vwcObj.(*v1beta1.ValidatingWebhookConfiguration)
+	vwc, ok := vwcObj.(*admissionv1.ValidatingWebhookConfiguration)
 	if !ok {
 		return fmt.Errorf("fail to assert validatingwebhookconfiguration")
 	}

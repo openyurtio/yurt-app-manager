@@ -59,6 +59,12 @@ func (h *UnitedDeploymentCreateUpdateHandler) Handle(ctx context.Context, req ad
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
+
+	origin,_ := json.Marshal(obj)
+	klog.Infoln("UnitedDeploymentCreateUpdateHandler")
+	klog.Infoln(string(req.Object.Raw))
+	klog.Infoln(string(origin))
+
 	unitv1alpha1.SetDefaultsUnitedDeployment(obj)
 	obj.Status = unitv1alpha1.UnitedDeploymentStatus{}
 
@@ -73,6 +79,8 @@ func (h *UnitedDeploymentCreateUpdateHandler) Handle(ctx context.Context, req ad
 	}
 
 	marshalled, err := json.Marshal(obj)
+	klog.Infoln("after UnitedDeploymentCreateUpdateHandler")
+	klog.Infoln(string(marshalled))
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}

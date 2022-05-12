@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CRD_OPTIONS ?= "crd:crdVersions=v1"
+
 .PHONY: clean all release build
 
 all: test build
@@ -70,11 +72,11 @@ clean:
 	-rm -Rf _output
 	-rm -Rf dockerbuild
 
-generate: controller-gen generate-manifests generate-goclient
+generate: controller-gen manifests generate-goclient
 
 # Generate manifests, e.g., CRD, RBAC etc.
-generate-manifests: controller-gen
-	$(CONTROLLER_GEN) crd:trivialVersions=true rbac:roleName=manager-role webhook paths="./pkg/yurtappmanager/..." output:crd:artifacts:config=config/yurt-app-manager/crd/bases  output:rbac:artifacts:config=config/yurt-app-manager/rbac output:webhook:artifacts:config=config/yurt-app-manager/webhook
+manifests: controller-gen
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." paths="./pkg/yurtappmanager/..." output:crd:artifacts:config=config/yurt-app-manager/crd/bases  output:rbac:artifacts:config=config/yurt-app-manager/rbac output:webhook:artifacts:config=config/yurt-app-manager/webhook
 
 # Generate go codes.
 generate-goclient: controller-gen
@@ -99,21 +101,38 @@ generate-goclient: controller-gen
 generate-deploy-yaml: 
 	hack/make-rules/genyaml.sh
 
-# find or download controller-gen
-# download controller-gen if necessary
-controller-gen:
-ifeq (, $(shell which controller-gen-openyurt))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	echo "replace sigs.k8s.io/controller-tools => github.com/openkruise/controller-tools v0.2.9-kruise" >> go.mod ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.9 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	mv $(GOPATH)/bin/controller-gen $(GOPATH)/bin/controller-gen-openyurt ;\
-	}
-CONTROLLER_GEN=$(GOPATH)/bin/controller-gen-openyurt
+
+
+CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+controller-gen: ## Download controller-gen locally if necessary.
+ifeq ("$(shell $(CONTROLLER_GEN) --version 2> /dev/null)", "Version: v0.7.0")
 else
-CONTROLLER_GEN=$(shell which controller-gen-openyurt)
+	rm -rf $(CONTROLLER_GEN)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0)
 endif
+
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
+GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
+golangci-lint: ## Download golangci-lint locally if necessary.
+	$(call go-get-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1)
+
+GINKGO = $(shell pwd)/bin/ginkgo
+ginkgo: ## Download ginkgo locally if necessary.
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/ginkgo@v1.16.4)
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef
