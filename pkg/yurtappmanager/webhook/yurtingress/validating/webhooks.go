@@ -20,7 +20,7 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// +kubebuilder:webhook:path=/validate-apps-openyurt-io-v1alpha1-yurtingress,mutating=false,failurePolicy=fail,groups=apps.openyurt.io,resources=yurtingresses,verbs=create;update;delete,versions=v1alpha1,name=vyurtingress.kb.io
+// +kubebuilder:webhook:path=/validate-apps-openyurt-io-v1alpha1-yurtingress,mutating=false,failurePolicy=fail,groups=apps.openyurt.io,resources=yurtingresses,verbs=create;update;delete,versions=v1alpha1,name=vyurtingress.kb.io,sideEffects=none,admissionReviewVersions=v1;v1alpha1
 
 var (
 	// HandlerMap contains admission webhook handlers

@@ -32,6 +32,7 @@ build_multi_arch_binaries() {
         "--rm"
         "--network host"
         "-v ${YURT_ROOT}:/opt/src"
+        "-v ${GOPATH}:/go"
         "--env CGO_ENABLED=0"
         "--env GOOS=${SUPPORTED_OS}"
         "--env PROJECT_PREFIX=${PROJECT_PREFIX}"

@@ -22,16 +22,16 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/api/admissionregistration/v1beta1"
+	admv1 "k8s.io/api/admissionregistration/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
-	admissionregistrationinformers "k8s.io/client-go/informers/admissionregistration/v1beta1"
+	admissionregistrationinformers "k8s.io/client-go/informers/admissionregistration/v1"
 	coreinformers "k8s.io/client-go/informers/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
-	admissionregistrationlisters "k8s.io/client-go/listers/admissionregistration/v1beta1"
+	admissionregistrationlisters "k8s.io/client-go/listers/admissionregistration/v1"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -117,14 +117,14 @@ func New(cli client.Client, handlers map[string]webhookutil.Handler) (*Controlle
 
 	admissionRegistrationInformer.MutatingWebhookConfigurations().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			conf := obj.(*v1beta1.MutatingWebhookConfiguration)
+			conf := obj.(*admv1.MutatingWebhookConfiguration)
 			if conf.Name == mutatingWebhookConfigurationName {
 				klog.Infof("MutatingWebhookConfiguration %s added", mutatingWebhookConfigurationName)
 				c.queue.Add("")
 			}
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			conf := cur.(*v1beta1.MutatingWebhookConfiguration)
+			conf := cur.(*admv1.MutatingWebhookConfiguration)
 			if conf.Name == mutatingWebhookConfigurationName {
 				klog.Infof("MutatingWebhookConfiguration %s update", mutatingWebhookConfigurationName)
 				c.queue.Add("")
@@ -134,14 +134,14 @@ func New(cli client.Client, handlers map[string]webhookutil.Handler) (*Controlle
 
 	admissionRegistrationInformer.ValidatingWebhookConfigurations().Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			conf := obj.(*v1beta1.ValidatingWebhookConfiguration)
+			conf := obj.(*admv1.ValidatingWebhookConfiguration)
 			if conf.Name == validatingWebhookConfigurationName {
 				klog.Infof("ValidatingWebhookConfiguration %s added", validatingWebhookConfigurationName)
 				c.queue.Add("")
 			}
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			conf := cur.(*v1beta1.ValidatingWebhookConfiguration)
+			conf := cur.(*admv1.ValidatingWebhookConfiguration)
 			if conf.Name == validatingWebhookConfigurationName {
 				klog.Infof("ValidatingWebhookConfiguration %s updated", validatingWebhookConfigurationName)
 				c.queue.Add("")

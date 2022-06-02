@@ -20,7 +20,7 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-apps-openyurt-io-v1alpha1-nodepool,mutating=false,failurePolicy=fail,groups=apps.openyurt.io,resources=nodepools,versions=v1alpha1,name=vnodepool.kb.io
+// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-apps-openyurt-io-v1alpha1-nodepool,mutating=false,failurePolicy=fail,groups=apps.openyurt.io,resources=nodepools,versions=v1alpha1,name=vnodepool.kb.io,sideEffects=none,admissionReviewVersions=v1
 
 var (
 	// HandlerMap contains admission webhook handlers

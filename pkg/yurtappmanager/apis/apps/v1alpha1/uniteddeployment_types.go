@@ -83,12 +83,14 @@ type WorkloadTemplate struct {
 
 // StatefulSetTemplateSpec defines the pool template of StatefulSet.
 type StatefulSetTemplateSpec struct {
+	// +kubebuilder:pruning:PreserveUnknownFields
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              appsv1.StatefulSetSpec `json:"spec"`
 }
 
 // DeploymentTemplateSpec defines the pool template of Deployment.
 type DeploymentTemplateSpec struct {
+	// +kubebuilder:pruning:PreserveUnknownFields
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              appsv1.DeploymentSpec `json:"spec"`
 }
