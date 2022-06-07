@@ -38,7 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog"
-	"k8s.io/klog/klogr"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	// +kubebuilder:scaffold:imports
@@ -100,8 +100,8 @@ func Run(opts *options.YurtAppOptions) {
 		}()
 	}
 
-	//ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
-	ctrl.SetLogger(klogr.New())
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	//ctrl.SetLogger(klogr.New())
 
 	cfg := ctrl.GetConfigOrDie()
 	setRestConfig(cfg)

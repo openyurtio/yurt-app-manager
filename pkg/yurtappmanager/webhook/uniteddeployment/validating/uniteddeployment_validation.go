@@ -19,6 +19,8 @@ package validating
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"k8s.io/klog"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -34,6 +36,7 @@ import (
 	"k8s.io/kubernetes/pkg/apis/core"
 	corev1 "k8s.io/kubernetes/pkg/apis/core/v1"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
+	corevalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -51,6 +54,12 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("selector"), spec.Selector, "empty selector is invalid for statefulset"))
 		}
 	}
+
+	klog.Infof("sel:%v, label: %v\n",spec.Selector,spec.WorkloadTemplate.DeploymentTemplate.Labels)
+	klog.Infof("templatePath:%s",fldPath.Child("workloadTemplate").String())
+
+	ss,_ :=	yaml.Marshal(spec)
+	klog.Infoln(string(ss))
 
 	selector, err := metav1.LabelSelectorAsSelector(spec.Selector)
 	if err != nil {
@@ -208,12 +217,15 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 			allErrs = append(allErrs, field.Invalid(fldPath.Root(), sstemplate, fmt.Sprintf("Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec failed: %v", err)))
 			return allErrs
 		}
-		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"))...)
+		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"),corevalidation.PodValidationOptions{})...)
 	}
 
+	klog.Infoln("call webhook validatePoolTemplate")
 	if template.DeploymentTemplate != nil {
 		labels := labels.Set(template.DeploymentTemplate.Labels)
 		if !selector.Matches(labels) {
+
+			klog.Errorf("labels: %v, selector: %v",labels,selector)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("deploymentTemplate", "metadata", "labels"),
 				template.DeploymentTemplate.Labels, "`selector` does not match template `labels`"))
 		}
@@ -226,7 +238,7 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 		}
 		allErrs = append(allErrs, validatePodTemplateSpec(coreTemplate, selector, fldPath.Child("deploymentTemplate", "spec", "template"))...)
 		allErrs = append(allErrs, apivalidation.ValidatePodTemplateSpec(coreTemplate,
-			fldPath.Child("deploymentTemplate", "spec", "template"))...)
+			fldPath.Child("deploymentTemplate", "spec", "template"),corevalidation.PodValidationOptions{})...)
 	}
 
 	return allErrs

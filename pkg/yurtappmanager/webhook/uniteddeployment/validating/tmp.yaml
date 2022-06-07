@@ -1,0 +1,63 @@
+apiVersion: apps.openyurt.io/v1alpha1
+kind: UnitedDeployment
+metadata:
+  labels:
+    www.edgexfoundry.org/generate: Deployment
+  name: edgex-core-consul
+spec:
+  selector:
+    matchLabels:
+      app: edgex-core-consul
+  topology:
+    pools:
+      - name: huadong
+        nodeSelectorTerm:
+          matchExpressions:
+            - key: apps.openyurt.io/nodepool
+              operator: In
+              values:
+                - huadong
+        replicas: 1
+  workloadTemplate:
+    deploymentTemplate:
+      metadata:
+        labels:
+          app: edgex-core-consul
+      spec:
+        selector:
+          matchLabels:
+            app: edgex-core-consul
+        strategy: {}
+        template:
+          metadata:
+            labels:
+              app: edgex-core-consul
+          spec:
+            dnsPolicy: ClusterFirst
+            restartPolicy: Always
+            containers:
+              - image: docker.io/consul:1.10.3
+                imagePullPolicy: IfNotPresent
+                name: edgex-core-consul
+                ports:
+                  - containerPort: 8500
+                    name: tcp-8500
+                    protocol: TCP
+                resources: {}
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+                volumeMounts:
+                  - mountPath: /consul/config
+                    name: consul-config
+                  - mountPath: /consul/data
+                    name: consul-data
+
+            volumes:
+              - hostPath:
+                  path: /consul/config
+                  type: DirectoryOrCreate
+                name: consul-config
+              - hostPath:
+                  path: /consul/data
+                  type: DirectoryOrCreate
+                name: consul-data

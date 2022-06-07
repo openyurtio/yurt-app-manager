@@ -17,6 +17,64 @@ limitations under the License.
 
 package validating
 
+import (
+	y2 "gopkg.in/yaml.v2"
+
+	"encoding/json"
+	"fmt"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/klog"
+	"testing"
+)
+
+func TestValidateUnitedDeployment(t *testing.T) {
+	deployment := v1alpha1.UnitedDeployment{}
+
+	var deployYaml []byte
+	var err error
+	var deployJson []byte
+	// 初始化k8s客户端
+	//if clientset, err = common.InitClient(); err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+
+	// 读取YAML
+	if deployYaml, err = ioutil.ReadFile("./tmp.yaml"); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+
+	// YAML转JSON
+	if deployJson, err = yaml.ToJSON(deployYaml); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// JSON转struct
+	if err = json.Unmarshal(deployJson, &deployment); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	klog.Info(deployment.Name)
+
+	//allErrs = append(allErrs, validateUnitedDeploymentSpec(c, &unitedDeployment.Spec, field.NewPath("spec"))...)
+
+	errs := validateUnitedDeploymentSpec(nil,&deployment.Spec,field.NewPath("spec"))
+
+	klog.Errorln(errs)
+
+
+	ss,_ :=	y2.Marshal(deployment.Spec)
+	klog.Infoln(string(ss))
+}
+
+
 /*
 import (
 	"strconv"

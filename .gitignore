@@ -6,3 +6,5 @@ dockerbuild
 
 *.out
 logs
+bin/controller-gen
+bin/kustomize
