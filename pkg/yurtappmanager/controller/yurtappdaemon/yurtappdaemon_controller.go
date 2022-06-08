@@ -167,18 +167,18 @@ func (r *ReconcileYurtAppDaemon) Reconcile(_ context.Context, request reconcile.
 	currentNPToWorkload, err := r.getNodePoolToWorkLoad(instance, control)
 	if err != nil {
 		klog.Errorf("YurtAppDaemon[%s/%s] Fail to get nodePoolWorkload, error: %s", instance.Namespace, instance.Name, err)
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, err
 	}
 
 	allNameToNodePools, err := r.getNameToNodePools(instance)
 	if err != nil {
 		klog.Errorf("YurtAppDaemon[%s/%s] Fail to get nameToNodePools, error: %s", instance.Namespace, instance.Name, err)
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, err
 	}
 
 	newStatus, err := r.manageWorkloads(instance, currentNPToWorkload, allNameToNodePools, expectedRevision.Name, templateType)
 	if err != nil {
-		return reconcile.Result{}, nil
+		return reconcile.Result{}, err
 	}
 
 	return r.updateStatus(instance, newStatus, oldStatus, currentRevision, collisionCount, templateType)
