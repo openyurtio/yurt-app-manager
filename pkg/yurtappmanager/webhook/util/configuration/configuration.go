@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 	adminssionv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,12 +31,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	mutatingWebhookConfigurationName   = "yurt-app-mutating-webhook-configuration"
-	validatingWebhookConfigurationName = "yurt-app-validating-webhook-configuration"
-)
-
 func Ensure(c client.Client, handlers map[string]webhookutil.Handler, caBundle []byte) error {
+	mutatingWebhookConfigurationName := util.GetMutatingWebhookConfigurationName()
+	validatingWebhookConfigurationName := util.GetValidatingWebhookConfigurationName()
+
 	mutatingConfig := &adminssionv1.MutatingWebhookConfiguration{}
 	if err := c.Get(context.TODO(), types.NamespacedName{Name: mutatingWebhookConfigurationName}, mutatingConfig); err != nil {
 		return fmt.Errorf("not found MutatingWebhookConfiguration %s", mutatingWebhookConfigurationName)
