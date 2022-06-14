@@ -67,3 +67,17 @@ func GetCertDir() string {
 	}
 	return "/tmp/yurt-app-webhook-certs"
 }
+
+func GetMutatingWebhookConfigurationName() string {
+	if p := os.Getenv("MUTATING_WEBHOOK_CONFIGURATION_NAME"); len(p) > 0 {
+		return p
+	}
+	return "yurt-app-mutating-webhook-configuration"
+}
+
+func GetValidatingWebhookConfigurationName() string {
+	if p := os.Getenv("VALIDATING_WEBHOOK_CONFIGURATION_NAME"); len(p) > 0 {
+		return p
+	}
+	return "yurt-app-validating-webhook-configuration"
+}
