@@ -13,6 +13,25 @@
 # limitations under the License.
 
 CRD_OPTIONS ?= "crd:crdVersions=v1"
+TARGET_PLATFORMS ?= linux/arm64
+IMAGE_REPO ?= openyurt
+IMAGE_TAG ?= $(shell git describe --abbrev=0 --tags)
+GIT_VERSION = $(shell git describe --abbrev=0 --tags)
+GIT_COMMIT = $(shell git rev-parse --short HEAD)
+
+DOCKER_BUILD_ARGS = --build-arg GIT_VERSION=${GIT_VERSION}
+
+ifeq (${REGION}, cn)
+DOCKER_BUILD_ARGS += --build-arg GOPROXY=https://goproxy.cn --build-arg MIRROR_REPO=mirrors.aliyun.com
+endif
+
+ifneq (${http_proxy},)
+DOCKER_BUILD_ARGS += --build-arg http_proxy='${http_proxy}'
+endif
+
+ifneq (${https_proxy},)
+DOCKER_BUILD_ARGS += --build-arg https_proxy='${https_proxy}'
+endif
 
 .PHONY: clean all release build
 
@@ -34,39 +53,17 @@ fmt:
 vet:
 	go vet ./pkg/... ./cmd/...
 
-# Build binaries and docker images.  
-# NOTE: this rule can take time, as we build binaries inside containers
-#
-# ARGS:
-#   REPO: image repo.
-#   TAG:  image tag 
-#   REGION: in which region this rule is executed, if in mainland China,
-#   	set it as cn.
-#
-# Examples:
-#   # compile yurt-app-manager
-#   make release REGION=cn REPO= TAG=
-#   or
-#   make release 
-release:
-	bash hack/make-rules/release-images.sh
+docker-build:
+	docker buildx build --no-cache --load ${DOCKER_BUILD_ARGS} --platform ${TARGET_PLATFORMS} -f hack/dockerfiles/Dockerfile . -t ${IMAGE_REPO}/yurt-app-manager:${IMAGE_TAG}
 
-# Push docker images.  
-#
-# ARGS:
-#   REPO: image repo.
-#   TAG:  image tag 
-#   REGION: in which region this rule is executed, if in mainland China,
-#   	set it as cn.
-#
-# Examples:
-#   # compile yurt-app-manager
-#   make push REGION=cn REPO= TAG=
-#   or
-#   make push 
-
-push: 
-	bash hack/make-rules/push-images.sh
+docker-push:
+	docker buildx rm container-builder || true
+	docker buildx create --use --name=yurt-app-manager-container-builder
+	# enable qemu for arm64 build
+	# https://github.com/docker/buildx/issues/464#issuecomment-741507760
+	docker run --privileged --rm tonistiigi/binfmt --uninstall qemu-aarch64
+	docker run --rm --privileged tonistiigi/binfmt --install all
+	docker buildx build --no-cache --push ${DOCKER_BUILD_ARGS} --platform ${TARGET_PLATFORMS} -f hack/dockerfiles/Dockerfile . -t ${IMAGE_REPO}/yurt-app-manager:${IMAGE_TAG}
 
 clean: 
 	-rm -Rf _output
@@ -82,7 +79,6 @@ manifests: controller-gen
 generate-goclient: controller-gen
 	hack/make-rules/generate_client.sh
 	$(CONTROLLER_GEN) object:headerFile="./pkg/yurtappmanager/hack/boilerplate.go.txt" paths="./pkg/yurtappmanager/apis/..."
-
 
 # generate deploy yaml.  
 #
@@ -100,8 +96,6 @@ generate-goclient: controller-gen
 
 generate-deploy-yaml: 
 	hack/make-rules/genyaml.sh
-
-
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.

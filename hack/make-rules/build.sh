@@ -17,6 +17,7 @@
 set -x
 
 YURT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
-source "${YURT_ROOT}/hack/lib/init.sh" 
+source "${YURT_ROOT}/hack/lib/init.sh"
+source "${YURT_ROOT}/hack/lib/build.sh"
 
 build_binary "$@"
