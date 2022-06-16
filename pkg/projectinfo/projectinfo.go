@@ -31,7 +31,7 @@ var (
 
 // GetYurtAppManagerName returns name of tunnel
 func GetYurtAppManagerName() string {
-	return projectPrefix + "app-manager"
+	return projectPrefix + "-app-manager"
 }
 
 // normalizeGitCommit reserve 7 characters for gitCommit

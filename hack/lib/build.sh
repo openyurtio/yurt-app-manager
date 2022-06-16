@@ -18,6 +18,8 @@ set -x
 
 # project_info generates the project information and the corresponding valuse 
 # for 'ldflags -X' option
+# gitVersion: "vX.Y" used to indicate the last release version
+# gitCommit: the git commit id corresponding to this source code
 project_info() {
     PROJECT_INFO_PKG=${YURT_MOD}/pkg/projectinfo
     echo "-X ${PROJECT_INFO_PKG}.projectPrefix=${PROJECT_PREFIX}"
@@ -27,6 +29,11 @@ project_info() {
     echo "-X ${PROJECT_INFO_PKG}.buildDate=${BUILD_DATE}"
 }
 
+# get_binary_dir_with_arch generated the binary's directory with GOOS and GOARCH.
+# eg: ./_output/bin/darwin/arm64/
+get_binary_dir_with_arch(){
+    echo $1/$(go env GOOS)/$(go env GOARCH)
+}
 
 build_binary() {
     local goflags goldflags gcflags
@@ -42,14 +49,32 @@ build_binary() {
       fi
     done
 
-    local bin_dir=${YURT_BIN_DIR}
     local bin_name=${BIN_NAME:-yurt-app-manager}
-    mkdir -p ${bin_dir}
+    local target_bin_dir=$(get_binary_dir_with_arch ${YURT_LOCAL_BIN_DIR})
+    rm -rf ${target_bin_dir}
+    mkdir -p ${target_bin_dir}
     
     echo "Building ${bin_name}"
-    go build -o ${bin_dir}/${bin_name} \
+    go build -o ${target_bin_dir}/${bin_name} \
         -ldflags "${goldflags:-}" \
-        -gcflags "${gcflags:-}" ${goflags} 
+        -gcflags "${gcflags:-}" ${goflags} ${YURT_ROOT}/cmd/yurt-app-manager
 }
 
+# gen_yamls generates yaml files for the yurt-app-manager
+gen_yamls() {
+    local OUT_YAML_DIR=$YURT_ROOT/_output/yamls
+    local BUILD_YAML_DIR=${OUT_YAML_DIR}/build
+    [ -f $BUILD_YAML_DIR ] || mkdir -p $BUILD_YAML_DIR
+    mkdir -p ${BUILD_YAML_DIR}
+    (
+        rm -rf ${BUILD_YAML_DIR}/yurt-app-manager
+        cp -rf $YURT_ROOT/config/yurt-app-manager ${BUILD_YAML_DIR}
+        cd ${BUILD_YAML_DIR}/yurt-app-manager/manager
+        kustomize edit set image controller=$REPO/yurt-app-manager:${TAG}
+	)
+    set +x
+    echo "==== create yurt-app-manager.yaml in $OUT_YAML_DIR ===="
+    kustomize build ${BUILD_YAML_DIR}/yurt-app-manager/default > ${OUT_YAML_DIR}/yurt-app-manager.yaml
+    rm -Rf ${BUILD_YAML_DIR}
+}
 
