@@ -14,7 +14,7 @@ import (
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
 )
 
-// YurtAppDaemonCreateUpdateHandler handles UnitedDeployment
+// YurtAppDaemonCreateUpdateHandler handles YurtAppSet
 type YurtAppDaemonCreateUpdateHandler struct {
 	// To use the client, you need to do the following:
 	// - uncomment it
@@ -69,7 +69,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 
 var _ admission.DecoderInjector = &YurtAppDaemonCreateUpdateHandler{}
 
-// InjectDecoder injects the decoder into the UnitedDeploymentCreateUpdateHandler
+// InjectDecoder injects the decoder into the YurtAppSetCreateUpdateHandler
 func (h *YurtAppDaemonCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
 	h.Decoder = d
 	return nil

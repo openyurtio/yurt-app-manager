@@ -32,12 +32,12 @@ webhooks:
       name: {{ include "yurt-app-manager.fullname" . }}
       namespace: {{ .Release.Namespace }}
       port: {{ .Values.service.port }}
-      path: /validate-apps-openyurt-io-v1alpha1-uniteddeployment
+      path: /validate-apps-openyurt-io-v1alpha1-yurtappset
   admissionReviewVersions:
   - v1
   sideEffects: None
   failurePolicy: Fail
-  name: vuniteddeployment.kb.io
+  name: vyurtappset.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
@@ -47,7 +47,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - uniteddeployments
+    - yurtappsets
 - clientConfig:
     caBundle: Cg==
     service:

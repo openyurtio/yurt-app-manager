@@ -135,7 +135,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.9
   creationTimestamp: null
-  name: uniteddeployments.apps.openyurt.io
+  name: yurtappsets.apps.openyurt.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .status.readyReplicas
@@ -152,18 +152,18 @@ spec:
     type: date
   group: apps.openyurt.io
   names:
-    kind: UnitedDeployment
-    listKind: UnitedDeploymentList
-    plural: uniteddeployments
+    kind: YurtAppSet
+    listKind: YurtAppSetList
+    plural: yurtappsets
     shortNames:
-    - ud
-    singular: uniteddeployment
+    - yas
+    singular: yurtappset
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: UnitedDeployment is the Schema for the uniteddeployments API
+      description: YurtAppSet is the Schema for the yurtappsets API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
@@ -174,7 +174,7 @@ spec:
         metadata:
           type: object
         spec:
-          description: UnitedDeploymentSpec defines the desired state of UnitedDeployment.
+          description: YurtAppSetSpec defines the desired state of YurtAppSet.
           properties:
             revisionHistoryLimit:
               description: Indicates the number of histories to be conserved. If unspecified, defaults to 10.
@@ -214,12 +214,12 @@ spec:
               description: Topology describes the pods distribution detail between each of pools.
               properties:
                 pools:
-                  description: Contains the details of each pool. Each element in this array represents one pool which will be provisioned and managed by UnitedDeployment.
+                  description: Contains the details of each pool. Each element in this array represents one pool which will be provisioned and managed by YurtAppSet.
                   items:
                     description: Pool defines the detail of a pool.
                     properties:
                       name:
-                        description: Indicates pool name as a DNS_LABEL, which will be used to generate pool workload name prefix in the format '<deployment-name>-<pool-name>-'. Name should be unique between all of the pools under one UnitedDeployment. Name is NodePool Name
+                        description: Indicates pool name as a DNS_LABEL, which will be used to generate pool workload name prefix in the format '<deployment-name>-<pool-name>-'. Name should be unique between all of the pools under one YurtAppSet. Name is NodePool Name
                         type: string
                       nodeSelectorTerm:
                         description: Indicates the node selector to form the pool. Depending on the node selector, pods provisioned could be distributed across multiple groups of nodes. A pool's nodeSelectorTerm is not allowed to be updated.
@@ -272,16 +272,16 @@ spec:
           - selector
           type: object
         status:
-          description: UnitedDeploymentStatus defines the observed state of UnitedDeployment.
+          description: YurtAppSetStatus defines the observed state of YurtAppSet.
           properties:
             collisionCount:
-              description: Count of hash collisions for the UnitedDeployment. The UnitedDeployment controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.
+              description: Count of hash collisions for the YurtAppSet. The YurtAppSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.
               format: int32
               type: integer
             conditions:
-              description: Represents the latest available observations of a UnitedDeployment's current state.
+              description: Represents the latest available observations of a YurtAppSet's current state.
               items:
-                description: UnitedDeploymentCondition describes current state of a UnitedDeployment.
+                description: YurtAppSetCondition describes current state of a YurtAppSet.
                 properties:
                   lastTransitionTime:
                     description: Last time the condition transitioned from one status to another.
@@ -302,10 +302,10 @@ spec:
                 type: object
               type: array
             currentRevision:
-              description: CurrentRevision, if not empty, indicates the current version of the UnitedDeployment.
+              description: CurrentRevision, if not empty, indicates the current version of the YurtAppSet.
               type: string
             observedGeneration:
-              description: ObservedGeneration is the most recent generation observed for this UnitedDeployment. It corresponds to the UnitedDeployment's generation, which is updated on mutation by the API Server.
+              description: ObservedGeneration is the most recent generation observed for this YurtAppSet. It corresponds to the YurtAppSet's generation, which is updated on mutation by the API Server.
               format: int64
               type: integer
             poolReplicas:
@@ -823,7 +823,7 @@ rules:
 - apiGroups:
   - apps.openyurt.io
   resources:
-  - uniteddeployments
+  - yurtappsets
   verbs:
   - create
   - delete
@@ -835,7 +835,7 @@ rules:
 - apiGroups:
   - apps.openyurt.io
   resources:
-  - uniteddeployments/status
+  - yurtappsets/status
   verbs:
   - get
   - patch
@@ -1163,9 +1163,9 @@ webhooks:
     service:
       name: yurt-app-webhook-service
       namespace: kube-system
-      path: /mutate-apps-openyurt-io-v1alpha1-uniteddeployment
+      path: /mutate-apps-openyurt-io-v1alpha1-yurtappset
   failurePolicy: Fail
-  name: muniteddeployment.kb.io
+  name: myurtappset.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
@@ -1175,7 +1175,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - uniteddeployments
+    - yurtappsets
 - clientConfig:
     caBundle: Cg==
     service:
@@ -1226,9 +1226,9 @@ webhooks:
     service:
       name: yurt-app-webhook-service
       namespace: kube-system
-      path: /validate-apps-openyurt-io-v1alpha1-uniteddeployment
+      path: /validate-apps-openyurt-io-v1alpha1-yurtappset
   failurePolicy: Fail
-  name: vuniteddeployment.kb.io
+  name: vyurtappset.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
@@ -1238,7 +1238,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - uniteddeployments
+    - yurtappsets
 - clientConfig:
     caBundle: Cg==
     service:

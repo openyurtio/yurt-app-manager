@@ -66,7 +66,7 @@ func (h *YurtAppDaemonCreateUpdateHandler) Handle(ctx context.Context, req admis
 
 var _ admission.DecoderInjector = &YurtAppDaemonCreateUpdateHandler{}
 
-// InjectDecoder injects the decoder into the UnitedDeploymentCreateUpdateHandler
+// InjectDecoder injects the decoder into the YurtAppSetCreateUpdateHandler
 func (h *YurtAppDaemonCreateUpdateHandler) InjectDecoder(d *admission.Decoder) error {
 	h.Decoder = d
 	return nil
