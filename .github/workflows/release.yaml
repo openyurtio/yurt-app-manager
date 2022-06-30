@@ -14,12 +14,14 @@ env:
 
 jobs:
   docker-push:
+    if: github.repository == 'openyurtio/yurt-app-manager'
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
+          fetch-depth: 0
       - name: Get the version
         id: get_version
         run: |
@@ -39,12 +41,14 @@ jobs:
       - name: Release
         run: make docker-push TARGET_PLATFORMS=linux/amd64,linux/arm64,linux/arm/v7 IMAGE_TAG=${{ steps.get_version.outputs.VERSION }}
   docker-push-ali-registry:
+    if: github.repository == 'openyurtio/yurt-app-manager'
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
+          fetch-depth: 0
       - name: Get the version
         id: get_version
         run: |
