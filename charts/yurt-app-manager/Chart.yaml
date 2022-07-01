@@ -1,6 +1,6 @@
 apiVersion: v2
 name: yurt-app-manager
-description: The controller manager that contains the nodepool controller and uniteddeployment controller.
+description: The controller manager that contains the nodepool controller and yurtappset controller.
 
 # A chart can be either an 'application' or a 'library' chart.
 #

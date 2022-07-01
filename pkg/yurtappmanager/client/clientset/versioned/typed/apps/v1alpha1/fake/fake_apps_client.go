@@ -32,12 +32,12 @@ func (c *FakeAppsV1alpha1) NodePools() v1alpha1.NodePoolInterface {
 	return &FakeNodePools{c}
 }
 
-func (c *FakeAppsV1alpha1) UnitedDeployments(namespace string) v1alpha1.UnitedDeploymentInterface {
-	return &FakeUnitedDeployments{c, namespace}
-}
-
 func (c *FakeAppsV1alpha1) YurtAppDaemons(namespace string) v1alpha1.YurtAppDaemonInterface {
 	return &FakeYurtAppDaemons{c, namespace}
+}
+
+func (c *FakeAppsV1alpha1) YurtAppSets(namespace string) v1alpha1.YurtAppSetInterface {
+	return &FakeYurtAppSets{c, namespace}
 }
 
 func (c *FakeAppsV1alpha1) YurtIngresses() v1alpha1.YurtIngressInterface {

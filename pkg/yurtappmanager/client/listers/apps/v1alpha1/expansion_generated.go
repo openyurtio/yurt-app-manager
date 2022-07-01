@@ -22,14 +22,6 @@ package v1alpha1
 // NodePoolLister.
 type NodePoolListerExpansion interface{}
 
-// UnitedDeploymentListerExpansion allows custom methods to be added to
-// UnitedDeploymentLister.
-type UnitedDeploymentListerExpansion interface{}
-
-// UnitedDeploymentNamespaceListerExpansion allows custom methods to be added to
-// UnitedDeploymentNamespaceLister.
-type UnitedDeploymentNamespaceListerExpansion interface{}
-
 // YurtAppDaemonListerExpansion allows custom methods to be added to
 // YurtAppDaemonLister.
 type YurtAppDaemonListerExpansion interface{}
@@ -37,6 +29,14 @@ type YurtAppDaemonListerExpansion interface{}
 // YurtAppDaemonNamespaceListerExpansion allows custom methods to be added to
 // YurtAppDaemonNamespaceLister.
 type YurtAppDaemonNamespaceListerExpansion interface{}
+
+// YurtAppSetListerExpansion allows custom methods to be added to
+// YurtAppSetLister.
+type YurtAppSetListerExpansion interface{}
+
+// YurtAppSetNamespaceListerExpansion allows custom methods to be added to
+// YurtAppSetNamespaceLister.
+type YurtAppSetNamespaceListerExpansion interface{}
 
 // YurtIngressListerExpansion allows custom methods to be added to
 // YurtIngressLister.

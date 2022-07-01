@@ -30,7 +30,7 @@ const (
 	WorkLoadProvisioned YurtAppDaemonConditionType = "WorkLoadProvisioned"
 	// WorkLoadUpdated means all the workload are updated.
 	WorkLoadUpdated YurtAppDaemonConditionType = "WorkLoadUpdated"
-	// WorkLoadFailure is added to a UnitedDeployment when one of its workload has failure during its own reconciling.
+	// WorkLoadFailure is added to a YurtAppSet when one of its workload has failure during its own reconciling.
 	WorkLoadFailure YurtAppDaemonConditionType = "WorkLoadFailure"
 )
 
