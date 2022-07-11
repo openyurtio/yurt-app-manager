@@ -28,30 +28,42 @@ git config --global user.email "openyurt-bot@openyurt.io"
 git config --global user.name "openyurt-bot"
 git clone --single-branch --depth 1 git@github.com:openyurtio/yurt-app-manager-api.git yurt-app-manager-api
 
-echo "clear yurt-app-manager-api api/"
-rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/*
+if [ -d "yurt-app-manager-api/pkg/yurtappmanager/apis" ]
+then
+    echo "yurt-app-manager-api apis exists, remove it"
+    rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/*
+else
+    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/apis
+fi
 
-echo "clear yurt-app-manager-api client/"
-rm -r yurt-app-manager-api/pkg/yurtappmanager/client/*
+if [ -d "yurt-app-manager-api/pkg/yurtappmanager/client" ]
+then
+    echo "yurt-app-manager-api client exists, remove it"
+    rm -r yurt-app-manager-api/pkg/yurtappmanager/client/*
+else
+    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/client
+fi
 
 echo "update yurt-app-manager-api api/"
 cp -R yurt-app-manager/pkg/yurtappmanager/apis/* yurt-app-manager-api/pkg/yurtappmanager/apis/
+# remove controller depends functions
+rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/apps/v1alpha1/defaults.go
 
 echo "update yurt-app-manager-api client/"
 cp -R yurt-app-manager/pkg/yurtappmanager/client/* yurt-app-manager-api/pkg/yurtappmanager/client/
 
-echo "change import path"
-find ./yurt-app-manager-api -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/|github.com/openyurtio/yurt-app-manager-api/|g' ./yurt-app-manager-api/pkg/yurtappmanager/apis/addtoscheme_apps_v1alpha1.go
+echo "change import paths, and change them"
+find ./yurt-app-manager-api -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/|github.com/openyurtio/yurt-app-manager-api/|g'
 
 echo "test api"
 cd yurt-app-manager-api
 go mod tidy
+make test
 
 echo "push to yurt-app-manager-api"
 echo "version: $VERSION, commit: $COMMIT_ID, tag: $TAG"
 
-if git diff --quiet
-then
+if [ -z "$(git status --porcelain)" ]; then
   echo "nothing need to push, finished!"
 else
   git add .
