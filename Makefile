@@ -80,7 +80,9 @@ generate-goclient: controller-gen
 	hack/make-rules/generate_client.sh
 	$(CONTROLLER_GEN) object:headerFile="./pkg/yurtappmanager/hack/boilerplate.go.txt" paths="./pkg/yurtappmanager/apis/..."
 
-# generate deploy yaml.  
+gen-all-in-one:
+	helm template --include-crds yurt-app-manager charts/yurt-app-manager > config/setup/all_in_one.yaml
+# generate deploy yaml.
 #
 # ARGS:
 #   REPO: image repo.
