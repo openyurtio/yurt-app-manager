@@ -23,7 +23,6 @@ import (
 
 var (
 	projectPrefix = "yurt"
-	labelPrefix   = "openyurt.io"
 	gitVersion    = "v0.0.0"
 	gitCommit     = "unknown"
 	buildDate     = "1970-01-01T00:00:00Z"

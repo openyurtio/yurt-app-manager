@@ -20,12 +20,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
 )
 
 func IsIngressNamespaceReady(cli client.Client) bool {

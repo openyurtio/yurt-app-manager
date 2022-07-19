@@ -18,10 +18,10 @@ limitations under the License.
 package yurtappset
 
 import (
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappset/adapter"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappset/adapter"
 )
 
 // Pool stores the details of a pool resource owned by one YurtAppSet.

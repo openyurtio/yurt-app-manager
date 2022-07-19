@@ -23,14 +23,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
-	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
-	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	extclient "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/fieldindex"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +33,15 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	// +kubebuilder:scaffold:imports
+
+	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
+	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	extclient "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/fieldindex"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook"
 )
 
 var (
