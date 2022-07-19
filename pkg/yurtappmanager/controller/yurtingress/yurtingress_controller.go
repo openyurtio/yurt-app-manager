@@ -19,9 +19,13 @@ package yurtingress
 import (
 	"context"
 
+	appsv1 "k8s.io/api/apps/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -35,10 +39,6 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/gate"
 	yurtapputil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/kubernetes"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/util/refmanager"
-	appsv1 "k8s.io/api/apps/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (

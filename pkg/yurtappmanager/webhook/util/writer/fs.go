@@ -25,9 +25,10 @@ import (
 	"os"
 	"path"
 
+	"k8s.io/klog"
+
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/generator"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/writer/atomic"
-	"k8s.io/klog"
 )
 
 // fsCertWriter provisions the certificate by reading and writing to the filesystem.

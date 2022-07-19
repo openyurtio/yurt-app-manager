@@ -253,7 +253,7 @@ func (r *ReconcileYurtAppDaemon) manageWorkloads(instance *unitv1alpha1.YurtAppD
 	newStatus = instance.Status.DeepCopy()
 
 	nps := make([]string, 0, len(allNameToNodePools))
-	for np, _ := range allNameToNodePools {
+	for np := range allNameToNodePools {
 		nps = append(nps, np)
 	}
 	newStatus.NodePools = nps
@@ -357,7 +357,9 @@ func (r *ReconcileYurtAppDaemon) classifyWorkloads(instance *unitv1alpha1.YurtAp
 				match = false
 			}
 			// judge workload whether toleration all taints
-			match = IsTolerationsAllTaints(load.GetToleration(), np.Spec.Taints)
+			if !IsTolerationsAllTaints(load.GetToleration(), np.Spec.Taints) {
+				match = false
+			}
 
 			// judge revision
 			if load.GetRevision() != expectedRevision {
@@ -376,7 +378,7 @@ func (r *ReconcileYurtAppDaemon) classifyWorkloads(instance *unitv1alpha1.YurtAp
 		}
 	}
 
-	for vnp, _ := range allNameToNodePools {
+	for vnp := range allNameToNodePools {
 		if _, ok := currentNodepoolToWorkload[vnp]; !ok {
 			needCreate = append(needCreate, vnp)
 			klog.V(4).Infof("YurtAppDaemon[%s/%s] need create new workload by nodepool %s", instance.GetNamespace(),

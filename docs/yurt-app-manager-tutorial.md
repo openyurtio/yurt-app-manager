@@ -1,8 +1,8 @@
-# Yurt-app-manager Tutorial 
+# Yurt-app-manager Tutorial
 
-This document introduces how to install yurt-app-manager and use yurt-app-manager to manage edge nodes and workloads. 
+This document introduces how to install yurt-app-manager and use yurt-app-manager to manage edge nodes and workloads.
 
-In this tutorial, we will show how the yurt-app-manager helps users manage 
+In this tutorial, we will show how the yurt-app-manager helps users manage
 there edge nodes and workload.
 Suppose you have a Kubernetes cluster in an Openyurt environment, or a native Kubernetes cluster with at least two nodes.
 
@@ -10,10 +10,10 @@ Suppose you have a Kubernetes cluster in an Openyurt environment, or a native Ku
 ``` bash
 $ kubectl get nodes -o wide
 
-NAME        STATUS   ROLES    AGE   VERSION   INTERNAL-IP    
-k8s-node1   Ready    <none>   20d   v1.16.2   10.48.115.9    
-k8s-node2   Ready    <none>   20d   v1.16.2   10.48.115.10   
-master      Ready    master   20d   v1.16.2   10.48.115.8    
+NAME        STATUS   ROLES    AGE   VERSION   INTERNAL-IP
+k8s-node1   Ready    <none>   20d   v1.16.2   10.48.115.9
+k8s-node2   Ready    <none>   20d   v1.16.2   10.48.115.10
+master      Ready    master   20d   v1.16.2   10.48.115.8
 ```
 and we will use node `master` as the cloud node.
 
@@ -33,14 +33,14 @@ k8s-node2 labeled
 
 ## Install yurt-app-manager
 
-### install yurt-app-manager operator 
-```bash
-$ cd  yurt-app-manager
+### install yurt-app-manager operator
+```
+$ cd yurt-app-manager
 $ kubectl apply -f config/setup/all_in_one.yaml
 ```
 
 Wait for the yurt-app-manager operator  to be created successfully
-``` bash
+```
 $ kubectl get pod -n kube-system |grep yurt-app-manager
 ```
 
@@ -48,10 +48,10 @@ $ kubectl get pod -n kube-system |grep yurt-app-manager
 
 The Examples of NodePool and YurtAppSet are in `config/yurt-app-manager/samples/` directory
 
-### NodePool 
+### NodePool
 
-- 1 create an nodepool 
-```bash
+- 1 create an nodepool
+``` bash
 $ cat <<EOF | kubectl apply -f -
 apiVersion: apps.openyurt.io/v1alpha1
 kind: NodePool
@@ -81,8 +81,8 @@ EOF
 ```
 
 - 2 Get NodePool
-```bash
-$ kubectl get np 
+``` bash
+$ kubectl get np
 
 NAME       TYPE   READYNODES   NOTREADYNODES   AGE
 beijing    Cloud                               35s
@@ -92,7 +92,7 @@ hangzhou   Edge                                28s
 - 3 Add Node To NodePool
 
 Add Your_Node_Name Cloud node into `beijing` NodePool, Set the `apps.openyurt.io/desired-nodepool` label on the host, and value is the name of the beijing NodePool
-```bash
+``` bash
 $ kubectl label node {Your_Node_Name} apps.openyurt.io/desired-nodepool=beijing
 ```
 ```
@@ -117,16 +117,16 @@ k8s-node2 labeled
 ```
 
 ```bash
-$ kubectl get np 
+$ kubectl get np
 
 NAME       TYPE    READYNODES   NOTREADYNODES   AGE
 beijing    Cloud   1            0               140m
 hangzhou   Edge    2            0               4h35m
 ```
 
-Once a Edge Node adds a NodePool, it inherits the annotations, labels, and taints defined in the nodepool Spec,at the same time, the Node will add a new tag: `apps.openyurt.io/nodepool`. 
+Once a Edge Node adds a NodePool, it inherits the annotations, labels, and taints defined in the nodepool Spec,at the same time, the Node will add a new tag: `apps.openyurt.io/nodepool`.
 ```bash
-$ kubectl get node {Your_Node_Name} -o yaml 
+$ kubectl get node {Your_Node_Name} -o yaml
 
 For Example:
 $ kubectl get node k8s-node1 -o yaml
@@ -200,13 +200,13 @@ spec:
                 image: nginx:1.19.3
   topology:
     pools:
-    - name: beijing 
+    - name: beijing
       nodeSelectorTerm:
         matchExpressions:
         - key: apps.openyurt.io/nodepool
           operator: In
           values:
-          - beijing 
+          - beijing
       replicas: 1
       patch:
         spec:
@@ -215,19 +215,19 @@ spec:
               containers:
                 - name: nginx
                   image: nginx:1.19.0
-    - name: hangzhou 
+    - name: hangzhou
       nodeSelectorTerm:
         matchExpressions:
         - key: apps.openyurt.io/nodepool
           operator: In
           values:
-          - hangzhou 
+          - hangzhou
       replicas: 2
       tolerations:
       - effect: NoSchedule
         key: apps.openyurt.io/example
         operator: Exists
-  revisionHistoryLimit: 5 
+  revisionHistoryLimit: 5
 EOF
 
 ```
@@ -261,16 +261,16 @@ ud-test-hangzhou-xv454-5cd9c4f6b5-gmbgp   1/1     Running   0          124m
 - 1 in 'config/yurt-app-manager/samples/yurtappset/yurtappset_deployment_test.yaml' file’s 35 to 41 lines
 ```bash
 $ kubectl get ud ud-test -o yaml
-   
+
   topology:
     pools:
-    - name: beijing 
+    - name: beijing
       nodeSelectorTerm:
         matchExpressions:
         - key: apps.openyurt.io/nodepool
           operator: In
           values:
-          - beijing 
+          - beijing
       replicas: 1
       patch:
         spec:
@@ -279,16 +279,16 @@ $ kubectl get ud ud-test -o yaml
               containers:
                 - name: nginx
                   image: nginx:1.19.0
-    - name: hangzhou 
+    - name: hangzhou
       nodeSelectorTerm:
         matchExpressions:
         - key: apps.openyurt.io/nodepool
           operator: In
           values:
-          - hangzhou 
+          - hangzhou
       replicas: 2
       tolerations:
-  *** 
+  ***
 ```
 - 2 Patch makes the image of deployment and pod named beijing created by yurtAppSet `nginx:1.19.0`,Other images used are `nginx:1.19.3`.
 ```bash
@@ -303,7 +303,7 @@ containers:
 ```
 The result of pod is consistent with that of deployment.
 
-- 3 After deleting this file, all the pods created by YurtAppSet use the same image: `nginx:1.19.3`. 
+- 3 After deleting this file, all the pods created by YurtAppSet use the same image: `nginx:1.19.3`.
 ```bash
 $ kubectl get pod ud-test-beijing-fp58z-787d5b6b54-g4jk6 -o yaml
 
@@ -316,8 +316,8 @@ containers:
 - 4 conclusion
 Patch solves the problem of single attribute upgrade and full release of nodepool.
 
- ### YurtAppDaemon
+### YurtAppDaemon
  For details please see the [tutorial](./YurtAppDaemon.md).
 
- ### YurtIngress
+### YurtIngress
  For details please see the [tutorial](https://github.com/openyurtio/openyurt.io/blob/master/docs/user-manuals/network/edge-ingress.md).

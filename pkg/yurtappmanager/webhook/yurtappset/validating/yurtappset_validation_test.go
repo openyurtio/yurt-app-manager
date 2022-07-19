@@ -18,17 +18,17 @@ limitations under the License.
 package validating
 
 import (
-	y2 "gopkg.in/yaml.v2"
-
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
 
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	y2 "gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/klog"
+
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 func TestValidateYurtAppSet(t *testing.T) {

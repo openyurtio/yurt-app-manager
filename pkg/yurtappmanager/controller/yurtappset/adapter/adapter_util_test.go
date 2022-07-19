@@ -22,11 +22,9 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
-
-	"k8s.io/apimachinery/pkg/runtime"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
@@ -93,10 +91,10 @@ func buildPodList(ordinals []int, revisions []string, t *testing.T) []*corev1.Po
 
 func TestCreateNewPatchedObject(t *testing.T) {
 	cases := []struct {
-		Name         string
-		PatchInfo    *runtime.RawExtension
-		OldObj       *appsv1.Deployment
-		EqualFuntion func(new *appsv1.Deployment) bool
+		Name          string
+		PatchInfo     *runtime.RawExtension
+		OldObj        *appsv1.Deployment
+		EqualFunction func(new *appsv1.Deployment) bool
 	}{
 		{
 			Name:      "replace image",
@@ -115,7 +113,7 @@ func TestCreateNewPatchedObject(t *testing.T) {
 					},
 				},
 			},
-			EqualFuntion: func(new *appsv1.Deployment) bool {
+			EqualFunction: func(new *appsv1.Deployment) bool {
 				return new.Spec.Template.Spec.Containers[0].Image == "nginx:1.18.0"
 			},
 		},
@@ -136,7 +134,7 @@ func TestCreateNewPatchedObject(t *testing.T) {
 					},
 				},
 			},
-			EqualFuntion: func(new *appsv1.Deployment) bool {
+			EqualFunction: func(new *appsv1.Deployment) bool {
 				if len(new.Spec.Template.Spec.Containers) != 2 {
 					return false
 				}
@@ -164,10 +162,9 @@ func TestCreateNewPatchedObject(t *testing.T) {
 			if err := CreateNewPatchedObject(c.PatchInfo, c.OldObj, newObj); err != nil {
 				t.Fatalf("%s CreateNewPatchedObject error %v", c.Name, err)
 			}
-			if !c.EqualFuntion(newObj) {
-				t.Fatalf("%s Not Expect equal funtion", c.Name)
+			if !c.EqualFunction(newObj) {
+				t.Fatalf("%s Not Expect equal function", c.Name)
 			}
 		})
 	}
-
 }

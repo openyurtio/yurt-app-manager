@@ -1,5 +1,3 @@
-
-
 <a name="Ynuk5"></a>
 # Description
 <br />In edge scenarios，edge nodes from the same region are allocated to the same nodepool, generally it is necessary to deploy some system components at the nodepool level, such as CoreDNS. When a nodepool is created, we want these system components bo be created automatically without any manual actions.
@@ -12,8 +10,8 @@
 - Support Deployment and Statefulset as template
 - Support template update and trigger sub-resources update, such as image update of the Deployment template will trigger the child Deployment image update accordingly
 - Support auto distribution of the template resources from the nodepool level:
-   - When the nodepools match the corresponding label, sub-resources are created automatically
-   - When the nodepools delete the corresponding label, sub-resources are deleted automatically
+  - When the nodepools match the corresponding label, sub-resources are created automatically
+  - When the nodepools delete the corresponding label, sub-resources are deleted automatically
 
 ​<br />
 <a name="cvH4w"></a>
@@ -34,8 +32,6 @@
 ## create nodepool  test1
 ```bash
 cat <<EOF | kubectl apply -f -
-
-
 apiVersion: apps.openyurt.io/v1alpha1
 kind: NodePool
 metadata:
@@ -45,10 +41,9 @@ spec:
     matchLabels:
       apps.openyurt.io/nodepool: test1
   type: Edge
-
-
 EOF
 ```
+
 <a name="rfeAg"></a>
 ## create nodepool  test2
 ```bash
@@ -154,7 +149,6 @@ kubectl get deployments.apps
 
 # Check the Pod
 ```
-
 
 <a name="UTCfl"></a>
 ## remove nodepool label

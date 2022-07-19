@@ -21,9 +21,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/app"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog"
+
+	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/app"
 )
 
 func main() {

@@ -19,10 +19,9 @@ package validating
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"k8s.io/klog"
 	"strings"
 
+	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -32,11 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/klog"
 	appsvalidation "k8s.io/kubernetes/pkg/apis/apps/validation"
 	"k8s.io/kubernetes/pkg/apis/core"
 	corev1 "k8s.io/kubernetes/pkg/apis/core/v1"
 	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
-	corevalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -126,14 +125,6 @@ func ValidateYurtAppSetUpdate(yurtAppSet, oldYurtAppSet *unitv1alpha1.YurtAppSet
 	return allErrs
 }
 
-func convertPodSpec(spec *v1.PodSpec) (*core.PodSpec, error) {
-	coreSpec := &core.PodSpec{}
-	if err := corev1.Convert_v1_PodSpec_To_core_PodSpec(spec.DeepCopy(), coreSpec, nil); err != nil {
-		return nil, err
-	}
-	return coreSpec, nil
-}
-
 func convertPodTemplateSpec(template *v1.PodTemplateSpec) (*core.PodTemplateSpec, error) {
 	coreTemplate := &core.PodTemplateSpec{}
 	if err := corev1.Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec(template.DeepCopy(), coreTemplate, nil); err != nil {
@@ -217,7 +208,7 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 			allErrs = append(allErrs, field.Invalid(fldPath.Root(), sstemplate, fmt.Sprintf("Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec failed: %v", err)))
 			return allErrs
 		}
-		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"), corevalidation.PodValidationOptions{})...)
+		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
 	klog.Infoln("call webhook validatePoolTemplate")
@@ -238,7 +229,7 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 		}
 		allErrs = append(allErrs, validatePodTemplateSpec(coreTemplate, selector, fldPath.Child("deploymentTemplate", "spec", "template"))...)
 		allErrs = append(allErrs, apivalidation.ValidatePodTemplateSpec(coreTemplate,
-			fldPath.Child("deploymentTemplate", "spec", "template"), corevalidation.PodValidationOptions{})...)
+			fldPath.Child("deploymentTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
 	return allErrs

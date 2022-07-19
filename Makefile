@@ -33,7 +33,7 @@ ifneq (${https_proxy},)
 DOCKER_BUILD_ARGS += --build-arg https_proxy='${https_proxy}'
 endif
 
-.PHONY: clean all release build
+.PHONY: clean all build
 
 all: test build
 
@@ -67,7 +67,6 @@ docker-push:
 
 clean: 
 	-rm -Rf _output
-	-rm -Rf dockerbuild
 
 generate: controller-gen manifests generate-goclient
 
@@ -114,6 +113,9 @@ kustomize: ## Download kustomize locally if necessary.
 GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
 golangci-lint: ## Download golangci-lint locally if necessary.
 	$(call go-get-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1)
+
+lint: golangci-lint ## Run go lint against code.
+	$(GOLANGCI_LINT) run -v
 
 GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.

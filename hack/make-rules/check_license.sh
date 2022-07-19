@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2022 The OpenYurt Authors.
+# Copyright 2020 The OpenYurt Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-YURT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
-source "${YURT_ROOT}/hack/lib/init.sh"
-source "${YURT_ROOT}/hack/lib/build.sh"
+# exit immediately when a command fails
+set -e
+# only exit with zero if all commands of the pipeline exit successfully
+set -o pipefail
+# error on unset variables
+set -u
 
-gen_yamls "$@"
+licRes=$(
+    find . -type f -regex '.*\.go\|.*\.sh' ! -path '*/vendor/*' -exec \
+         sh -c 'head -n5 $1 | grep -Eq "(Copyright|generated|GENERATED)" || echo -e  $1' {} {} \;
+)
+
+if [ -n "${licRes}" ]; then
+        echo -e "license header checking failed:\\n${licRes}"
+        exit 255
+fi
