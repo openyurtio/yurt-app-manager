@@ -38,6 +38,7 @@ import (
 	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
 	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1beta1"
 	extclient "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller"
@@ -55,9 +56,11 @@ var (
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
+	_ = appsv1alpha1.AddToScheme(scheme)
+	_ = v1beta1.AddToScheme(scheme)
+
 	_ = appsv1alpha1.AddToScheme(clientgoscheme.Scheme)
 
-	_ = appsv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
