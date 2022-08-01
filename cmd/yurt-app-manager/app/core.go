@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -53,10 +54,10 @@ var (
 )
 
 func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
 	_ = appsv1alpha1.AddToScheme(clientgoscheme.Scheme)
 
-	_ = appsv1alpha1.AddToScheme(scheme)
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(appsv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -110,7 +111,7 @@ func Run(opts *options.YurtAppOptions) {
 		&appsv1alpha1.YurtIngress{},
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:                     scheme,
 		MetricsBindAddress:         opts.MetricsAddr,
 		HealthProbeBindAddress:     opts.HealthProbeAddr,
