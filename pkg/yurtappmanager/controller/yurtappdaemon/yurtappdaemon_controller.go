@@ -164,6 +164,11 @@ func (r *ReconcileYurtAppDaemon) Reconcile(_ context.Context, request reconcile.
 		return reconcile.Result{}, err
 	}
 
+	if control == nil {
+		r.recorder.Event(instance.DeepCopy(), corev1.EventTypeWarning, fmt.Sprintf("YurtAppDaemon[%s/%s] Fail to get control", instance.Namespace, instance.Name), fmt.Sprintf("fail to find control"))
+		return reconcile.Result{}, fmt.Errorf("fail to find control")
+	}
+
 	currentNPToWorkload, err := r.getNodePoolToWorkLoad(instance, control)
 	if err != nil {
 		klog.Errorf("YurtAppDaemon[%s/%s] Fail to get nodePoolWorkload, error: %s", instance.Namespace, instance.Name, err)
