@@ -1,0 +1,196 @@
+package yurtappdaemon
+
+import (
+	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
+	"testing"
+)
+
+const (
+	failed  = "\u2717"
+	succeed = "\u2713"
+)
+
+//const updateRetries = 5
+
+func TestIsTolerationsAllTaints(t *testing.T) {
+	tests := []struct {
+		name        string
+		tolerations []corev1.Toleration
+		taints      []corev1.Taint
+		expect      bool
+	}{
+		{
+			"false",
+			[]corev1.Toleration{
+				{
+					Key: "a",
+				},
+			},
+			[]corev1.Taint{
+				{
+					Key: "b",
+				},
+			},
+			false,
+		},
+		{
+			"true",
+			[]corev1.Toleration{
+				{
+					Key: "a",
+				},
+			},
+			[]corev1.Taint{
+				{
+					Key: "a",
+				},
+			},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+			{
+				get := IsTolerationsAllTaints(tt.tolerations, tt.taints)
+
+				if !reflect.DeepEqual(get, tt.expect) {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, get)
+
+			}
+		})
+	}
+}
+
+func TestNewYurtAppDaemonCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		condType unitv1alpha1.YurtAppDaemonConditionType
+		status   corev1.ConditionStatus
+		reason   string
+		message  string
+		expect   unitv1alpha1.YurtAppDaemonCondition
+	}{
+		{
+			"normal",
+			unitv1alpha1.WorkLoadUpdated,
+			corev1.ConditionTrue,
+			"a",
+			"b",
+			unitv1alpha1.YurtAppDaemonCondition{
+				Type:               unitv1alpha1.WorkLoadUpdated,
+				Status:             corev1.ConditionTrue,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "a",
+				Message:            "b",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+			{
+				get := NewYurtAppDaemonCondition(tt.condType, tt.status, tt.reason, tt.message)
+
+				if !reflect.DeepEqual(get.Type, tt.expect.Type) {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, *get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, get)
+
+			}
+		})
+	}
+}
+
+func TestGetYurtAppDaemonCondition(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   unitv1alpha1.YurtAppDaemonStatus
+		condType unitv1alpha1.YurtAppDaemonConditionType
+		expect   unitv1alpha1.YurtAppDaemonCondition
+	}{
+		{
+			"normal",
+			unitv1alpha1.YurtAppDaemonStatus{
+				Conditions: []unitv1alpha1.YurtAppDaemonCondition{
+					{
+						Type: unitv1alpha1.WorkLoadProvisioned,
+					},
+				},
+			},
+			unitv1alpha1.WorkLoadProvisioned,
+			unitv1alpha1.YurtAppDaemonCondition{
+				Type: unitv1alpha1.WorkLoadProvisioned,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+			{
+				get := GetYurtAppDaemonCondition(tt.status, tt.condType)
+
+				if !reflect.DeepEqual(get.Type, tt.expect.Type) {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, *get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, get)
+
+			}
+		})
+	}
+}
+
+func TestSetYurtAppDaemonCondition(t *testing.T) {
+	tests := []struct {
+		name   string
+		status *unitv1alpha1.YurtAppDaemonStatus
+		cond   *unitv1alpha1.YurtAppDaemonCondition
+		expect unitv1alpha1.YurtAppDaemonCondition
+	}{
+		{
+			"normal",
+			&unitv1alpha1.YurtAppDaemonStatus{
+				Conditions: []unitv1alpha1.YurtAppDaemonCondition{
+					{
+						Type:   unitv1alpha1.WorkLoadProvisioned,
+						Status: "a",
+						Reason: "b",
+					},
+				},
+			},
+			&unitv1alpha1.YurtAppDaemonCondition{
+				Type: unitv1alpha1.WorkLoadProvisioned,
+			},
+			unitv1alpha1.YurtAppDaemonCondition{
+				Type: unitv1alpha1.WorkLoadProvisioned,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+			{
+				SetYurtAppDaemonCondition(tt.status, tt.cond)
+
+				//if !reflect.DeepEqual(get.Type, tt.expect.Type) {
+				//	t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, tt.expect)
+				//}
+				t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, tt.expect)
+
+			}
+		})
+	}
+}
