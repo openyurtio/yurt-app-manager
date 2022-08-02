@@ -32,6 +32,7 @@ import (
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
@@ -126,6 +127,11 @@ func Run(opts *options.YurtAppOptions) {
 		os.Exit(1)
 	}
 
+	if err := registerHealthChecks(mgr); err != nil {
+		setupLog.Error(err, "Unable to register ready/health checks")
+		os.Exit(1)
+	}
+
 	setupLog.Info("register field index")
 	if err := fieldindex.RegisterFieldIndexes(mgr.GetCache()); err != nil {
 		setupLog.Error(err, "failed to register field index")
@@ -156,17 +162,6 @@ func Run(opts *options.YurtAppOptions) {
 	// +kubebuilder:scaffold:builder
 
 	stopCh := ctrl.SetupSignalHandler()
-	setupLog.Info("initialize webhook")
-	if err := webhook.Initialize(mgr, stopCh.Done()); err != nil {
-		setupLog.Error(err, "unable to initialize webhook")
-		os.Exit(1)
-	}
-
-	if err := mgr.AddReadyzCheck("webhook-ready", webhook.Checker); err != nil {
-		setupLog.Error(err, "unable to add readyz check")
-		os.Exit(1)
-	}
-
 	setupLog.Info("starting manager")
 	if err := mgr.Start(stopCh); err != nil {
 		setupLog.Error(err, "problem running manager")
@@ -187,4 +182,16 @@ func setRestConfig(c *rest.Config) {
 	if *restConfigBurst > 0 {
 		c.Burst = *restConfigBurst
 	}
+}
+
+func registerHealthChecks(mgr ctrl.Manager) error {
+	klog.Info("Create readiness/health check")
+	if err := mgr.AddReadyzCheck("ping", healthz.Ping); err != nil {
+		return err
+	}
+	// TODO: change the health check to be different from readiness check
+	if err := mgr.AddHealthzCheck("ping", healthz.Ping); err != nil {
+		return err
+	}
+	return nil
 }

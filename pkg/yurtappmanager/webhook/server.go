@@ -18,25 +18,17 @@ limitations under the License.
 package webhook
 
 import (
-	"fmt"
-	"time"
-
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/capabilities"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
-	webhookcontroller "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/controller"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util/health"
 )
 
 var (
 	// HandlerMap contains all admission webhook handlers.
 	HandlerMap = map[string]webhookutil.Handler{}
-
-	Checker = health.Checker
 )
 
 func init() {
@@ -82,39 +74,9 @@ func SetupWithManager(mgr manager.Manager) error {
 		klog.V(3).Infof("Registered webhook handler %s", path)
 	}
 
-	// register health handler
-	server.Register("/healthz", &health.Handler{})
-
 	return nil
 }
 
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=get;list;watch;create;update;patch;delete
-
-func Initialize(mgr manager.Manager, stopCh <-chan struct{}) error {
-	cli, err := client.NewDelegatingClient(client.NewDelegatingClientInput{
-		CacheReader: mgr.GetAPIReader(),
-		Client:      mgr.GetClient(),
-	})
-	if err != nil {
-		return err
-	}
-
-	c, err := webhookcontroller.New(cli, HandlerMap)
-	if err != nil {
-		return err
-	}
-	go func() {
-		c.Start(stopCh)
-	}()
-
-	timer := time.NewTimer(time.Second * 5)
-	defer timer.Stop()
-	select {
-	case <-webhookcontroller.Inited():
-		return nil
-	case <-timer.C:
-		return fmt.Errorf("failed to start webhook controller for waiting more than 5s")
-	}
-}
