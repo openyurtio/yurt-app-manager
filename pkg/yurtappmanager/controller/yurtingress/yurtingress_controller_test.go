@@ -1,3 +1,19 @@
+/*
+Copyright 2021 The OpenYurt Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package yurtingress
 
 import (
@@ -93,16 +109,16 @@ func TestGetPools(t *testing.T) {
 			"unchange",
 			[]appsv1alpha1.IngressPool{
 				{
-					"a",
-					[]string{
+					Name: "a",
+					IngressIPs: []string{
 						"192.168.0.1",
 					},
 				},
 			},
 			[]appsv1alpha1.IngressPool{
 				{
-					"a",
-					[]string{
+					Name: "a",
+					IngressIPs: []string{
 						"192.168.0.1",
 					},
 				},
@@ -112,8 +128,8 @@ func TestGetPools(t *testing.T) {
 				nil,
 				{
 					{
-						"a",
-						[]string{
+						Name: "a",
+						IngressIPs: []string{
 							"192.168.0.1",
 						},
 					},
@@ -150,13 +166,13 @@ func TestGetDesiredPools(t *testing.T) {
 			&appsv1alpha1.YurtIngress{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-node"},
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
@@ -165,8 +181,8 @@ func TestGetDesiredPools(t *testing.T) {
 			},
 			[]appsv1alpha1.IngressPool{
 				{
-					"a",
-					[]string{
+					Name: "a",
+					IngressIPs: []string{
 						"192.168.0.1",
 					},
 				},
@@ -203,8 +219,8 @@ func TestGetCurrentPools(t *testing.T) {
 					Conditions: appsv1alpha1.YurtIngressCondition{
 						IngressReadyPools: []appsv1alpha1.IngressPool{
 							{
-								"a",
-								[]string{
+								Name: "a",
+								IngressIPs: []string{
 									"192.168.0.1",
 								},
 							},
@@ -249,13 +265,13 @@ func TestGetDesiredPool(t *testing.T) {
 			"true",
 			&appsv1alpha1.YurtIngress{
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
@@ -264,8 +280,8 @@ func TestGetDesiredPool(t *testing.T) {
 			},
 			"a",
 			&appsv1alpha1.IngressPool{
-				"a",
-				[]string{
+				Name: "a",
+				IngressIPs: []string{
 					"192.168.0.1",
 				},
 			},
@@ -274,13 +290,13 @@ func TestGetDesiredPool(t *testing.T) {
 			"false",
 			&appsv1alpha1.YurtIngress{
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
@@ -318,13 +334,13 @@ func TestGetCurrentPool(t *testing.T) {
 			"true",
 			&appsv1alpha1.YurtIngress{
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
@@ -333,8 +349,8 @@ func TestGetCurrentPool(t *testing.T) {
 			},
 			"a",
 			&appsv1alpha1.IngressPool{
-				"a",
-				[]string{
+				Name: "a",
+				IngressIPs: []string{
 					"192.168.0.1",
 				},
 			},
@@ -343,13 +359,13 @@ func TestGetCurrentPool(t *testing.T) {
 			"false",
 			&appsv1alpha1.YurtIngress{
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
@@ -391,8 +407,8 @@ func TestRemovePoolfromCondition(t *testing.T) {
 					Conditions: appsv1alpha1.YurtIngressCondition{
 						IngressReadyPools: []appsv1alpha1.IngressPool{
 							{
-								"a",
-								[]string{
+								Name: "a",
+								IngressIPs: []string{
 									"192.168.0.1",
 								},
 							},
@@ -412,8 +428,8 @@ func TestRemovePoolfromCondition(t *testing.T) {
 						IngressNotReadyPools: []appsv1alpha1.IngressNotReadyPool{
 							{
 								Pool: appsv1alpha1.IngressPool{
-									"a",
-									[]string{
+									Name: "a",
+									IngressIPs: []string{
 										"192.168.0.1",
 									},
 								},
@@ -429,13 +445,13 @@ func TestRemovePoolfromCondition(t *testing.T) {
 			"false",
 			&appsv1alpha1.YurtIngress{
 				Spec: appsv1alpha1.YurtIngressSpec{
-					3,
-					"a",
-					"a",
-					[]appsv1alpha1.IngressPool{
+					Replicas:                   3,
+					IngressControllerImage:     "a",
+					IngressWebhookCertGenImage: "a",
+					Pools: []appsv1alpha1.IngressPool{
 						{
-							"a",
-							[]string{
+							Name: "a",
+							IngressIPs: []string{
 								"192.168.0.1",
 							},
 						},
