@@ -2,8 +2,10 @@ name: sync-api
 on:
   push:
     paths:
-      - 'pkg/yurtappmanager/apis/**'
-      - 'pkg/yurtappmanager/client/**'
+#       TODO disable match all paths when workflow run fluently
+      - '**'
+#      - 'pkg/yurtappmanager/apis/**'
+#      - 'pkg/yurtappmanager/client/**'
     tags:
       - "v*"
 
