@@ -17,11 +17,13 @@ limitations under the License.
 package yurtingress
 
 import (
-	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
+
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 const (
@@ -101,13 +103,13 @@ func TestIsStrArrayEqual(t *testing.T) {
 func TestGetPools(t *testing.T) {
 	tests := []struct {
 		name    string
-		desired []appsv1alpha1.IngressPool
-		current []appsv1alpha1.IngressPool
-		expect  [3][]appsv1alpha1.IngressPool
+		desired []alpha1.IngressPool
+		current []alpha1.IngressPool
+		expect  [3][]alpha1.IngressPool
 	}{
 		{
 			"unchange",
-			[]appsv1alpha1.IngressPool{
+			[]alpha1.IngressPool{
 				{
 					Name: "a",
 					IngressIPs: []string{
@@ -115,7 +117,7 @@ func TestGetPools(t *testing.T) {
 					},
 				},
 			},
-			[]appsv1alpha1.IngressPool{
+			[]alpha1.IngressPool{
 				{
 					Name: "a",
 					IngressIPs: []string{
@@ -123,7 +125,7 @@ func TestGetPools(t *testing.T) {
 					},
 				},
 			},
-			[3][]appsv1alpha1.IngressPool{
+			[3][]alpha1.IngressPool{
 				nil,
 				nil,
 				{
@@ -144,7 +146,7 @@ func TestGetPools(t *testing.T) {
 			t.Parallel()
 			t.Logf("\tTestCase: %s", tt.name)
 
-			var get [3][]appsv1alpha1.IngressPool
+			var get [3][]alpha1.IngressPool
 			get[0], get[1], get[2] = getPools(tt.desired, tt.current)
 
 			if !reflect.DeepEqual(get, tt.expect) {
@@ -158,18 +160,18 @@ func TestGetPools(t *testing.T) {
 func TestGetDesiredPools(t *testing.T) {
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
-		expect      []appsv1alpha1.IngressPool
+		yurtIngress *alpha1.YurtIngress
+		expect      []alpha1.IngressPool
 	}{
 		{
 			"normal",
-			&appsv1alpha1.YurtIngress{
+			&alpha1.YurtIngress{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-node"},
-				Spec: appsv1alpha1.YurtIngressSpec{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -179,7 +181,7 @@ func TestGetDesiredPools(t *testing.T) {
 					},
 				},
 			},
-			[]appsv1alpha1.IngressPool{
+			[]alpha1.IngressPool{
 				{
 					Name: "a",
 					IngressIPs: []string{
@@ -208,16 +210,16 @@ func TestGetDesiredPools(t *testing.T) {
 func TestGetCurrentPools(t *testing.T) {
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
-		expect      []appsv1alpha1.IngressPool
+		yurtIngress *alpha1.YurtIngress
+		expect      []alpha1.IngressPool
 	}{
 		{
 			"normal",
-			&appsv1alpha1.YurtIngress{
+			&alpha1.YurtIngress{
 				ObjectMeta: metav1.ObjectMeta{Name: "a"},
-				Status: appsv1alpha1.YurtIngressStatus{
-					Conditions: appsv1alpha1.YurtIngressCondition{
-						IngressReadyPools: []appsv1alpha1.IngressPool{
+				Status: alpha1.YurtIngressStatus{
+					Conditions: alpha1.YurtIngressCondition{
+						IngressReadyPools: []alpha1.IngressPool{
 							{
 								Name: "a",
 								IngressIPs: []string{
@@ -228,7 +230,7 @@ func TestGetCurrentPools(t *testing.T) {
 					},
 				},
 			},
-			[]appsv1alpha1.IngressPool{
+			[]alpha1.IngressPool{
 				{
 					Name: "a",
 					IngressIPs: []string{
@@ -257,18 +259,18 @@ func TestGetCurrentPools(t *testing.T) {
 func TestGetDesiredPool(t *testing.T) {
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
+		yurtIngress *alpha1.YurtIngress
 		poolname    string
-		expect      *appsv1alpha1.IngressPool
+		expect      *alpha1.IngressPool
 	}{
 		{
 			"true",
-			&appsv1alpha1.YurtIngress{
-				Spec: appsv1alpha1.YurtIngressSpec{
+			&alpha1.YurtIngress{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -279,7 +281,7 @@ func TestGetDesiredPool(t *testing.T) {
 				},
 			},
 			"a",
-			&appsv1alpha1.IngressPool{
+			&alpha1.IngressPool{
 				Name: "a",
 				IngressIPs: []string{
 					"192.168.0.1",
@@ -288,12 +290,12 @@ func TestGetDesiredPool(t *testing.T) {
 		},
 		{
 			"false",
-			&appsv1alpha1.YurtIngress{
-				Spec: appsv1alpha1.YurtIngressSpec{
+			&alpha1.YurtIngress{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -326,18 +328,18 @@ func TestGetDesiredPool(t *testing.T) {
 func TestGetCurrentPool(t *testing.T) {
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
+		yurtIngress *alpha1.YurtIngress
 		poolname    string
-		expect      *appsv1alpha1.IngressPool
+		expect      *alpha1.IngressPool
 	}{
 		{
 			"true",
-			&appsv1alpha1.YurtIngress{
-				Spec: appsv1alpha1.YurtIngressSpec{
+			&alpha1.YurtIngress{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -348,7 +350,7 @@ func TestGetCurrentPool(t *testing.T) {
 				},
 			},
 			"a",
-			&appsv1alpha1.IngressPool{
+			&alpha1.IngressPool{
 				Name: "a",
 				IngressIPs: []string{
 					"192.168.0.1",
@@ -357,12 +359,12 @@ func TestGetCurrentPool(t *testing.T) {
 		},
 		{
 			"false",
-			&appsv1alpha1.YurtIngress{
-				Spec: appsv1alpha1.YurtIngressSpec{
+			&alpha1.YurtIngress{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -395,17 +397,17 @@ func TestGetCurrentPool(t *testing.T) {
 func TestRemovePoolfromCondition(t *testing.T) {
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
+		yurtIngress *alpha1.YurtIngress
 		poolname    string
 		expect      bool
 	}{
 		{
 			"true in IngressReadyPools",
-			&appsv1alpha1.YurtIngress{
-				Status: appsv1alpha1.YurtIngressStatus{
+			&alpha1.YurtIngress{
+				Status: alpha1.YurtIngressStatus{
 					ReadyNum: 1,
-					Conditions: appsv1alpha1.YurtIngressCondition{
-						IngressReadyPools: []appsv1alpha1.IngressPool{
+					Conditions: alpha1.YurtIngressCondition{
+						IngressReadyPools: []alpha1.IngressPool{
 							{
 								Name: "a",
 								IngressIPs: []string{
@@ -421,13 +423,13 @@ func TestRemovePoolfromCondition(t *testing.T) {
 		},
 		{
 			"true in IngressNotReadyPool",
-			&appsv1alpha1.YurtIngress{
-				Status: appsv1alpha1.YurtIngressStatus{
+			&alpha1.YurtIngress{
+				Status: alpha1.YurtIngressStatus{
 					ReadyNum: 1,
-					Conditions: appsv1alpha1.YurtIngressCondition{
-						IngressNotReadyPools: []appsv1alpha1.IngressNotReadyPool{
+					Conditions: alpha1.YurtIngressCondition{
+						IngressNotReadyPools: []alpha1.IngressNotReadyPool{
 							{
-								Pool: appsv1alpha1.IngressPool{
+								Pool: alpha1.IngressPool{
 									Name: "a",
 									IngressIPs: []string{
 										"192.168.0.1",
@@ -443,12 +445,12 @@ func TestRemovePoolfromCondition(t *testing.T) {
 		},
 		{
 			"false",
-			&appsv1alpha1.YurtIngress{
-				Spec: appsv1alpha1.YurtIngressSpec{
+			&alpha1.YurtIngress{
+				Spec: alpha1.YurtIngressSpec{
 					Replicas:                   3,
 					IngressControllerImage:     "a",
 					IngressWebhookCertGenImage: "a",
-					Pools: []appsv1alpha1.IngressPool{
+					Pools: []alpha1.IngressPool{
 						{
 							Name: "a",
 							IngressIPs: []string{
@@ -486,12 +488,12 @@ func TestPrepareDeploymentOwnerReferences(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		yurtIngress *appsv1alpha1.YurtIngress
+		yurtIngress *alpha1.YurtIngress
 		expect      Result
 	}{
 		{
 			"normal",
-			&appsv1alpha1.YurtIngress{
+			&alpha1.YurtIngress{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "a",
 					UID:  "a",
@@ -521,7 +523,7 @@ func TestPrepareDeploymentOwnerReferences(t *testing.T) {
 
 func TestGetUnreadyDeploymentCondition(t *testing.T) {
 	type Result struct {
-		conditionType appsv1alpha1.IngressNotReadyType
+		conditionType alpha1.IngressNotReadyType
 	}
 
 	tests := []struct {
@@ -548,7 +550,7 @@ func TestGetUnreadyDeploymentCondition(t *testing.T) {
 				},
 			},
 			&Result{
-				conditionType: appsv1alpha1.IngressFailure,
+				conditionType: alpha1.IngressFailure,
 			},
 		},
 		{
@@ -563,7 +565,7 @@ func TestGetUnreadyDeploymentCondition(t *testing.T) {
 				},
 			},
 			&Result{
-				conditionType: appsv1alpha1.IngressPending,
+				conditionType: alpha1.IngressPending,
 			},
 		},
 	}
