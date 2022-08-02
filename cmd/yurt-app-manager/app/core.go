@@ -154,8 +154,8 @@ func Run(opts *options.YurtAppOptions) {
 	}
 
 	setupLog.Info("setup webhook")
-	if err = webhook.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to setup webhook")
+	if err := webhook.SetupWebhooks(mgr); err != nil {
+		setupLog.Error(err, "setup webhook fail")
 		os.Exit(1)
 	}
 

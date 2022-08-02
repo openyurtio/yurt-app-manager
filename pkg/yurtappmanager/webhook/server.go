@@ -1,6 +1,5 @@
 /*
-Copyright 2020 The OpenYurt Authors.
-Copyright 2020 The Kruise Authors.
+Copyright 2022 The OpenYurt Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,62 +17,26 @@ limitations under the License.
 package webhook
 
 import (
-	"k8s.io/klog"
-	"k8s.io/kubernetes/pkg/capabilities"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"github.com/pkg/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
 
-	webhookutil "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/util"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/nodepool"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappdaemon"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappset"
 )
 
-var (
-	// HandlerMap contains all admission webhook handlers.
-	HandlerMap = map[string]webhookutil.Handler{}
-)
-
-func init() {
-	capabilities.Initialize(capabilities.Capabilities{
-		AllowPrivileged: true,
-		PrivilegedSources: capabilities.PrivilegedSources{
-			HostNetworkSources: []string{},
-			HostPIDSources:     []string{},
-			HostIPCSources:     []string{},
-		},
-	})
-}
-
-func addHandlers(m map[string]webhookutil.Handler) {
-	for path, handler := range m {
-		if len(path) == 0 {
-			klog.Warningf("Skip handler with empty path.")
-			continue
-		}
-		if path[0] != '/' {
-			path = "/" + path
-		}
-		_, found := HandlerMap[path]
-		if found {
-			klog.V(1).Infof("conflicting webhook builder path %v in handler map", path)
-		}
-		HandlerMap[path] = handler
-	}
-}
-
-func SetupWithManager(mgr manager.Manager) error {
-	server := mgr.GetWebhookServer()
-	server.Host = "0.0.0.0"
-	server.Port = webhookutil.GetPort()
-	server.CertDir = webhookutil.GetCertDir()
-
-	// register admission handlers
-	for path, handler := range HandlerMap {
-		handler.SetOptions(webhookutil.Options{
-			Client: mgr.GetClient(),
-		})
-		server.Register(path, &webhook.Admission{Handler: handler})
-		klog.V(3).Infof("Registered webhook handler %s", path)
+func SetupWebhooks(mgr ctrl.Manager) error {
+	if err := (&nodepool.NodePoolHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
+		return errors.Wrapf(err, "unable to create webhook for NodePool")
 	}
 
+	if err := (&yurtappdaemon.YurtAppDaemonHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
+		return errors.Wrapf(err, "unable to create webhook for YurtAppDaemon")
+	}
+
+	if err := (&yurtappset.YurtAppSetHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
+		return errors.Wrapf(err, "unable to create webhook for YurtAppSet")
+	}
 	return nil
 }
 
