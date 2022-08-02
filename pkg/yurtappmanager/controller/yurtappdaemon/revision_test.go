@@ -17,10 +17,12 @@ limitations under the License.
 package yurtappdaemon
 
 import (
-	appsalphav1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	apps "k8s.io/api/apps/v1"
 	"reflect"
 	"testing"
+
+	apps "k8s.io/api/apps/v1"
+
+	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 const (
@@ -71,11 +73,11 @@ func TestGetYurtAppDaemonPatch(t *testing.T) {
 
 	tests := []struct {
 		name string
-		ud   *appsalphav1.YurtAppDaemon
+		ud   *alpha1.YurtAppDaemon
 	}{
 		{
 			"normal",
-			&appsalphav1.YurtAppDaemon{},
+			&alpha1.YurtAppDaemon{},
 		},
 	}
 
