@@ -55,7 +55,7 @@ func init() {
 }
 
 // ResourceEnabled help runnable check if the custom resource is valid and enabled
-// 1. If this CRD is not found from kueb-apiserver, it is invalid.
+// 1. If this CRD is not found from kube-apiserver, it is invalid.
 // 2. If 'CUSTOM_RESOURCE_ENABLE' env is not empty and this CRD kind is not in ${CUSTOM_RESOURCE_ENABLE}.
 func ResourceEnabled(obj runtime.Object) bool {
 	gvk, err := apiutil.GVKForObject(obj, internalScheme)
@@ -98,8 +98,10 @@ func discoveryEnabled(gvk schema.GroupVersionKind) bool {
 	return false
 }
 
+var osGetenv = os.Getenv
+
 func envEnabled(gvk schema.GroupVersionKind) bool {
-	limits := strings.TrimSpace(os.Getenv(envCustomResourceEnable))
+	limits := strings.TrimSpace(osGetenv(envCustomResourceEnable))
 	if len(limits) == 0 {
 		// all enabled by default
 		return true

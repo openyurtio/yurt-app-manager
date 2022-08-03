@@ -129,9 +129,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+var timeSleep = time.Sleep
+
 // createNodePool creates an nodepool, it will retry 5 times if it fails
 func createNodePool(c client.Client, name string,
-	poolType appsv1alpha1.NodePoolType) {
+	poolType appsv1alpha1.NodePoolType) bool {
 	for i := 0; i < 5; i++ {
 		np := appsv1alpha1.NodePool{
 			ObjectMeta: metav1.ObjectMeta{
@@ -144,16 +146,17 @@ func createNodePool(c client.Client, name string,
 		err := c.Create(context.TODO(), &np)
 		if err == nil {
 			klog.V(4).Infof("the default nodepool(%s) is created", name)
-			break
+			return true
 		}
 		if apierrors.IsAlreadyExists(err) {
 			klog.V(4).Infof("the default nodepool(%s) already exist", name)
-			break
+			return false
 		}
 		klog.Errorf("fail to create the node pool(%s): %s", name, err)
-		time.Sleep(2 * time.Second)
+		timeSleep(2 * time.Second)
 	}
 	klog.V(4).Info("fail to create the default nodepool after trying for 5 times")
+	return false
 }
 
 // createDefaultNodePool creates the default NodePool if not exist
@@ -194,6 +197,110 @@ func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctr
 	// 1. handle the event of removing node out of the pool
 	// nodes in currentNodeList but not in the desiredNodeList, will be
 	// removed from the pool
+	removedNodes := getRemovedNodes(&currentNodeList, &desiredNodeList)
+	for _, rNode := range removedNodes {
+		if err := removePoolRelatedAttrs(&rNode); err != nil {
+			return ctrl.Result{}, err
+		}
+		if err := r.Update(ctx, &rNode); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// 2. handle the event of adding node to the pool and the event of
+	// updating node pool attributes
+	var (
+		readyNode    int32
+		notReadyNode int32
+		nodes        []string
+	)
+
+	for _, node := range desiredNodeList.Items {
+		// prepare nodepool status
+		nodes = append(nodes, node.GetName())
+		if isNodeReady(node) {
+			readyNode += 1
+		} else {
+			notReadyNode += 1
+		}
+
+		// update node status according to nodepool
+		updated, err := concilateNode(&node, nodePool)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if updated {
+			if err := r.Update(ctx, &node); err != nil {
+				klog.Errorf("Update Node %s error %v", node.Name, err)
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
+	// 3. always update the node pool status if necessary
+	needUpdate := conciliateNodePoolStatus(readyNode, notReadyNode, nodes, &nodePool)
+	if needUpdate {
+		return ctrl.Result{}, r.Update(ctx, &nodePool)
+	}
+	return ctrl.Result{}, nil
+}
+
+// conciliatePoolRelatedAttrs will update the node's attributes that related to
+// the nodepool
+func concilateNode(node *corev1.Node, nodePool appsv1alpha1.NodePool) (attrUpdated bool, err error) {
+	// update node attr
+	npra := NodePoolRelatedAttributes{
+		Labels:      nodePool.Spec.Labels,
+		Annotations: nodePool.Spec.Annotations,
+		Taints:      nodePool.Spec.Taints,
+	}
+
+	if preAttrs, exist := node.Annotations[appsv1alpha1.AnnotationPrevAttrs]; !exist {
+		node.Labels = mergeMap(node.Labels, npra.Labels)
+		node.Annotations = mergeMap(node.Annotations, npra.Annotations)
+		for _, npt := range npra.Taints {
+			for i, nt := range node.Spec.Taints {
+				if npt.Effect == nt.Effect && npt.Key == nt.Key {
+					node.Spec.Taints = append(node.Spec.Taints[:i], node.Spec.Taints[i+1:]...)
+					break
+				}
+			}
+			node.Spec.Taints = append(node.Spec.Taints, npt)
+		}
+		if err := cachePrevPoolAttrs(node, npra); err != nil {
+			return attrUpdated, err
+		}
+		attrUpdated = true
+	} else {
+		var preNpra NodePoolRelatedAttributes
+		if err := json.Unmarshal([]byte(preAttrs), &preNpra); err != nil {
+			return attrUpdated, err
+		}
+		if !reflect.DeepEqual(preNpra, npra) {
+			// pool related attributes will be updated
+			conciliateLabels(node, preNpra.Labels, npra.Labels)
+			conciliateAnnotations(node, preNpra.Annotations, npra.Annotations)
+			conciliateTaints(node, preNpra.Taints, npra.Taints)
+			if err := cachePrevPoolAttrs(node, npra); err != nil {
+				return attrUpdated, err
+			}
+			attrUpdated = true
+		}
+	}
+
+	// update ownerLabel
+	if node.Labels[appsv1alpha1.LabelCurrentNodePool] != nodePool.GetName() {
+		if len(node.Labels) == 0 {
+			node.Labels = make(map[string]string)
+		}
+		node.Labels[appsv1alpha1.LabelCurrentNodePool] = nodePool.GetName()
+		attrUpdated = true
+	}
+	return attrUpdated, nil
+}
+
+// getRemovedNodes calculates removed nodes from current nodes and desired nodes
+func getRemovedNodes(currentNodeList *corev1.NodeList, desiredNodeList *corev1.NodeList) []corev1.Node {
 	var removedNodes []corev1.Node
 	for _, mNode := range currentNodeList.Items {
 		var found bool
@@ -207,60 +314,7 @@ func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctr
 			removedNodes = append(removedNodes, mNode)
 		}
 	}
-
-	for _, rNode := range removedNodes {
-		if err := removePoolRelatedAttrs(&rNode); err != nil {
-			return ctrl.Result{}, err
-		}
-		if err := r.Update(ctx, &rNode); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	var (
-		readyNode    int32
-		notReadyNode int32
-		nodes        []string
-	)
-
-	// 2. handle the event of adding node to the pool and the event of
-	// updating node pool attributes
-	for _, node := range desiredNodeList.Items {
-		nodes = append(nodes, node.GetName())
-		if isNodeReady(node) {
-			readyNode += 1
-		} else {
-			notReadyNode += 1
-		}
-
-		attrUpdated, err := conciliatePoolRelatedAttrs(&node,
-			NodePoolRelatedAttributes{
-				Labels:      nodePool.Spec.Labels,
-				Annotations: nodePool.Spec.Annotations,
-				Taints:      nodePool.Spec.Taints,
-			})
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		var ownerLabelUpdated bool
-		if node.Labels[appsv1alpha1.LabelCurrentNodePool] != nodePool.GetName() {
-			ownerLabelUpdated = true
-			if len(node.Labels) == 0 {
-				node.Labels = make(map[string]string)
-			}
-			node.Labels[appsv1alpha1.LabelCurrentNodePool] = nodePool.GetName()
-		}
-
-		if attrUpdated || ownerLabelUpdated {
-			if err := r.Update(ctx, &node); err != nil {
-				klog.Errorf("Update Node %s error %v", node.Name, err)
-				return ctrl.Result{}, err
-			}
-		}
-	}
-
-	// 3. always update the node pool status if necessary
-	return conciliateNodePoolStatus(r.Client, readyNode, notReadyNode, nodes, &nodePool)
+	return removedNodes
 }
 
 // removePoolRelatedAttrs removes attributes(label/annotation/taint) that
@@ -301,48 +355,6 @@ func removePoolRelatedAttrs(node *corev1.Node) error {
 	delete(node.Labels, appsv1alpha1.LabelCurrentNodePool)
 
 	return nil
-}
-
-// conciliatePoolRelatedAttrs will update the node's attributes that related to
-// the nodepool
-func conciliatePoolRelatedAttrs(node *corev1.Node,
-	npra NodePoolRelatedAttributes) (bool, error) {
-	var attrUpdated bool
-	preAttrs, exist := node.Annotations[appsv1alpha1.AnnotationPrevAttrs]
-	if !exist {
-		node.Labels = mergeMap(node.Labels, npra.Labels)
-		node.Annotations = mergeMap(node.Annotations, npra.Annotations)
-		for _, npt := range npra.Taints {
-			for i, nt := range node.Spec.Taints {
-				if npt.Effect == nt.Effect && npt.Key == nt.Key {
-					node.Spec.Taints = append(node.Spec.Taints[:i], node.Spec.Taints[i+1:]...)
-					break
-				}
-			}
-			node.Spec.Taints = append(node.Spec.Taints, npt)
-		}
-
-		if err := cachePrevPoolAttrs(node, npra); err != nil {
-			return attrUpdated, err
-		}
-		attrUpdated = true
-		return attrUpdated, nil
-	}
-	var preNpra NodePoolRelatedAttributes
-	if err := json.Unmarshal([]byte(preAttrs), &preNpra); err != nil {
-		return attrUpdated, err
-	}
-	if !reflect.DeepEqual(preNpra, npra) {
-		// pool related attributes will be updated
-		conciliateLabels(node, preNpra.Labels, npra.Labels)
-		conciliateAnnotations(node, preNpra.Annotations, npra.Annotations)
-		conciliateTaints(node, preNpra.Taints, npra.Taints)
-		if err := cachePrevPoolAttrs(node, npra); err != nil {
-			return attrUpdated, err
-		}
-		attrUpdated = true
-	}
-	return attrUpdated, nil
 }
 
 // conciliateLabels will update the node's label that related to the nodepool
@@ -392,21 +404,21 @@ func conciliateTaints(node *corev1.Node, oldTaints, newTaints []corev1.Taint) {
 	}
 }
 
-// conciliateNodePoolStatus will update the nodepool status
-func conciliateNodePoolStatus(cli client.Client,
+// conciliateNodePoolStatus will update the nodepool status if necessary
+func conciliateNodePoolStatus(
 	readyNode,
 	notReadyNode int32,
 	nodes []string,
-	nodePool *appsv1alpha1.NodePool) (ctrl.Result, error) {
-	var updateNodePool bool
+	nodePool *appsv1alpha1.NodePool) (needUpdate bool) {
+
 	if readyNode != nodePool.Status.ReadyNodeNum {
 		nodePool.Status.ReadyNodeNum = readyNode
-		updateNodePool = true
+		needUpdate = true
 	}
 
 	if notReadyNode != nodePool.Status.UnreadyNodeNum {
 		nodePool.Status.UnreadyNodeNum = notReadyNode
-		updateNodePool = true
+		needUpdate = true
 	}
 
 	// update the node list on demand
@@ -414,13 +426,10 @@ func conciliateNodePoolStatus(cli client.Client,
 	sort.Strings(nodePool.Status.Nodes)
 	if !reflect.DeepEqual(nodes, nodePool.Status.Nodes) {
 		nodePool.Status.Nodes = nodes
-		updateNodePool = true
+		needUpdate = true
 	}
-	// update the nodepool on demand
-	if updateNodePool {
-		return ctrl.Result{}, cli.Status().Update(context.Background(), nodePool)
-	}
-	return ctrl.Result{}, nil
+
+	return needUpdate
 }
 
 // containTaint checks if `taint` is in `taints`, if yes it will return
