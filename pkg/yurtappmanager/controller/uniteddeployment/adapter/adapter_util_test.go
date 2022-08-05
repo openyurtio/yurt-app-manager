@@ -22,11 +22,9 @@ import (
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
-
-	"k8s.io/apimachinery/pkg/runtime"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
