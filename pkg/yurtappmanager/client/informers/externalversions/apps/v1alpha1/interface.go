@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// NodePools returns a NodePoolInformer.
 	NodePools() NodePoolInformer
+	// UnitedDeployments returns a UnitedDeploymentInformer.
+	UnitedDeployments() UnitedDeploymentInformer
 	// YurtAppDaemons returns a YurtAppDaemonInformer.
 	YurtAppDaemons() YurtAppDaemonInformer
 	// YurtAppSets returns a YurtAppSetInformer.
@@ -48,6 +50,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // NodePools returns a NodePoolInformer.
 func (v *version) NodePools() NodePoolInformer {
 	return &nodePoolInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// UnitedDeployments returns a UnitedDeploymentInformer.
+func (v *version) UnitedDeployments() UnitedDeploymentInformer {
+	return &unitedDeploymentInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // YurtAppDaemons returns a YurtAppDaemonInformer.

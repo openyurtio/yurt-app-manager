@@ -88,6 +88,29 @@ func SetDefaultsYurtAppSet(obj *YurtAppSet) {
 
 }
 
+// SetDefaults_UnitedDeployment set default values for UnitedDeployment.
+func SetDefaultsUnitedDeployment(obj *UnitedDeployment) {
+
+	if obj.Spec.RevisionHistoryLimit == nil {
+		obj.Spec.RevisionHistoryLimit = utilpointer.Int32Ptr(10)
+	}
+
+	if obj.Spec.WorkloadTemplate.StatefulSetTemplate != nil {
+		SetDefaultPodSpec(&obj.Spec.WorkloadTemplate.StatefulSetTemplate.Spec.Template.Spec)
+		for i := range obj.Spec.WorkloadTemplate.StatefulSetTemplate.Spec.VolumeClaimTemplates {
+			a := &obj.Spec.WorkloadTemplate.StatefulSetTemplate.Spec.VolumeClaimTemplates[i]
+			v1.SetDefaults_PersistentVolumeClaim(a)
+			v1.SetDefaults_ResourceList(&a.Spec.Resources.Limits)
+			v1.SetDefaults_ResourceList(&a.Spec.Resources.Requests)
+			v1.SetDefaults_ResourceList(&a.Status.Capacity)
+		}
+	}
+	if obj.Spec.WorkloadTemplate.DeploymentTemplate != nil {
+		SetDefaultPodSpec(&obj.Spec.WorkloadTemplate.DeploymentTemplate.Spec.Template.Spec)
+	}
+
+}
+
 // SetDefaultPod sets default pod
 func SetDefaultPod(in *corev1.Pod) {
 	SetDefaultPodSpec(&in.Spec)
