@@ -1,13 +1,9 @@
 /*
-Copyright 2020 The OpenYurt Authors.
-Copyright 2019 The Kruise Authors.
-
+Copyright 2022 The OpenYurt authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +11,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package validating
+package yurtappdaemon
 
 import (
 	"fmt"
-	"strings"
 
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -29,9 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unversionedvalidation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/klog"
 	appsvalidation "k8s.io/kubernetes/pkg/apis/apps/validation"
 	"k8s.io/kubernetes/pkg/apis/core"
 	corev1 "k8s.io/kubernetes/pkg/apis/core/v1"
@@ -41,8 +33,15 @@ import (
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
-// ValidateYurtAppSetSpec tests if required fields in the YurtAppSet spec are set.
-func validateYurtAppSetSpec(c client.Client, spec *unitv1alpha1.YurtAppSetSpec, fldPath *field.Path) field.ErrorList {
+// validateYurtAppDaemon validates a YurtAppDaemon.
+func validateYurtAppDaemon(c client.Client, yad *unitv1alpha1.YurtAppDaemon) field.ErrorList {
+	allErrs := apivalidation.ValidateObjectMeta(&yad.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
+	allErrs = append(allErrs, validateYurtAppDaemonSpec(c, &yad.Spec, field.NewPath("spec"))...)
+	return allErrs
+}
+
+// validateYurtAppDaemonSpec tests if required fields in the YurtAppDaemon spec are set.
+func validateYurtAppDaemonSpec(c client.Client, spec *unitv1alpha1.YurtAppDaemonSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if spec.Selector == nil {
@@ -54,131 +53,17 @@ func validateYurtAppSetSpec(c client.Client, spec *unitv1alpha1.YurtAppSetSpec, 
 		}
 	}
 
-	klog.Infof("sel:%v, label: %v\n", spec.Selector, spec.WorkloadTemplate.DeploymentTemplate.Labels)
-	klog.Infof("templatePath:%s", fldPath.Child("workloadTemplate").String())
-
-	ss, _ := yaml.Marshal(spec)
-	klog.Infoln(string(ss))
-
 	selector, err := metav1.LabelSelectorAsSelector(spec.Selector)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("selector"), spec.Selector, ""))
 	} else {
-		allErrs = append(allErrs, validatePoolTemplate(&(spec.WorkloadTemplate), spec, selector, fldPath.Child("workloadTemplate"))...)
-	}
-
-	poolNames := sets.String{}
-	for i, pool := range spec.Topology.Pools {
-		if len(pool.Name) == 0 {
-			allErrs = append(allErrs, field.Required(fldPath.Child("topology", "pools").Index(i).Child("name"), ""))
-		}
-
-		if poolNames.Has(pool.Name) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("topology", "pools").Index(i).Child("name"), pool.Name,
-				fmt.Sprintf("duplicated pool name %s", pool.Name)))
-		}
-
-		poolNames.Insert(pool.Name)
-		if errs := apimachineryvalidation.NameIsDNSLabel(pool.Name, false); len(errs) > 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("topology", "pools").Index(i).Child("name"), pool.Name,
-				fmt.Sprintf("invalid pool name %s", strings.Join(errs, ", "))))
-		}
-
-		coreNodeSelectorTerm := &core.NodeSelectorTerm{}
-		if err := corev1.Convert_v1_NodeSelectorTerm_To_core_NodeSelectorTerm(pool.NodeSelectorTerm.DeepCopy(), coreNodeSelectorTerm, nil); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("topology", "pools").Index(i).Child("nodeSelectorTerm"),
-				pool.NodeSelectorTerm, fmt.Sprintf("Convert_v1_NodeSelectorTerm_To_core_NodeSelectorTerm failed: %v", err)))
-		} else {
-			allErrs = append(allErrs, apivalidation.ValidateNodeSelectorTerm(*coreNodeSelectorTerm, fldPath.Child("topology", "pools").Index(i).Child("nodeSelectorTerm"))...)
-		}
-
-		if pool.Tolerations != nil {
-			var coreTolerations []core.Toleration
-			for i, toleration := range pool.Tolerations {
-				coreToleration := &core.Toleration{}
-				if err := corev1.Convert_v1_Toleration_To_core_Toleration(&toleration, coreToleration, nil); err != nil {
-					allErrs = append(allErrs, field.Invalid(fldPath.Child("topology", "pools").Index(i).Child("tolerations"), pool.Tolerations,
-						fmt.Sprintf("Convert_v1_Toleration_To_core_Toleration failed: %v", err)))
-				} else {
-					coreTolerations = append(coreTolerations, *coreToleration)
-				}
-			}
-			allErrs = append(allErrs, apivalidation.ValidateTolerations(coreTolerations, fldPath.Child("topology", "pools").Index(i).Child("tolerations"))...)
-		}
-
+		allErrs = append(allErrs, validateWorkLoadTemplate(&(spec.WorkloadTemplate), selector, fldPath.Child("template"))...)
 	}
 
 	return allErrs
 }
 
-// validateYurtAppSet validates a YurtAppSet.
-func validateYurtAppSet(c client.Client, yurtAppSet *unitv1alpha1.YurtAppSet) field.ErrorList {
-	allErrs := apivalidation.ValidateObjectMeta(&yurtAppSet.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateYurtAppSetSpec(c, &yurtAppSet.Spec, field.NewPath("spec"))...)
-	return allErrs
-}
-
-// ValidateYurtAppSetUpdate tests if required fields in the YurtAppSet are set.
-func ValidateYurtAppSetUpdate(yurtAppSet, oldYurtAppSet *unitv1alpha1.YurtAppSet) field.ErrorList {
-	allErrs := apivalidation.ValidateObjectMetaUpdate(&yurtAppSet.ObjectMeta, &oldYurtAppSet.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, validateYurtAppSetSpecUpdate(&yurtAppSet.Spec, &oldYurtAppSet.Spec, field.NewPath("spec"))...)
-	return allErrs
-}
-
-func convertPodTemplateSpec(template *v1.PodTemplateSpec) (*core.PodTemplateSpec, error) {
-	coreTemplate := &core.PodTemplateSpec{}
-	if err := corev1.Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec(template.DeepCopy(), coreTemplate, nil); err != nil {
-		return nil, err
-	}
-	return coreTemplate, nil
-}
-
-func validateYurtAppSetSpecUpdate(spec, oldSpec *unitv1alpha1.YurtAppSetSpec, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateWorkloadTemplateUpdate(&spec.WorkloadTemplate, &oldSpec.WorkloadTemplate, fldPath.Child("workloadTemplate"))...)
-	allErrs = append(allErrs, validateYurtAppSetTopology(&spec.Topology, &oldSpec.Topology, fldPath.Child("topology"))...)
-	return allErrs
-}
-
-func validateYurtAppSetTopology(topology, oldTopology *unitv1alpha1.Topology, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if topology == nil || oldTopology == nil {
-		return allErrs
-	}
-
-	oldPools := map[string]*unitv1alpha1.Pool{}
-	for i, pool := range oldTopology.Pools {
-		oldPools[pool.Name] = &oldTopology.Pools[i]
-	}
-
-	for i, pool := range topology.Pools {
-		if oldPool, exist := oldPools[pool.Name]; exist {
-			if !apiequality.Semantic.DeepEqual(oldPool.NodeSelectorTerm, pool.NodeSelectorTerm) {
-				allErrs = append(allErrs, field.Forbidden(fldPath.Child("pools").Index(i).Child("nodeSelectorTerm"), "may not be changed in an update"))
-			}
-			if !apiequality.Semantic.DeepEqual(oldPool.Tolerations, pool.Tolerations) {
-				allErrs = append(allErrs, field.Forbidden(fldPath.Child("pools").Index(i).Child("tolerations"), "may not be changed in an update"))
-			}
-		}
-	}
-	return allErrs
-}
-
-func validateWorkloadTemplateUpdate(template, oldTemplate *unitv1alpha1.WorkloadTemplate, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if template.StatefulSetTemplate != nil && oldTemplate.StatefulSetTemplate != nil {
-		allErrs = append(allErrs, validateStatefulSetUpdate(template.StatefulSetTemplate, oldTemplate.StatefulSetTemplate,
-			fldPath.Child("statefulSetTemplate"))...)
-	}
-	if template.DeploymentTemplate != nil && oldTemplate.DeploymentTemplate != nil {
-		allErrs = append(allErrs, validateDeploymentUpdate(template.DeploymentTemplate, oldTemplate.DeploymentTemplate,
-			fldPath.Child("deploymentTemplate"))...)
-	}
-	return allErrs
-}
-
-func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1alpha1.YurtAppSetSpec,
-	selector labels.Selector, fldPath *field.Path) field.ErrorList {
+func validateWorkLoadTemplate(template *unitv1alpha1.WorkloadTemplate, selector labels.Selector, fldPath *field.Path) field.ErrorList {
 
 	allErrs := field.ErrorList{}
 
@@ -191,9 +76,9 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 	}
 
 	if templateCount < 1 {
-		allErrs = append(allErrs, field.Required(fldPath, "should provide one of (statefulSetTemplate/deploymentTemplate/daemonSetTemplate)"))
+		allErrs = append(allErrs, field.Required(fldPath, "should provide one of (statefulSetTemplate/deploymentTemplate)"))
 	} else if templateCount > 1 {
-		allErrs = append(allErrs, field.Invalid(fldPath, template, "should provide only one of (statefulSetTemplate/deploymentTemplate/daemonSetTemplate)"))
+		allErrs = append(allErrs, field.Invalid(fldPath, template, "should provide only one of (statefulSetTemplate/deploymentTemplate)"))
 	}
 
 	if template.StatefulSetTemplate != nil {
@@ -211,12 +96,9 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
-	klog.Infoln("call webhook validatePoolTemplate")
 	if template.DeploymentTemplate != nil {
 		labels := labels.Set(template.DeploymentTemplate.Labels)
 		if !selector.Matches(labels) {
-
-			klog.Errorf("labels: %v, selector: %v", labels, selector)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("deploymentTemplate", "metadata", "labels"),
 				template.DeploymentTemplate.Labels, "`selector` does not match template `labels`"))
 		}
@@ -232,6 +114,40 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 			fldPath.Child("deploymentTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
+	return allErrs
+}
+
+// ValidateYurtAppDaemonUpdate tests if required fields in the YurtAppDaemon are set.
+func ValidateYurtAppDaemonUpdate(yad, oldYad *unitv1alpha1.YurtAppDaemon) field.ErrorList {
+	allErrs := apivalidation.ValidateObjectMetaUpdate(&yad.ObjectMeta, &oldYad.ObjectMeta, field.NewPath("metadata"))
+	allErrs = append(allErrs, validateYurtAppDaemonSpecUpdate(&yad.Spec, &oldYad.Spec, field.NewPath("spec"))...)
+	return allErrs
+}
+
+func convertPodTemplateSpec(template *v1.PodTemplateSpec) (*core.PodTemplateSpec, error) {
+	coreTemplate := &core.PodTemplateSpec{}
+	if err := corev1.Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec(template.DeepCopy(), coreTemplate, nil); err != nil {
+		return nil, err
+	}
+	return coreTemplate, nil
+}
+
+func validateYurtAppDaemonSpecUpdate(spec, oldSpec *unitv1alpha1.YurtAppDaemonSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, validateWorkloadTemplateUpdate(&spec.WorkloadTemplate, &oldSpec.WorkloadTemplate, fldPath.Child("template"))...)
+	return allErrs
+}
+
+func validateWorkloadTemplateUpdate(template, oldTemplate *unitv1alpha1.WorkloadTemplate, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if template.StatefulSetTemplate != nil && oldTemplate.StatefulSetTemplate != nil {
+		allErrs = append(allErrs, validateStatefulSetUpdate(template.StatefulSetTemplate, oldTemplate.StatefulSetTemplate,
+			fldPath.Child("statefulSetTemplate"))...)
+	}
+	if template.DeploymentTemplate != nil && oldTemplate.DeploymentTemplate != nil {
+		allErrs = append(allErrs, validateDeploymentUpdate(template.DeploymentTemplate, oldTemplate.DeploymentTemplate,
+			fldPath.Child("deploymentTemplate"))...)
+	}
 	return allErrs
 }
 
@@ -253,9 +169,11 @@ func validatePodTemplateSpec(template *core.PodTemplateSpec, selector labels.Sel
 
 func validateStatefulSet(statefulSet *unitv1alpha1.StatefulSetTemplateSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if statefulSet.Spec.Replicas != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *statefulSet.Spec.Replicas, "replicas in statefulSetTemplate will not be used"))
-	}
+	/*
+		if statefulSet.Spec.Replicas != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *statefulSet.Spec.Replicas, "replicas in statefulSetTemplate will not be used"))
+		}
+	*/
 	if statefulSet.Spec.UpdateStrategy.Type == appsv1.RollingUpdateStatefulSetStrategyType &&
 		statefulSet.Spec.UpdateStrategy.RollingUpdate != nil &&
 		statefulSet.Spec.UpdateStrategy.RollingUpdate.Partition != nil {
@@ -267,9 +185,11 @@ func validateStatefulSet(statefulSet *unitv1alpha1.StatefulSetTemplateSpec, fldP
 
 func validateDeployment(deployment *unitv1alpha1.DeploymentTemplateSpec, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if deployment.Spec.Replicas != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *deployment.Spec.Replicas, "replicas in deploymentTemplate will not be used"))
-	}
+	/*
+		if deployment.Spec.Replicas != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("spec", "replicas"), *deployment.Spec.Replicas, "replicas in deploymentTemplate will not be used"))
+		}
+	*/
 	return allErrs
 }
 
