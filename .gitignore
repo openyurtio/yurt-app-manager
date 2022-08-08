@@ -1,5 +1,6 @@
 _output
 .idea
+.vscode
 .DS_Store
 gopath
 dockerbuild
