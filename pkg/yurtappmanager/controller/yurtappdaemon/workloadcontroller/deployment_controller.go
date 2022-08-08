@@ -99,7 +99,8 @@ func (a *DeploymentControllor) applyTemplate(scheme *runtime.Scheme, yad *v1alph
 	set.Spec.Template.Spec.NodeSelector = CreateNodeSelectorByNodepoolName(nodepool.GetName())
 
 	// toleration
-	set.Spec.Template.Spec.Tolerations = TaintsToTolerations(nodepool.Spec.Taints)
+	nodePoolTaints := TaintsToTolerations(nodepool.Spec.Taints)
+	set.Spec.Template.Spec.Tolerations = append(set.Spec.Template.Spec.Tolerations, nodePoolTaints...)
 
 	if err := controllerutil.SetControllerReference(yad, set, scheme); err != nil {
 		return err
