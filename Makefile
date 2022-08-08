@@ -68,6 +68,17 @@ docker-push:
 clean: 
 	-rm -Rf _output
 
+# verify will verify the code.
+verify: verify-mod verify-license
+
+# verify-license will check if license has been added to files. 
+verify-license:
+	hack/make-rules/check_license.sh
+
+# verify-mod will check if go.mod has beed tidied.
+verify-mod:
+	hack/make-rules/verify_mod.sh
+
 generate: controller-gen manifests generate-goclient
 
 # Generate manifests, e.g., CRD, RBAC etc.
