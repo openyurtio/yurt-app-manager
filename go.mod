@@ -3,12 +3,9 @@ module github.com/openyurtio/yurt-app-manager
 go 1.16
 
 require (
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.15.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3
