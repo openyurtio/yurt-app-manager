@@ -134,4 +134,5 @@ func (e *EnqueueNodePoolForNode) Delete(evt event.DeleteEvent,
 // Generic implements EventHandler
 func (e *EnqueueNodePoolForNode) Generic(evt event.GenericEvent,
 	q workqueue.RateLimitingInterface) {
+	return
 }
