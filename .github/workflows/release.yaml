@@ -2,8 +2,18 @@ name: Release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - "v*"
+    paths-ignore:
+      - '*.md'
+      - 'charts/**'
+      - 'config/**'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'OWNERS'
+      - 'README.md'
   schedule:
     # run at UTC 1:30 every day
     - cron:  '30 1 * * *'
