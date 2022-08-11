@@ -240,7 +240,7 @@ func (r *NodePoolReconciler) Reconcile(_ context.Context, req ctrl.Request) (ctr
 	// 3. always update the node pool status if necessary
 	needUpdate := conciliateNodePoolStatus(readyNode, notReadyNode, nodes, &nodePool)
 	if needUpdate {
-		return ctrl.Result{}, r.Update(ctx, &nodePool)
+		return ctrl.Result{}, r.Status().Update(ctx, &nodePool)
 	}
 	return ctrl.Result{}, nil
 }
