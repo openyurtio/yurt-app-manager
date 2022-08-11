@@ -15,13 +15,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package validating
+package uniteddeployment
 
 import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -35,7 +34,7 @@ import (
 	appsvalidation "k8s.io/kubernetes/pkg/apis/apps/validation"
 	"k8s.io/kubernetes/pkg/apis/core"
 	corev1 "k8s.io/kubernetes/pkg/apis/core/v1"
-	"k8s.io/kubernetes/pkg/apis/core/validation"
+	apivalidation "k8s.io/kubernetes/pkg/apis/core/validation"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -56,9 +55,6 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 
 	klog.Infof("sel:%v, label: %v\n", spec.Selector, spec.WorkloadTemplate.DeploymentTemplate.Labels)
 	klog.Infof("templatePath:%s", fldPath.Child("workloadTemplate").String())
-
-	ss, _ := yaml.Marshal(spec)
-	klog.Infoln(string(ss))
 
 	selector, err := metav1.LabelSelectorAsSelector(spec.Selector)
 	if err != nil {
@@ -89,7 +85,7 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("topology", "pools").Index(i).Child("nodeSelectorTerm"),
 				pool.NodeSelectorTerm, fmt.Sprintf("Convert_v1_NodeSelectorTerm_To_core_NodeSelectorTerm failed: %v", err)))
 		} else {
-			allErrs = append(allErrs, validation.ValidateNodeSelectorTerm(*coreNodeSelectorTerm, fldPath.Child("topology", "pools").Index(i).Child("nodeSelectorTerm"))...)
+			allErrs = append(allErrs, apivalidation.ValidateNodeSelectorTerm(*coreNodeSelectorTerm, fldPath.Child("topology", "pools").Index(i).Child("nodeSelectorTerm"))...)
 		}
 
 		if pool.Tolerations != nil {
@@ -103,7 +99,7 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 					coreTolerations = append(coreTolerations, *coreToleration)
 				}
 			}
-			allErrs = append(allErrs, validation.ValidateTolerations(coreTolerations, fldPath.Child("topology", "pools").Index(i).Child("tolerations"))...)
+			allErrs = append(allErrs, apivalidation.ValidateTolerations(coreTolerations, fldPath.Child("topology", "pools").Index(i).Child("tolerations"))...)
 		}
 
 	}
@@ -113,14 +109,14 @@ func validateUnitedDeploymentSpec(c client.Client, spec *unitv1alpha1.UnitedDepl
 
 // validateUnitedDeployment validates a UnitedDeployment.
 func validateUnitedDeployment(c client.Client, unitedDeployment *unitv1alpha1.UnitedDeployment) field.ErrorList {
-	allErrs := validation.ValidateObjectMeta(&unitedDeployment.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
+	allErrs := apivalidation.ValidateObjectMeta(&unitedDeployment.ObjectMeta, true, apimachineryvalidation.NameIsDNSSubdomain, field.NewPath("metadata"))
 	allErrs = append(allErrs, validateUnitedDeploymentSpec(c, &unitedDeployment.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
 
 // ValidateUnitedDeploymentUpdate tests if required fields in the UnitedDeployment are set.
 func ValidateUnitedDeploymentUpdate(unitedDeployment, oldUnitedDeployment *unitv1alpha1.UnitedDeployment) field.ErrorList {
-	allErrs := validation.ValidateObjectMetaUpdate(&unitedDeployment.ObjectMeta, &oldUnitedDeployment.ObjectMeta, field.NewPath("metadata"))
+	allErrs := apivalidation.ValidateObjectMetaUpdate(&unitedDeployment.ObjectMeta, &oldUnitedDeployment.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, validateUnitedDeploymentSpecUpdate(&unitedDeployment.Spec, &oldUnitedDeployment.Spec, field.NewPath("spec"))...)
 	return allErrs
 }
@@ -208,7 +204,7 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 			allErrs = append(allErrs, field.Invalid(fldPath.Root(), sstemplate, fmt.Sprintf("Convert_v1_PodTemplateSpec_To_core_PodTemplateSpec failed: %v", err)))
 			return allErrs
 		}
-		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"), validation.PodValidationOptions{})...)
+		allErrs = append(allErrs, appsvalidation.ValidatePodTemplateSpecForStatefulSet(coreTemplate, selector, fldPath.Child("statefulSetTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
 	klog.Infoln("call webhook validatePoolTemplate")
@@ -228,8 +224,8 @@ func validatePoolTemplate(template *unitv1alpha1.WorkloadTemplate, spec *unitv1a
 			return allErrs
 		}
 		allErrs = append(allErrs, validatePodTemplateSpec(coreTemplate, selector, fldPath.Child("deploymentTemplate", "spec", "template"))...)
-		allErrs = append(allErrs, validation.ValidatePodTemplateSpec(coreTemplate,
-			fldPath.Child("deploymentTemplate", "spec", "template"), validation.PodValidationOptions{})...)
+		allErrs = append(allErrs, apivalidation.ValidatePodTemplateSpec(coreTemplate,
+			fldPath.Child("deploymentTemplate", "spec", "template"), apivalidation.PodValidationOptions{})...)
 	}
 
 	return allErrs
@@ -294,7 +290,7 @@ func validateDeploymentUpdate(deployment, oldDeployment *unitv1alpha1.Deployment
 	deployment.Spec.Strategy = restoreStrategy
 
 	if deployment.Spec.Replicas != nil {
-		allErrs = append(allErrs, validation.ValidateNonnegativeField(int64(*deployment.Spec.Replicas),
+		allErrs = append(allErrs, apivalidation.ValidateNonnegativeField(int64(*deployment.Spec.Replicas),
 			fldPath.Child("spec", "replicas"))...)
 	}
 	return allErrs
@@ -320,7 +316,7 @@ func validateStatefulSetUpdate(statefulSet, oldStatefulSet *unitv1alpha1.Statefu
 	statefulSet.Spec.UpdateStrategy = restoreStrategy
 
 	if statefulSet.Spec.Replicas != nil {
-		allErrs = append(allErrs, validation.ValidateNonnegativeField(int64(*statefulSet.Spec.Replicas), fldPath.Child("spec", "replicas"))...)
+		allErrs = append(allErrs, apivalidation.ValidateNonnegativeField(int64(*statefulSet.Spec.Replicas), fldPath.Child("spec", "replicas"))...)
 	}
 	return allErrs
 }

@@ -32,26 +32,6 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-apps-openyurt-io-v1alpha1-uniteddeployment
-  failurePolicy: Fail
-  name: muniteddeployment.kb.io
-  rules:
-  - apiGroups:
-    - apps.openyurt.io
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - uniteddeployments
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
       path: /mutate-apps-openyurt-io-v1alpha1-yurtappdaemon
   failurePolicy: Fail
   name: myurtappdaemon.kb.io
@@ -106,6 +86,26 @@ webhooks:
     resources:
     - yurtingresses
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-apps-openyurt-io-v1alpha1-uniteddeployment
+  failurePolicy: Fail
+  name: muniteddeployment.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - uniteddeployments
+  sideEffects: None
 
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -134,26 +134,6 @@ webhooks:
     - DELETE
     resources:
     - nodepools
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /validate-apps-openyurt-io-v1alpha1-uniteddeployment
-  failurePolicy: Fail
-  name: vuniteddeployment.kb.io
-  rules:
-  - apiGroups:
-    - apps.openyurt.io
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - uniteddeployments
   sideEffects: None
 - admissionReviewVersions:
   - v1
@@ -215,4 +195,24 @@ webhooks:
     - DELETE
     resources:
     - yurtingresses
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-apps-openyurt-io-v1alpha1-uniteddeployment
+  failurePolicy: Fail
+  name: vuniteddeployment.kb.io
+  rules:
+  - apiGroups:
+    - apps.openyurt.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - uniteddeployments
   sideEffects: None
