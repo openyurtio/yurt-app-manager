@@ -1,5 +1,13 @@
 # Yurt-app-manager
 
+<div align="center">
+
+[![Version](https://img.shields.io/badge/YurtAppManager-v0.6.0-orange)](https://github.com/openyurtio/yurt-app-manager/releases/tag/v0.6.0-beta.1)
+[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/openyurtio/yurt-app-manager)](https://goreportcard.com/report/github.com/openyurtio/yurt-app-manager)
+[![codecov](https://codecov.io/gh/openyurtio/yurt-app-manager/branch/master/graph/badge.svg)](https://app.codecov.io/gh/openyurtio/yurt-app-manager)
+</div>
+
 This repository contains 4 CRD/controllers: NodePool, YurtAppSet, YurtAppDaemon and YurtIngress.
 
 The NodePool provides a convenient management experience for a pool of nodes within the same region or site.
