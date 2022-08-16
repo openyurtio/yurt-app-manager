@@ -3,6 +3,7 @@ module github.com/openyurtio/yurt-app-manager
 go 1.16
 
 require (
+	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
@@ -17,6 +18,7 @@ require (
 	k8s.io/kubernetes v1.22.3
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
 	sigs.k8s.io/controller-runtime v0.10.3
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
