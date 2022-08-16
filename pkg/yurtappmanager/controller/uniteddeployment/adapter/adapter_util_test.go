@@ -21,12 +21,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 func TestGetCurrentPartitionForStrategyOnDelete(t *testing.T) {
@@ -80,7 +81,7 @@ func buildPodList(ordinals []int, revisions []string, t *testing.T) []*corev1.Po
 		}
 		if revisions[i] != "" {
 			pod.Labels = map[string]string{
-				unitv1alpha1.ControllerRevisionHashLabelKey: revisions[i],
+				appsv1alpha1.ControllerRevisionHashLabelKey: revisions[i],
 			}
 		}
 		pods = append(pods, pod)
@@ -168,4 +169,148 @@ func TestCreateNewPatchedObject(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_getPoolPrefix(t *testing.T) {
+
+	tests := []struct {
+		caseName       string
+		controllerName string
+		poolName       string
+		prefix         string
+	}{
+		{caseName: "valid prefix", controllerName: "ud", poolName: "hangzhou", prefix: "ud-hangzhou-"},
+		{caseName: "invalid prefix: contain uppercase characters", controllerName: "ud", poolName: "HangZhou", prefix: "ud-"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.caseName, func(t *testing.T) {
+			if got := getPoolPrefix(tt.controllerName, tt.poolName); got != tt.prefix {
+				t.Errorf("getPoolPrefix() = %v, want %v", got, tt.prefix)
+			}
+		})
+	}
+}
+
+func Test_attachNodeAffinity(t *testing.T) {
+	tests := []struct {
+		name          string
+		podSpec       *corev1.PodSpec
+		pool          *appsv1alpha1.Pool
+		expectPodSpec *corev1.PodSpec
+	}{
+		{
+			name:    "pod Spec.Affinity is nil",
+			podSpec: &corev1.PodSpec{},
+			pool: &appsv1alpha1.Pool{
+				NodeSelectorTerm: corev1.NodeSelectorTerm{
+					MatchExpressions: []corev1.NodeSelectorRequirement{
+						{
+							Key:      "apps.openyurt.io/desired-nodepool",
+							Operator: corev1.NodeSelectorOpIn,
+							Values:   []string{"hangzhou"},
+						},
+					},
+				},
+			},
+
+			expectPodSpec: &corev1.PodSpec{Affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "apps.openyurt.io/desired-nodepool",
+										Operator: corev1.NodeSelectorOpIn,
+										Values:   []string{"hangzhou"},
+									},
+								},
+							},
+						},
+					},
+				},
+			}},
+		},
+		{
+			name:    "pool has pool.NodeSelector",
+			podSpec: &corev1.PodSpec{},
+			pool: &appsv1alpha1.Pool{
+				NodeSelectorTerm: corev1.NodeSelectorTerm{
+					MatchExpressions: []corev1.NodeSelectorRequirement{
+						{
+							Key:      "apps.openyurt.io/desired-nodepool",
+							Operator: corev1.NodeSelectorOpIn,
+							Values:   []string{"hangzhou"},
+						},
+					},
+				},
+			},
+
+			expectPodSpec: &corev1.PodSpec{Affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "apps.openyurt.io/desired-nodepool",
+										Operator: corev1.NodeSelectorOpIn,
+										Values:   []string{"hangzhou"},
+									},
+								},
+							},
+						},
+					},
+				},
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attachNodeAffinity(tt.podSpec, tt.pool)
+			assert.Equal(t, tt.expectPodSpec, tt.podSpec)
+		})
+	}
+}
+
+func Test_attachTolerations(t *testing.T) {
+	tests := []struct {
+		name          string
+		podSpec       *corev1.PodSpec
+		poolConfig    *appsv1alpha1.Pool
+		expectPodSpec *corev1.PodSpec
+	}{
+		{
+			name:       "poolConfig's Tolerations is nil",
+			podSpec:    &corev1.PodSpec{},
+			poolConfig: &appsv1alpha1.Pool{},
+
+			expectPodSpec: &corev1.PodSpec{},
+		},
+		{
+			name:    "poolConfig with Tolerations",
+			podSpec: &corev1.PodSpec{},
+			poolConfig: &appsv1alpha1.Pool{Tolerations: []corev1.Toleration{
+				{
+					Key:      "key",
+					Operator: corev1.TolerationOpEqual,
+					Value:    "value",
+				},
+			}},
+
+			expectPodSpec: &corev1.PodSpec{Tolerations: []corev1.Toleration{
+				{
+					Key:      "key",
+					Operator: corev1.TolerationOpEqual,
+					Value:    "value",
+				},
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attachTolerations(tt.podSpec, tt.poolConfig)
+			assert.Equal(t, tt.expectPodSpec, tt.podSpec)
+		})
+	}
 }
