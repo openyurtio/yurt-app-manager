@@ -172,7 +172,7 @@ func TestDiscoveryEnabled(t *testing.T) {
 			false,
 		},
 		{
-			"GV match, resources not found ",
+			"GV match, resources found ",
 			schema.GroupVersionKind{
 				Group:   "apps",
 				Version: "v1",
