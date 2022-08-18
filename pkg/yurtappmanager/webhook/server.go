@@ -21,14 +21,20 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/nodepool"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/nodepool/v1beta1"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappdaemon"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappset"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtingress"
 )
 
 func SetupWebhooks(mgr ctrl.Manager) error {
+	// Our existing call to SetupWebhookWithManager registers our conversion webhooks with the manager, too.
 	if err := (&nodepool.NodePoolHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
 		return errors.Wrapf(err, "unable to create webhook for NodePool")
+	}
+
+	if err := (&v1beta1.NodePoolHandler{}).SetupWebhookWithManager(mgr); err != nil {
+		return errors.Wrapf(err, "unable to create webhook for v1beta1 NodePool")
 	}
 
 	if err := (&yurtappdaemon.YurtAppDaemonHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
