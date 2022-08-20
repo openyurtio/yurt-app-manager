@@ -26,48 +26,53 @@ echo "git clone"
 cd ..
 git config --global user.email "openyurt-bot@openyurt.io"
 git config --global user.name "openyurt-bot"
-git clone --single-branch --depth 1 git@github.com:openyurtio/yurt-app-manager-api.git yurt-app-manager-api
 
-if [ -d "yurt-app-manager-api/pkg/yurtappmanager/apis" ]
+## sync to code repo
+destRepo=api
+destModule=apps
+
+git clone --single-branch --depth 1 git@github.com:openyurtio/${destRepo}.git ${destRepo}
+
+if [ -d "${destRepo}/pkg/${destModule}/apis" ]
 then
-    echo "yurt-app-manager-api apis exists, remove it"
-    rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/*
+    echo "apps apis exists, remove it"
+    rm -r ${destRepo}/pkg/${destModule}/apis/*
 else
-    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/apis
+    mkdir -p ${destRepo}/pkg/${destModule}/apis
 fi
 
-if [ -d "yurt-app-manager-api/pkg/yurtappmanager/client" ]
+if [ -d "${destRepo}/pkg/${destModule}/client" ]
 then
-    echo "yurt-app-manager-api client exists, remove it"
-    rm -r yurt-app-manager-api/pkg/yurtappmanager/client/*
+    echo "client exists, remove it"
+    rm -r ${destRepo}/pkg/${destModule}/client/*
 else
-    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/client
+    mkdir -p ${destRepo}/pkg/${destModule}/client
 fi
 
-echo "update yurt-app-manager-api api/"
-cp -R yurt-app-manager/pkg/yurtappmanager/apis/* yurt-app-manager-api/pkg/yurtappmanager/apis/
+echo "update ${destRepo} apis/"
+cp -R yurt-app-manager/pkg/yurtappmanager/apis/* ${destRepo}/pkg/${destModule}/apis/
 # remove controller depends functions
-rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/apps/v1alpha1/defaults.go
+rm -r ${destRepo}/pkg/${destModule}/apis/apps/v1alpha1/defaults.go
 
-echo "update yurt-app-manager-api client/"
-cp -R yurt-app-manager/pkg/yurtappmanager/client/* yurt-app-manager-api/pkg/yurtappmanager/client/
+echo "update ${destRepo} client/"
+cp -R yurt-app-manager/pkg/yurtappmanager/client/* ${destRepo}/pkg/${destModule}/client/
 
 echo "change import paths, and change them"
-find ./yurt-app-manager-api -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/|github.com/openyurtio/yurt-app-manager-api/|g'
+find ./${destRepo} -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/|github.com/openyurtio/api/|g'
 
-echo "test api"
-cd yurt-app-manager-api
-go mod tidy
-make test
+#echo "test api"
+#cd ${destRepo}
+#go mod tidy
+#make test
 
-echo "push to yurt-app-manager-api"
+echo "push to ${destRepo}"
 echo "version: $VERSION, commit: $COMMIT_ID, tag: $TAG"
 
 if [ -z "$(git status --porcelain)" ]; then
   echo "nothing need to push, finished!"
 else
   git add .
-  git commit -m "align with yurt-app-manager-$VERSION from commit $COMMIT_ID"
+  git commit -m "align with yurt-app-manager commit $COMMIT_ID"
   git tag "$VERSION"
   git push origin main
 fi
