@@ -16,7 +16,7 @@ CRD_OPTIONS ?= "crd:crdVersions=v1"
 TARGET_PLATFORMS ?= linux/arm64
 IMAGE_REPO ?= openyurt
 IMAGE_TAG ?= $(shell git describe --abbrev=0 --tags)
-GIT_VERSION = $(shell git describe --abbrev=0 --tags)
+GIT_VERSION ?= $(shell git describe --abbrev=0 --tags)
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 
 DOCKER_BUILD_ARGS = --build-arg GIT_VERSION=${GIT_VERSION}
