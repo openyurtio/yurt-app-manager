@@ -17,13 +17,11 @@ limitations under the License.
 package yurtappdaemon
 
 import (
-	"k8s.io/client-go/util/workqueue"
 	"testing"
 	"time"
-)
 
-// dummy object for test
-var enqueueYurtAppDaemonForNodePool EnqueueYurtAppDaemonForNodePool = EnqueueYurtAppDaemonForNodePool{}
+	"k8s.io/client-go/util/workqueue"
+)
 
 func createQueue() workqueue.RateLimitingInterface {
 	return workqueue.NewRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(1*time.Millisecond, 1*time.Second))
