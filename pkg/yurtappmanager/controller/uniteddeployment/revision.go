@@ -153,7 +153,11 @@ func (r *ReconcileUnitedDeployment) constructUnitedDeploymentRevisions(ud *appsa
 func (r *ReconcileUnitedDeployment) cleanExpiredRevision(ud *appsalphav1.UnitedDeployment,
 	sortedRevisions *[]*apps.ControllerRevision) (*[]*apps.ControllerRevision, error) {
 
-	exceedNum := len(*sortedRevisions) - int(*ud.Spec.RevisionHistoryLimit)
+	var revisionHistoryLimit int
+	if ud.Spec.RevisionHistoryLimit != nil {
+		revisionHistoryLimit = int(*ud.Spec.RevisionHistoryLimit)
+	}
+	exceedNum := len(*sortedRevisions) - revisionHistoryLimit
 	if exceedNum <= 0 {
 		return sortedRevisions, nil
 	}
