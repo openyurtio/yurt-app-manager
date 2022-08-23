@@ -17,11 +17,7 @@ limitations under the License.
 package yurtingress
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/record"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 
 	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -597,38 +593,37 @@ func TestGetUnreadyDeploymentCondition(t *testing.T) {
 	}
 }
 
-type controllerManager struct {
-	Client   client.Client
-	Scheme   *runtime.Scheme
-	recorder record.EventRecorder
-}
-
-func TestNewReconciler(t *testing.T) {
-	tests := []struct {
-		name   string
-		mng    controllerManager
-		expect *YurtIngressReconciler
-	}{
-		{
-			"test",
-			controllerManager{
-				Client:   client.client{},
-				Scheme:   *runtime.Scheme{},
-				recorder: record.EventRecorder{},
-			},
-			&YurtIngressReconciler{
-				Client:   fake.fakeClient{},
-				Scheme:   *runtime.Scheme{},
-				recorder: record.EventRecorder{},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			t.Logf("\tTestCase: %s", tt.name)
-
-		})
-	}
-}
+//func TestNewReconciler(t *testing.T) {
+//	scheme := runtime.NewScheme()
+//	alpha1.AddToScheme(scheme)
+//
+//	tests := []struct {
+//		name   string
+//		mng    manager.Manager
+//		expect *YurtIngressReconciler
+//	}{
+//		{
+//			"test",
+//			controllerManager{
+//				Client: fake.NewClientBuilder().
+//					WithScheme(scheme).
+//					Build(),
+//				Scheme:   scheme,
+//				recorder: record.EventRecorder{},
+//			},
+//			&YurtIngressReconciler{
+//				Client:   fake.fakeClient{},
+//				Scheme:   *runtime.Scheme{},
+//				recorder: record.EventRecorder{},
+//			},
+//		},
+//	}
+//
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			t.Parallel()
+//			t.Logf("\tTestCase: %s", tt.name)
+//
+//		})
+//	}
+//}
