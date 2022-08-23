@@ -341,9 +341,9 @@ func TestClassifyWorkloads(t *testing.T) {
 			t.Logf("\tTestCase: %s", st.name)
 			{
 				rc := &ReconcileYurtAppDaemon{}
-				_, _, get := rc.classifyWorkloads(
+				rc.classifyWorkloads(
 					st.instance, st.currentNodepoolToWorkload, st.allNameToNodePools, st.expectedRevision)
-				get = []string{}
+				get := []string{}
 				if !reflect.DeepEqual(get, st.expect) {
 					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
 				}
