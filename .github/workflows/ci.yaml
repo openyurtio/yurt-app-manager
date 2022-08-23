@@ -17,7 +17,7 @@ env:
 jobs:
 
   verify:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
         run: make verify
 
   golangci-lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -42,7 +42,7 @@ jobs:
           args: -v
 
   markdownlint-misspell-shellcheck:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # this image is build from Dockerfile
     # https://github.com/pouchcontainer/pouchlinter/blob/master/Dockerfile
     container: pouchcontainer/pouchlinter:v0.1.2
@@ -67,7 +67,7 @@ jobs:
 #          bash -c "exit $code";
 
   unit-tests:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -96,7 +96,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
   build-binaries:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
