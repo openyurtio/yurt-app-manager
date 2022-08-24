@@ -17,7 +17,10 @@ limitations under the License.
 package yurtingress
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"testing"
 
 	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -29,6 +32,46 @@ const (
 	failed  = "\u2717"
 	succeed = "\u2713"
 )
+
+func TestNewReconciler(t *testing.T) {
+	scheme := runtime.NewScheme()
+	alpha1.AddToScheme(scheme)
+	cfg, _ := config.GetConfig()
+	mgr, _ := manager.New(cfg, manager.Options{})
+
+	tests := []struct {
+		name   string
+		mgr    manager.Manager
+		expect *YurtIngressReconciler
+	}{
+		{
+			"test",
+
+			mgr,
+			&YurtIngressReconciler{
+				//Client:   fake.NewClientBuilder().WithScheme(scheme).Build(),
+				//Scheme:   scheme,
+				//recorder: record.NewFakeRecorder(1),
+				Client:   mgr.GetClient(),
+				Scheme:   mgr.GetScheme(),
+				recorder: mgr.GetEventRecorderFor(controllerName),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+
+			get := newReconciler(tt.mgr)
+			if !reflect.DeepEqual(get, tt.expect) {
+				t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, get)
+			}
+			t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, get)
+		})
+	}
+}
 
 func TestIsStrArrayEqual(t *testing.T) {
 	tests := []struct {
@@ -592,38 +635,3 @@ func TestGetUnreadyDeploymentCondition(t *testing.T) {
 		})
 	}
 }
-
-//func TestNewReconciler(t *testing.T) {
-//	scheme := runtime.NewScheme()
-//	alpha1.AddToScheme(scheme)
-//
-//	tests := []struct {
-//		name   string
-//		mng    manager.Manager
-//		expect *YurtIngressReconciler
-//	}{
-//		{
-//			"test",
-//			controllerManager{
-//				Client: fake.NewClientBuilder().
-//					WithScheme(scheme).
-//					Build(),
-//				Scheme:   scheme,
-//				recorder: record.EventRecorder{},
-//			},
-//			&YurtIngressReconciler{
-//				Client:   fake.fakeClient{},
-//				Scheme:   *runtime.Scheme{},
-//				recorder: record.EventRecorder{},
-//			},
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			t.Parallel()
-//			t.Logf("\tTestCase: %s", tt.name)
-//
-//		})
-//	}
-//}
