@@ -23,8 +23,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	unitv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
@@ -65,46 +63,46 @@ import (
 //	}
 //}
 
-func TestNewReconciler(t *testing.T) {
-	cfg, _ := config.GetConfig()
-	mgr, _ := manager.New(cfg, manager.Options{})
-	tests := []struct {
-		name   string
-		mgr    manager.Manager
-		expect reconcile.Reconciler
-	}{
-		{
-			name: "add new key/val",
-			mgr:  mgr,
-			expect: &ReconcileYurtAppDaemon{
-				Client: mgr.GetClient(),
-				scheme: mgr.GetScheme(),
-
-				recorder: mgr.GetEventRecorderFor(controllerName),
-				controls: map[unitv1alpha1.TemplateType]workloadcontroller.WorkloadControllor{
-					//			unitv1alpha1.StatefulSetTemplateType: &StatefulSetControllor{Client: mgr.GetClient(), scheme: mgr.GetScheme()},
-					unitv1alpha1.DeploymentTemplateType: &workloadcontroller.DeploymentControllor{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		st := tt
-		tf := func(t *testing.T) {
-			t.Parallel()
-			t.Logf("\tTestCase: %s", st.name)
-			{
-				get := newReconciler(tt.mgr)
-				if !reflect.DeepEqual(get, st.expect) {
-					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
-				}
-				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
-
-			}
-		}
-		t.Run(st.name, tf)
-	}
-}
+//func TestNewReconciler(t *testing.T) {
+//	cfg, _ := config.GetConfig()
+//	mgr, _ := manager.New(cfg, manager.Options{})
+//	tests := []struct {
+//		name   string
+//		mgr    manager.Manager
+//		expect reconcile.Reconciler
+//	}{
+//		{
+//			name: "add new key/val",
+//			mgr:  mgr,
+//			expect: &ReconcileYurtAppDaemon{
+//				Client: mgr.GetClient(),
+//				scheme: mgr.GetScheme(),
+//
+//				recorder: mgr.GetEventRecorderFor(controllerName),
+//				controls: map[unitv1alpha1.TemplateType]workloadcontroller.WorkloadControllor{
+//					//			unitv1alpha1.StatefulSetTemplateType: &StatefulSetControllor{Client: mgr.GetClient(), scheme: mgr.GetScheme()},
+//					unitv1alpha1.DeploymentTemplateType: &workloadcontroller.DeploymentControllor{Client: mgr.GetClient(), Scheme: mgr.GetScheme()},
+//				},
+//			},
+//		},
+//	}
+//	for _, tt := range tests {
+//		st := tt
+//		tf := func(t *testing.T) {
+//			t.Parallel()
+//			t.Logf("\tTestCase: %s", st.name)
+//			{
+//				get := newReconciler(tt.mgr)
+//				if !reflect.DeepEqual(get, st.expect) {
+//					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
+//				}
+//				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
+//
+//			}
+//		}
+//		t.Run(st.name, tf)
+//	}
+//}
 
 func TestUpdateStatus(t *testing.T) {
 	var int1 int32 = 11
