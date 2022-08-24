@@ -81,6 +81,16 @@ verify-mod:
 
 generate: controller-gen manifests generate-goclient
 
+e2e-build:
+	hack/make-rules/build-e2e.sh
+
+e2e-test:
+	go test -v ./tests/e2e/... -args -ginkgo.v
+	#bash hack/run-e2e-tests.sh
+
+kind-load: docker-build
+	kind load docker-image ${IMAGE_REPO}/yurt-app-manager:${IMAGE_TAG} || { echo >&2 "kind not installed or error loading image: ${IMAGE_REPO}/yurt-app-manager:${IMAGE_TAG}"; exit 1; }
+
 # Generate manifests, e.g., CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." paths="./pkg/yurtappmanager/..." output:crd:artifacts:config=config/yurt-app-manager/crd/bases  output:rbac:artifacts:config=config/yurt-app-manager/rbac output:webhook:artifacts:config=config/yurt-app-manager/webhook
