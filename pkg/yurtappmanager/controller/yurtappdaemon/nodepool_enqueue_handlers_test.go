@@ -17,16 +17,17 @@ limitations under the License.
 package yurtappdaemon
 
 import (
-	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 func createQueue() workqueue.RateLimitingInterface {
@@ -85,7 +86,7 @@ func TestCreate(t *testing.T) {
 		{
 			"default",
 			event.CreateEvent{
-				&v1.Pod{
+				Object: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "kube-system",
 						Name:      "kube-proxy",
@@ -136,9 +137,9 @@ func TestUpdate(t *testing.T) {
 		expect            string
 	}{
 		{
-			"default",
-			event.UpdateEvent{
-				&v1.Pod{
+			name: "default",
+			event: event.UpdateEvent{
+				ObjectOld: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "kube-system",
 						Name:      "kube-proxy",
@@ -148,7 +149,7 @@ func TestUpdate(t *testing.T) {
 					},
 					Spec: v1.PodSpec{},
 				},
-				&v1.Pod{
+				ObjectNew: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "kube-system",
 						Name:      "kube-proxy",
@@ -159,8 +160,7 @@ func TestUpdate(t *testing.T) {
 					Spec: v1.PodSpec{},
 				},
 			},
-			createQueue(),
-			"",
+			limitingInterface: createQueue(),
 		},
 	}
 
@@ -201,7 +201,7 @@ func TestDelete(t *testing.T) {
 		{
 			"default",
 			event.DeleteEvent{
-				&v1.Pod{
+				Object: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "kube-system",
 						Name:      "kube-proxy",
@@ -211,7 +211,7 @@ func TestDelete(t *testing.T) {
 					},
 					Spec: v1.PodSpec{},
 				},
-				true,
+				DeleteStateUnknown: true,
 			},
 			createQueue(),
 			"",
@@ -255,7 +255,7 @@ func TestGeneric(t *testing.T) {
 		{
 			"default",
 			event.GenericEvent{
-				&v1.Pod{
+				Object: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: "kube-system",
 						Name:      "kube-proxy",
