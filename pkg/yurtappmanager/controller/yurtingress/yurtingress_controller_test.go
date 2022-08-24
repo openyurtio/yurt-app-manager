@@ -17,11 +17,12 @@ limitations under the License.
 package yurtingress
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
+	"testing"
+
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"testing"
 
 	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
