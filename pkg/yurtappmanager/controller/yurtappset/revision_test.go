@@ -1,6 +1,7 @@
 /*
 Copyright 2020 The OpenYurt Authors.
 Copyright 2019 The Kruise Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,50 +18,244 @@ limitations under the License.
 
 package yurtappset
 
-/*
 import (
 	"testing"
 
-	"github.com/onsi/gomega"
-	"golang.org/x/net/context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	fakeclint "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
-func TestRevisionManage(t *testing.T) {
-	g, requests, stopMgr, mgrStopped := setUp(t)
-	defer func() {
-		clean(g, c)
-		close(stopMgr)
-		mgrStopped.Wait()
-	}()
+func TestReconcileyurtAppSet_ControlledHistories(t *testing.T) {
 
+	instance := struct {
+		yas *appsv1alpha1.YurtAppSet
+		ctr []*appsv1.ControllerRevision
+	}{
+		yas: &appsv1alpha1.YurtAppSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "default",
+			},
+			Spec: appsv1alpha1.YurtAppSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name": "foo",
+					},
+				},
+				WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+					DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"name": "foo",
+							},
+						},
+						Spec: appsv1.DeploymentSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"name": "foo",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "container-a",
+											Image: "nginx:1.0",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Topology: appsv1alpha1.Topology{
+					Pools: []appsv1alpha1.Pool{
+						{
+							Name:     "foo-0",
+							Replicas: &one,
+							NodeSelectorTerm: corev1.NodeSelectorTerm{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "app.openyurt.io/nodepool",
+										Operator: corev1.NodeSelectorOpIn,
+										Values: []string{
+											"foo-0",
+										},
+									},
+								},
+							},
+						},
+						{
+							Name:     "foo-1",
+							Replicas: &two,
+							NodeSelectorTerm: corev1.NodeSelectorTerm{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "app.openyurt.io/nodepool",
+										Operator: corev1.NodeSelectorOpIn,
+										Values: []string{
+											"foo-1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				RevisionHistoryLimit: &two,
+			},
+		},
+	}
+
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	if err := appsv1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add appsv1 custom resource")
+		return
+	}
+
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance.yas).Build()
+	ryas := ReconcileYurtAppSet{
+		Client: fc,
+		scheme: scheme,
+	}
+	histories, err := ryas.controlledHistories(instance.yas)
+	if err != nil || len(histories) != 0 {
+		t.Logf("failed to get controlled histories")
+	}
+
+}
+
+func TestReconcileYurtAppSet_CreateControllerRevision(t *testing.T) {
+	instance := struct {
+		yas *appsv1alpha1.YurtAppSet
+		ctr *appsv1.ControllerRevision
+	}{
+		yas: &appsv1alpha1.YurtAppSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "default",
+			},
+			Spec: appsv1alpha1.YurtAppSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name": "foo",
+					},
+				},
+				WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+					DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"name": "foo",
+							},
+						},
+						Spec: appsv1.DeploymentSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"name": "foo",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "container-a",
+											Image: "nginx:1.0",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Topology: appsv1alpha1.Topology{
+					Pools: []appsv1alpha1.Pool{
+						{
+							Name: "pool-a",
+							NodeSelectorTerm: corev1.NodeSelectorTerm{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "node-name",
+										Operator: corev1.NodeSelectorOpIn,
+										Values:   []string{"nodeA"},
+									},
+								},
+							},
+						},
+					},
+				},
+				RevisionHistoryLimit: &two,
+			},
+		},
+		ctr: &appsv1.ControllerRevision{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo-0",
+				Namespace: "foo-ns",
+			},
+			Revision: 1,
+		},
+	}
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	if err := appsv1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add appsv1 custom resource")
+		return
+	}
+
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance.yas).Build()
+	ryas := ReconcileYurtAppSet{
+		Client: fc,
+		scheme: scheme,
+	}
+	o, err := ryas.createControllerRevision(instance.yas, instance.ctr, &two)
+	if err != nil && o.Revision != 1 {
+		t.Logf("failed to create controller revision")
+	}
+}
+
+func TestReconcileYurtAppSet_newRevision(t *testing.T) {
 	instance := &appsv1alpha1.YurtAppSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "foo",
-			Namespace: "default",
+			Namespace: "foo-ns",
 		},
 		Spec: appsv1alpha1.YurtAppSetSpec{
-			Replicas: &one,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"name": "foo",
+					"app": "foo",
 				},
 			},
-			WorkloadTemplate: appsv1alpha1.PoolTemplate{
+			WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
 				StatefulSetTemplate: &appsv1alpha1.StatefulSetTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
 						Labels: map[string]string{
 							"name": "foo",
 						},
 					},
 					Spec: appsv1.StatefulSetSpec{
-						WorkloadTemplate: corev1.PodTemplateSpec{
+						Replicas: &two,
+						Template: corev1.PodTemplateSpec{
 							ObjectMeta: metav1.ObjectMeta{
 								Labels: map[string]string{
 									"name": "foo",
@@ -69,8 +264,8 @@ func TestRevisionManage(t *testing.T) {
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "container-a",
-										Image: "nginx:1.0",
+										Name:  "nginx",
+										Image: "nginx:1.19",
 									},
 								},
 							},
@@ -81,56 +276,154 @@ func TestRevisionManage(t *testing.T) {
 			Topology: appsv1alpha1.Topology{
 				Pools: []appsv1alpha1.Pool{
 					{
-						Name: "pool-a",
+						Name:     "foo-0",
+						Replicas: &one,
 						NodeSelectorTerm: corev1.NodeSelectorTerm{
 							MatchExpressions: []corev1.NodeSelectorRequirement{
 								{
-									Key:      "node-name",
+									Key:      "app.openyurt.io/nodepool",
 									Operator: corev1.NodeSelectorOpIn,
-									Values:   []string{"nodeA"},
+									Values: []string{
+										"foo-0",
+									},
+								},
+							},
+						},
+					},
+					{
+						Name:     "foo-1",
+						Replicas: &two,
+						NodeSelectorTerm: corev1.NodeSelectorTerm{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "app.openyurt.io/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values: []string{
+										"foo-1",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-			RevisionHistoryLimit: &two,
 		},
 	}
-
-	// Create the YurtAppSet object and expect the Reconcile and Deployment to be created
-	err := c.Create(context.TODO(), instance)
-	// The instance object may not be a valid object because it might be missing some required fields.
-	// Please modify the instance object by adding required fields and then remove the following if statement.
-	if apierrors.IsInvalid(err) {
-		t.Logf("failed to create object, got an invalid object error: %v", err)
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
 		return
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred())
-	defer c.Delete(context.TODO(), instance)
-	g.Eventually(requests, timeout).Should(gomega.Receive(gomega.Equal(expectedRequest)))
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	if err := appsv1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add appsv1 custom resource")
+		return
+	}
 
-	revisionList := &appsv1.ControllerRevisionList{}
-	g.Expect(c.List(context.TODO(), revisionList, &client.ListOptions{})).Should(gomega.BeNil())
-	g.Expect(len(revisionList.Items)).Should(gomega.BeEquivalentTo(1))
-
-	g.Expect(c.Get(context.TODO(), client.ObjectKey{Namespace: instance.Namespace, Name: instance.Name}, instance)).Should(gomega.BeNil())
-	instance.Spec.WorkloadTemplate.StatefulSetTemplate.Labels["version"] = "v2"
-	g.Expect(c.Update(context.TODO(), instance)).Should(gomega.BeNil())
-	waitReconcilerProcessFinished(g, requests, 0)
-
-	revisionList = &appsv1.ControllerRevisionList{}
-	g.Expect(c.List(context.TODO(), revisionList, &client.ListOptions{})).Should(gomega.BeNil())
-	g.Expect(len(revisionList.Items)).Should(gomega.BeEquivalentTo(2))
-
-	g.Expect(c.Get(context.TODO(), client.ObjectKey{Namespace: instance.Namespace, Name: instance.Name}, instance)).Should(gomega.BeNil())
-	instance.Spec.WorkloadTemplate.StatefulSetTemplate.Spec.WorkloadTemplate.Spec.Containers[0].Image = "nginx:1.1"
-	g.Expect(c.Update(context.TODO(), instance)).Should(gomega.BeNil())
-	waitReconcilerProcessFinished(g, requests, 0)
-
-	revisionList = &appsv1.ControllerRevisionList{}
-	g.Expect(c.List(context.TODO(), revisionList, &client.ListOptions{})).Should(gomega.BeNil())
-	g.Expect(len(revisionList.Items)).Should(gomega.BeEquivalentTo(2))
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
+	ryas := ReconcileYurtAppSet{
+		Client: fc,
+		scheme: scheme,
+	}
+	cr, err := ryas.newRevision(instance, 2, &two)
+	if err != nil && cr.Namespace != instance.Namespace {
+		t.Logf("failed to new revision for yurtappset")
+	}
 }
 
-*/
+func TestReconcileYurtAppSet_ConstructYurtAppSetRevisions(t *testing.T) {
+	instance := struct {
+		yas *appsv1alpha1.YurtAppSet
+		ctr *appsv1.ControllerRevision
+	}{
+		yas: &appsv1alpha1.YurtAppSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "foo-ns",
+			},
+			Spec: appsv1alpha1.YurtAppSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"name": "foo",
+					},
+				},
+				WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+					DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"name": "foo",
+							},
+						},
+						Spec: appsv1.DeploymentSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										"name": "foo",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Containers: []corev1.Container{
+										{
+											Name:  "container-a",
+											Image: "nginx:1.0",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Topology: appsv1alpha1.Topology{
+					Pools: []appsv1alpha1.Pool{
+						{
+							Name: "pool-a",
+							NodeSelectorTerm: corev1.NodeSelectorTerm{
+								MatchExpressions: []corev1.NodeSelectorRequirement{
+									{
+										Key:      "node-name",
+										Operator: corev1.NodeSelectorOpIn,
+										Values:   []string{"nodeA"},
+									},
+								},
+							},
+						},
+					},
+				},
+				RevisionHistoryLimit: &two,
+			},
+		},
+		ctr: &appsv1.ControllerRevision{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo-0",
+				Namespace: "foo-ns",
+			},
+			Revision: 1,
+		},
+	}
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	if err := appsv1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add appsv1 custom resource")
+		return
+	}
+
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance.yas).Build()
+	ryas := ReconcileYurtAppSet{
+		Client: fc,
+		scheme: scheme,
+	}
+	_, _, _, err := ryas.constructYurtAppSetRevisions(instance.yas)
+	if err != nil {
+		t.Logf("failed to construct yurtappset revisions")
+	}
+}
