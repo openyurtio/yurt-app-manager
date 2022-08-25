@@ -20,7 +20,14 @@ import (
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 func createQueue() workqueue.RateLimitingInterface {
@@ -54,6 +61,228 @@ func TestAddYurtAppDaemonToWorkQueue(t *testing.T) {
 					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.added, get)
 				}
 				t.Logf("\t%s\texpect %v, get %v", succeed, st.added, get)
+
+			}
+		}
+		t.Run(st.name, tf)
+	}
+}
+
+func TestCreate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	appsv1alpha1.AddToScheme(scheme)
+
+	ep := EnqueueYurtAppDaemonForNodePool{
+		client: fake.NewClientBuilder().
+			WithScheme(scheme).
+			Build(),
+	}
+	tests := []struct {
+		name              string
+		event             event.CreateEvent
+		limitingInterface workqueue.RateLimitingInterface
+		expect            string
+	}{
+		{
+			"default",
+			event.CreateEvent{
+				Object: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+						Name:      "kube-proxy",
+						Annotations: map[string]string{
+							appsv1alpha1.AnnotationRefNodePool: "a",
+						},
+					},
+					Spec: v1.PodSpec{},
+				},
+			},
+			createQueue(),
+			"",
+		},
+	}
+
+	for _, st := range tests {
+		st := st
+		tf := func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", st.name)
+			{
+				ep.Create(st.event, st.limitingInterface)
+				get := st.expect
+				if get != st.expect {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
+
+			}
+		}
+		t.Run(st.name, tf)
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	scheme := runtime.NewScheme()
+	appsv1alpha1.AddToScheme(scheme)
+
+	ep := EnqueueYurtAppDaemonForNodePool{
+		client: fake.NewClientBuilder().
+			WithScheme(scheme).
+			Build(),
+	}
+	tests := []struct {
+		name              string
+		event             event.UpdateEvent
+		limitingInterface workqueue.RateLimitingInterface
+		expect            string
+	}{
+		{
+			name: "default",
+			event: event.UpdateEvent{
+				ObjectOld: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+						Name:      "kube-proxy",
+						Annotations: map[string]string{
+							appsv1alpha1.AnnotationRefNodePool: "a",
+						},
+					},
+					Spec: v1.PodSpec{},
+				},
+				ObjectNew: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+						Name:      "kube-proxy",
+						Annotations: map[string]string{
+							appsv1alpha1.AnnotationRefNodePool: "a",
+						},
+					},
+					Spec: v1.PodSpec{},
+				},
+			},
+			limitingInterface: createQueue(),
+		},
+	}
+
+	for _, st := range tests {
+		st := st
+		tf := func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", st.name)
+			{
+				ep.Update(st.event, st.limitingInterface)
+				get := st.expect
+				if get != st.expect {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
+
+			}
+		}
+		t.Run(st.name, tf)
+	}
+}
+
+func TestDelete(t *testing.T) {
+	scheme := runtime.NewScheme()
+	appsv1alpha1.AddToScheme(scheme)
+
+	ep := EnqueueYurtAppDaemonForNodePool{
+		client: fake.NewClientBuilder().
+			WithScheme(scheme).
+			Build(),
+	}
+	tests := []struct {
+		name              string
+		event             event.DeleteEvent
+		limitingInterface workqueue.RateLimitingInterface
+		expect            string
+	}{
+		{
+			"default",
+			event.DeleteEvent{
+				Object: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+						Name:      "kube-proxy",
+						Annotations: map[string]string{
+							appsv1alpha1.AnnotationRefNodePool: "a",
+						},
+					},
+					Spec: v1.PodSpec{},
+				},
+				DeleteStateUnknown: true,
+			},
+			createQueue(),
+			"",
+		},
+	}
+
+	for _, st := range tests {
+		st := st
+		tf := func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", st.name)
+			{
+				ep.Delete(st.event, st.limitingInterface)
+				get := st.expect
+				if get != st.expect {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
+
+			}
+		}
+		t.Run(st.name, tf)
+	}
+}
+
+func TestGeneric(t *testing.T) {
+	scheme := runtime.NewScheme()
+	appsv1alpha1.AddToScheme(scheme)
+
+	ep := EnqueueYurtAppDaemonForNodePool{
+		client: fake.NewClientBuilder().
+			WithScheme(scheme).
+			Build(),
+	}
+	tests := []struct {
+		name              string
+		event             event.GenericEvent
+		limitingInterface workqueue.RateLimitingInterface
+		expect            string
+	}{
+		{
+			"default",
+			event.GenericEvent{
+				Object: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+						Name:      "kube-proxy",
+						Annotations: map[string]string{
+							appsv1alpha1.AnnotationRefNodePool: "a",
+						},
+					},
+					Spec: v1.PodSpec{},
+				},
+			},
+			createQueue(),
+			"",
+		},
+	}
+
+	for _, st := range tests {
+		st := st
+		tf := func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", st.name)
+			{
+				ep.Generic(st.event, st.limitingInterface)
+				get := st.expect
+				if get != st.expect {
+					t.Fatalf("\t%s\texpect %v, but get %v", failed, st.expect, get)
+				}
+				t.Logf("\t%s\texpect %v, get %v", succeed, st.expect, get)
 
 			}
 		}
