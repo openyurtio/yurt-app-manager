@@ -388,19 +388,18 @@ func conciliateAnnotations(node *corev1.Node, oldAnnos, newAnnos map[string]stri
 
 // conciliateLabels will update the node's taint that related to the nodepool
 func conciliateTaints(node *corev1.Node, oldTaints, newTaints []corev1.Taint) {
+
 	// 1. remove taints from the node if they have been removed from the
 	// node pool
 	for _, oldTaint := range oldTaints {
-		if _, exist := containTaint(oldTaint, newTaints); !exist {
+		if _, exist := containTaint(oldTaint, node.Spec.Taints); exist {
 			node.Spec.Taints = removeTaint(oldTaint, node.Spec.Taints)
 		}
 	}
 
 	// 2. update the node taints based on the latest node pool taints
 	for _, nt := range newTaints {
-		if _, exist := containTaint(nt, oldTaints); !exist {
-			node.Spec.Taints = append(node.Spec.Taints, nt)
-		}
+		node.Spec.Taints = append(node.Spec.Taints, nt)
 	}
 }
 
