@@ -703,6 +703,14 @@ var testTaints []corev1.Taint = []corev1.Taint{
 	},
 }
 
+var currentTaints = []corev1.Taint{
+	{
+		Key:    "foo",
+		Value:  "beijing",
+		Effect: corev1.TaintEffectNoExecute,
+	},
+}
+
 var testNPRA1 NodePoolRelatedAttributes = NodePoolRelatedAttributes{
 	Labels:      testLabel1,
 	Annotations: testAnnotations,
@@ -818,6 +826,42 @@ func TestConciliateNode(t *testing.T) {
 				},
 			},
 			false,
+		},
+		{
+			"node change nodepool",
+			// use DeepCopy because of the side effects
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"foo":                             "bar",
+						"buz":                             "qux",
+						appsv1alpha1.LabelCurrentNodePool: "test",
+					},
+					Annotations: map[string]string{
+						"foo":                            "qux",
+						"buz":                            "qux",
+						appsv1alpha1.AnnotationPrevAttrs: string(npraBytes),
+					},
+				},
+				Spec: corev1.NodeSpec{
+					Taints: testTaints,
+				},
+			},
+			appsv1alpha1.NodePool{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: appsv1alpha1.NodePoolSpec{
+					Labels: map[string]string{
+						"foo":                             "bar",
+						"buz":                             "qux",
+						appsv1alpha1.LabelCurrentNodePool: "test",
+					},
+					Annotations: testAnnotations,
+					Taints:      currentTaints,
+				},
+			},
+			true,
 		},
 		{
 			"outdated npra attrs",
