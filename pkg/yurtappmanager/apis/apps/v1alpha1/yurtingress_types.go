@@ -36,7 +36,7 @@ type IngressPool struct {
 	Name string `json:"name"`
 
 	// IngressIPs is a list of IP addresses for which nodes will also accept traffic for this service.
-	IngressIPs []string `json:"ingress_ips,omitempty"`
+	IngressIPs []string `json:"ingressIPs,omitempty"`
 }
 
 // IngressNotReadyConditionInfo defines the details info of an ingress not ready Pool
@@ -60,22 +60,22 @@ type IngressNotReadyPool struct {
 	Pool IngressPool `json:"pool"`
 
 	// Info of ingress not ready condition.
-	Info *IngressNotReadyConditionInfo `json:"unreadyinfo,omitempty"`
+	Info *IngressNotReadyConditionInfo `json:"unreadyInfo,omitempty"`
 }
 
 // YurtIngressSpec defines the desired state of YurtIngress
 type YurtIngressSpec struct {
 	// Indicates the number of the ingress controllers to be deployed under all the specified nodepools.
 	// +optional
-	Replicas int32 `json:"ingress_controller_replicas_per_pool,omitempty"`
+	Replicas int32 `json:"ingressControllerReplicasPerPool,omitempty"`
 
 	// Indicates the ingress controller image url.
 	// +optional
-	IngressControllerImage string `json:"ingress_controller_image,omitempty"`
+	IngressControllerImage string `json:"ingressControllerImage,omitempty"`
 
 	// Indicates the ingress webhook image url.
 	// +optional
-	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image,omitempty"`
+	IngressWebhookCertGenImage string `json:"ingressWebhookCertGenImage,omitempty"`
 
 	// Indicates all the nodepools on which to enable ingress.
 	// +optional
@@ -85,17 +85,17 @@ type YurtIngressSpec struct {
 // YurtIngressCondition describes current state of a YurtIngress
 type YurtIngressCondition struct {
 	// Indicates the pools that ingress controller is deployed successfully.
-	IngressReadyPools []IngressPool `json:"ingressreadypools,omitempty"`
+	IngressReadyPools []IngressPool `json:"ingressReadyPools,omitempty"`
 
 	// Indicates the pools that ingress controller is being deployed or deployed failed.
-	IngressNotReadyPools []IngressNotReadyPool `json:"ingressunreadypools,omitempty"`
+	IngressNotReadyPools []IngressNotReadyPool `json:"ingressNotReadyPools,omitempty"`
 }
 
 // YurtIngressStatus defines the observed state of YurtIngress
 type YurtIngressStatus struct {
 	// Indicates the number of the ingress controllers deployed under all the specified nodepools.
 	// +optional
-	Replicas int32 `json:"ingress_controller_replicas_per_pool,omitempty"`
+	Replicas int32 `json:"ingressControllerReplicasPerPool,omitempty"`
 
 	// Indicates all the nodepools on which to enable ingress.
 	// +optional
@@ -103,11 +103,11 @@ type YurtIngressStatus struct {
 
 	// Indicates the ingress controller image url.
 	// +optional
-	IngressControllerImage string `json:"ingress_controller_image"`
+	IngressControllerImage string `json:"ingressControllerImage"`
 
 	// Indicates the ingress webhook image url.
 	// +optional
-	IngressWebhookCertGenImage string `json:"ingress_webhook_certgen_image"`
+	IngressWebhookCertGenImage string `json:"ingressWebhookCertGenImage"`
 
 	// Total number of ready pools on which ingress is enabled.
 	// +optional
