@@ -25,20 +25,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	fakeclint "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
 func TestGetTemplateType(t *testing.T) {
 	scheme := runtime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
 
 	dc := DeploymentControllor{
-		Client: fake.NewClientBuilder().
-			WithScheme(scheme).
-			Build(),
+		Client: fc,
+		Scheme: scheme,
 	}
 
 	tests := []struct {
@@ -68,12 +76,19 @@ func TestGetTemplateType(t *testing.T) {
 
 func TestApplyTemplate(t *testing.T) {
 	scheme := runtime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
 
 	dc := DeploymentControllor{
-		Client: fake.NewClientBuilder().
-			WithScheme(scheme).
-			Build(),
+		Client: fc,
+		Scheme: scheme,
 	}
 
 	tests := []struct {
@@ -164,12 +179,19 @@ func TestApplyTemplate(t *testing.T) {
 
 func TestObjectKey(t *testing.T) {
 	scheme := runtime.NewScheme()
-	v1alpha1.AddToScheme(scheme)
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
 
 	dc := DeploymentControllor{
-		Client: fake.NewClientBuilder().
-			WithScheme(scheme).
-			Build(),
+		Client: fc,
+		Scheme: scheme,
 	}
 
 	tests := []struct {
@@ -201,6 +223,345 @@ func TestObjectKey(t *testing.T) {
 				t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, get)
 			}
 			t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, get)
+		})
+	}
+}
+
+func TestDeploymentControllor_CreateWorkload(t *testing.T) {
+	var four int32 = 4
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
+	dc := DeploymentControllor{
+		Client: fc,
+		Scheme: scheme,
+	}
+
+	tests := []struct {
+		name     string
+		yad      *v1alpha1.YurtAppDaemon
+		nodepool v1alpha1.NodePool
+		expect   error
+	}{
+		{
+			name: "normal",
+			yad: &v1alpha1.YurtAppDaemon{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "foo",
+					Namespace: "foo-ns",
+				},
+				Spec: v1alpha1.YurtAppDaemonSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app": "daemon-foo",
+						},
+					},
+					WorkloadTemplate: v1alpha1.WorkloadTemplate{
+						DeploymentTemplate: &v1alpha1.DeploymentTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"app": "daemon-foo",
+								},
+							},
+							Spec: appsv1.DeploymentSpec{
+								Replicas: &four,
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app": "daemon-foo",
+									},
+								},
+								Template: v1.PodTemplateSpec{
+									ObjectMeta: metav1.ObjectMeta{
+										Labels: map[string]string{
+											"app": "daemon-foo",
+										},
+									},
+									Spec: v1.PodSpec{
+										Containers: []v1.Container{
+											{
+												Image:           "nginx:1.19",
+												ImagePullPolicy: "Always",
+												Name:            "nginx",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					NodePoolSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			nodepool: v1alpha1.NodePool{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo",
+				},
+				Spec: v1alpha1.NodePoolSpec{
+					Type: "Edge",
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			expect: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+
+			err := dc.CreateWorkload(tt.yad, tt.nodepool, "1")
+			t.Logf("expect: %v, get: %v", tt.expect, err)
+			if !reflect.DeepEqual(err, tt.expect) {
+				t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, err)
+			}
+			t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, err)
+		})
+	}
+}
+
+func TestDeploymentControllor_GetAllWorkloads(t *testing.T) {
+	var four int32 = 4
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
+	dc := DeploymentControllor{
+		Client: fc,
+		Scheme: scheme,
+	}
+
+	tests := []struct {
+		name     string
+		yad      *v1alpha1.YurtAppDaemon
+		nodepool v1alpha1.NodePool
+		expect   error
+	}{
+		{
+			name: "normal",
+			yad: &v1alpha1.YurtAppDaemon{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "foo",
+					Namespace: "foo-ns",
+				},
+				Spec: v1alpha1.YurtAppDaemonSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app": "daemon-foo",
+						},
+					},
+					WorkloadTemplate: v1alpha1.WorkloadTemplate{
+						DeploymentTemplate: &v1alpha1.DeploymentTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"app": "daemon-foo",
+								},
+							},
+							Spec: appsv1.DeploymentSpec{
+								Replicas: &four,
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app": "daemon-foo",
+									},
+								},
+								Template: v1.PodTemplateSpec{
+									ObjectMeta: metav1.ObjectMeta{
+										Labels: map[string]string{
+											"app": "daemon-foo",
+										},
+									},
+									Spec: v1.PodSpec{
+										Containers: []v1.Container{
+											{
+												Image:           "nginx:1.19",
+												ImagePullPolicy: "Always",
+												Name:            "nginx",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					NodePoolSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			nodepool: v1alpha1.NodePool{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo",
+				},
+				Spec: v1alpha1.NodePoolSpec{
+					Type: "Edge",
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			expect: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+
+			err := dc.CreateWorkload(tt.yad, tt.nodepool, "1")
+			if err != nil {
+				t.Logf("sucessed to create a yurtappdaemon")
+			}
+			ws, err := dc.GetAllWorkloads(tt.yad)
+			if err != nil {
+				t.Logf("sucessed to get all yurtappdaemon")
+			}
+			t.Logf("expect: %v, get: %v", tt.expect, err)
+			if len(ws) != 0 && !reflect.DeepEqual(err, tt.expect) {
+				t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, err)
+			}
+			t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, err)
+		})
+	}
+}
+
+func TestDeploymentControllor_DeleteWorkload(t *testing.T) {
+	var four int32 = 4
+	scheme := runtime.NewScheme()
+	if err := v1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
+	dc := DeploymentControllor{
+		Client: fc,
+		Scheme: scheme,
+	}
+
+	tests := []struct {
+		name     string
+		yad      *v1alpha1.YurtAppDaemon
+		nodepool v1alpha1.NodePool
+		expect   error
+	}{
+		{
+			name: "normal",
+			yad: &v1alpha1.YurtAppDaemon{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "foo",
+					Namespace: "foo-ns",
+				},
+				Spec: v1alpha1.YurtAppDaemonSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app": "daemon-foo",
+						},
+					},
+					WorkloadTemplate: v1alpha1.WorkloadTemplate{
+						DeploymentTemplate: &v1alpha1.DeploymentTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"app": "daemon-foo",
+								},
+							},
+							Spec: appsv1.DeploymentSpec{
+								Replicas: &four,
+								Selector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"app": "daemon-foo",
+									},
+								},
+								Template: v1.PodTemplateSpec{
+									ObjectMeta: metav1.ObjectMeta{
+										Labels: map[string]string{
+											"app": "daemon-foo",
+										},
+									},
+									Spec: v1.PodSpec{
+										Containers: []v1.Container{
+											{
+												Image:           "nginx:1.19",
+												ImagePullPolicy: "Always",
+												Name:            "nginx",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					NodePoolSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			nodepool: v1alpha1.NodePool{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "foo",
+				},
+				Spec: v1alpha1.NodePoolSpec{
+					Type: "Edge",
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"nodepool": "foo",
+						},
+					},
+				},
+			},
+			expect: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("\tTestCase: %s", tt.name)
+
+			err := dc.CreateWorkload(tt.yad, tt.nodepool, "1")
+			if err != nil {
+				t.Logf("sucessed to create a yurtappdaemon")
+			}
+			ws, err := dc.GetAllWorkloads(tt.yad)
+			if err != nil {
+				t.Logf("sucessed to get all yurtappdaemon")
+			}
+			err = dc.DeleteWorkload(tt.yad, ws[0])
+			t.Logf("expect: %v, get: %v", tt.expect, err)
+			if !reflect.DeepEqual(err, tt.expect) {
+				t.Fatalf("\t%s\texpect %v, but get %v", failed, tt.expect, err)
+			}
+			t.Logf("\t%s\texpect %v, get %v", succeed, tt.expect, err)
 		})
 	}
 }
