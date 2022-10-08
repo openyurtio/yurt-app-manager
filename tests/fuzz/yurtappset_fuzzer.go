@@ -46,16 +46,55 @@ func init() {
 	_ = corev1.AddToScheme(fakeSchemeForFuzzing)
 }
 
+// helper function to crate an unstructured object.
+func GetUnstructured(f *fuzz.ConsumeFuzzer) (*unstructured.Unstructured, error) {
+	yamlStr, err := f.GetString()
+	if err != nil {
+		return nil, err
+	}
+	obj := make(map[string]interface{})
+	err = yaml.Unmarshal([]byte(yamlStr), &obj)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: obj}, nil
+}
+
+
+func validateUnstructured(unstr *unstructured.Unstructured) error {
+	if _, ok := unstr.Object["kind"]; !ok {
+		return fmt.Errorf("invalid unstr")
+	}
+	if _, ok := unstr.Object["apiVersion"]; !ok {
+		return fmt.Errorf("invalid unstr")
+	}
+	if _, ok := unstr.Object["spec"]; !ok {
+		return fmt.Errorf("invalid unstr")
+	}
+	if _, ok := unstr.Object["status"]; !ok {
+		return fmt.Errorf("invalid unstr")
+	}
+	return nil
+}
+
 func FuzzAppSetReconcile(data []byte) int {
 	f := fuzz.NewConsumer(data)
+	unstr, err := GetUnstructured(f)
+	if err != nil {
+		return 0
+	}
+	err = validateUnstructured(unstr)
+	if err != nil {
+		return 0
+	}
 
-	appDaemon := &appsv1alpha1.YurtAppDaemon{}
-	if err := f.GenerateStruct(appDaemon); err != nil {
+	appset := &appsv1alpha1.YurtAppSet{}
+	if err := f.GenerateStruct(appset); err != nil {
 		return 0
 	}
 
 	clientFake := fake.NewClientBuilder().WithScheme(fakeSchemeForFuzzing).WithObjects(
-		appDaemon,
+		appset,
 	).Build()
 
 	r := &ReconcileYurtAppSet{
@@ -70,6 +109,6 @@ func FuzzAppSetReconcile(data []byte) int {
 		},
 	}
 
-	_, _ = r.Reconcile(fuzzCtx, reconcile.Request{NamespacedName: types.NamespacedName{Name: appDaemon.Name, Namespace: appDaemon.Namespace}})
+	_, _ = r.Reconcile(fuzzCtx, reconcile.Request{NamespacedName: types.NamespacedName{Name: appset.Name, Namespace: appset.Namespace}})
 	return 1
 }
