@@ -12,7 +12,7 @@ limitations under the License.
 */
 // +kubebuilder:docs-gen:collapse=Apache License
 
-package yurtingress
+package v1alpha2
 
 import (
 	"context"
@@ -24,19 +24,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha2"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1beta1"
 )
 
-var defaultYurtIngress = &v1alpha1.YurtIngress{
+var defaultYurtIngress = &v1alpha2.YurtIngress{
 	ObjectMeta: metav1.ObjectMeta{
-		Name:      "fooboo",
-		Namespace: "default",
+		Name: "beijing",
 	},
-	Spec: v1alpha1.YurtIngressSpec{
-		Replicas:                   1,
-		IngressControllerImage:     "k8s.gcr.io/ingress-nginx/controller:v0.49.0",
-		IngressWebhookCertGenImage: "k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v0.49.0",
-		Pools:                      []v1alpha1.IngressPool{{Name: "beijing"}},
+	Spec: v1alpha2.YurtIngressSpec{
+		Enabled: true,
 	},
 }
 
@@ -51,14 +48,14 @@ func TestYurtAppSetValidator(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
-	_ = v1alpha1.AddToScheme(scheme)
+	_ = v1beta1.AddToScheme(scheme)
+	_ = v1alpha2.AddToScheme(scheme)
 
-	bjNp := &v1alpha1.NodePool{
+	bjNp := &v1beta1.NodePool{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "beijing",
-			Namespace: "default",
+			Name: "beijing",
 		},
-		Spec: v1alpha1.NodePoolSpec{},
+		Spec: v1beta1.NodePoolSpec{},
 	}
 	objs := []client.Object{bjNp}
 
@@ -75,9 +72,9 @@ func TestYurtAppSetValidator(t *testing.T) {
 		t.Fatal("should create success", err)
 	}
 
-	npNotExist := defaultYurtIngress.DeepCopy()
-	npNotExist.Spec.Pools = []v1alpha1.IngressPool{{Name: "noneexist"}}
-	if err := webhook.ValidateCreate(context.TODO(), npNotExist); err == nil {
+	npNotExistYurtIngress := defaultYurtIngress.DeepCopy()
+	npNotExistYurtIngress.Name = "notexist"
+	if err := webhook.ValidateCreate(context.TODO(), npNotExistYurtIngress); err == nil {
 		t.Fatal("should create fail", err)
 	}
 

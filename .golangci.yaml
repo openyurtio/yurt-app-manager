@@ -3,7 +3,7 @@
 
 # options for analysis running
 run:
-  go: '1.16'
+  go: '1.17'
   # default concurrency is a available CPU number
   concurrency: 4
 

@@ -92,14 +92,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-apps-openyurt-io-v1alpha1-yurtingress
+      path: /mutate-apps-openyurt-io-v1alpha2-yurtingress
   failurePolicy: Fail
   name: myurtingress.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE
@@ -201,14 +201,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-apps-openyurt-io-v1alpha1-yurtingress
+      path: /validate-apps-openyurt-io-v1alpha2-yurtingress
   failurePolicy: Fail
   name: vyurtingress.kb.io
   rules:
   - apiGroups:
     - apps.openyurt.io
     apiVersions:
-    - v1alpha1
+    - v1alpha2
     operations:
     - CREATE
     - UPDATE

@@ -65,6 +65,12 @@ rules:
 - apiGroups:
   - apps
   resources:
+  - replicasets
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
   - statefulsets
   verbs:
   - create
@@ -312,6 +318,18 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - '*'
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - '*'
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:

@@ -128,6 +128,7 @@ type YurtIngressStatus struct {
 // +genclient:nonNamespaced
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:unservedversion
 
 // YurtIngress is the Schema for the yurtingresses API
 type YurtIngress struct {

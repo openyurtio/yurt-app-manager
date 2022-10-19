@@ -87,3 +87,24 @@ webhooks:
     - UPDATE
     resources:
     - yurtappdaemons
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: {{ template "yurt-app-manager.name" . }}-webhook
+      namespace: {{ .Release.Namespace }}
+      path: /mutate-apps-openyurt-io-v1alpha2-yurtingress
+  admissionReviewVersions:
+    - v1
+  failurePolicy: Fail
+  name: myurtingress.kb.io
+  rules:
+    - apiGroups:
+        - apps.openyurt.io
+      apiVersions:
+        - v1alpha2
+      operations:
+        - CREATE
+        - UPDATE
+      resources:
+        - yurtingresses
+  sideEffects: None

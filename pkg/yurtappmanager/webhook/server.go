@@ -25,7 +25,7 @@ import (
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/uniteddeployment"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappdaemon"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappset"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtingress"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtingress/v1alpha2"
 )
 
 func SetupWebhooks(mgr ctrl.Manager) error {
@@ -50,7 +50,7 @@ func SetupWebhooks(mgr ctrl.Manager) error {
 		return errors.Wrapf(err, "unable to create webhook for YurtAppSet")
 	}
 
-	if err := (&yurtingress.YurtIngressHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&v1alpha2.YurtIngressHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
 		return errors.Wrapf(err, "unable to create webhook for YurtIngress")
 	}
 
