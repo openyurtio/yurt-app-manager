@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -38,6 +39,7 @@ import (
 	"github.com/openyurtio/yurt-app-manager/cmd/yurt-app-manager/options"
 	"github.com/openyurtio/yurt-app-manager/pkg/projectinfo"
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	appsv1alpha2 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha2"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1beta1"
 	extclient "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/client"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/constant"
@@ -57,6 +59,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = appsv1alpha1.AddToScheme(scheme)
+	utilruntime.Must(appsv1alpha2.AddToScheme(scheme))
 	_ = v1beta1.AddToScheme(scheme)
 
 	_ = appsv1alpha1.AddToScheme(clientgoscheme.Scheme)
@@ -79,6 +82,10 @@ func NewCmdYurtAppManager(stopCh <-chan struct{}) *cobra.Command {
 			}
 
 			fmt.Printf("%s version: %#v\n", projectinfo.GetYurtAppManagerName(), projectinfo.Get())
+
+			if yurtAppOptions.WorkloadNamespace == "" {
+				yurtAppOptions.WorkloadNamespace = os.Getenv("POD_NAMESPACE")
+			}
 
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 				klog.V(1).Infof("FLAG: --%s=%q", flag.Name, flag.Value)
@@ -150,7 +157,7 @@ func Run(opts *options.YurtAppOptions) {
 
 	setupLog.Info("setup controllers")
 
-	ctx := genOptCtx(opts.CreateDefaultPool)
+	ctx := genOptCtx(opts)
 	if err = controller.SetupWithManager(mgr, ctx); err != nil {
 		setupLog.Error(err, "unable to setup controllers")
 		os.Exit(1)
@@ -173,9 +180,14 @@ func Run(opts *options.YurtAppOptions) {
 
 }
 
-func genOptCtx(createDefaultPool bool) context.Context {
-	return context.WithValue(context.Background(),
-		constant.ContextKeyCreateDefaultPool, createDefaultPool)
+func genOptCtx(opts *options.YurtAppOptions) context.Context {
+	ctx := context.WithValue(context.Background(),
+		constant.ContextKeyCreateDefaultPool, opts.CreateDefaultPool)
+
+	ctx = context.WithValue(ctx,
+		constant.ContextKeyWorkloadNamespace, opts.WorkloadNamespace)
+
+	return ctx
 }
 
 func setRestConfig(c *rest.Config) {

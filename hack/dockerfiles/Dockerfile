@@ -9,6 +9,9 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GIT_VERSION=${GIT_VERSIO
 FROM --platform=${TARGETPLATFORM} alpine:3.14
 ARG TARGETOS TARGETARCH MIRROR_REPO
 RUN if [ ! -z "${MIRROR_REPO+x}" ]; then sed -i "s/dl-cdn.alpinelinux.org/${MIRROR_REPO}/g" /etc/apk/repositories; fi && \
-    apk add ca-certificates bash libc6-compat && update-ca-certificates && rm /var/cache/apk/*
+    apk add ca-certificates bash libc6-compat tar gzip && update-ca-certificates && rm /var/cache/apk/*
 COPY --from=builder /build/_output/local/bin/${TARGETOS}/${TARGETARCH}/yurt-app-manager /usr/local/bin/yurt-app-manager
+
+RUN wget https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.3.0/ingress-nginx-4.3.0.tgz -O /tmp/ingress-nginx-4.3.0.tgz
+RUN cd /tmp && tar -zxf /tmp/ingress-nginx-4.3.0.tgz
 ENTRYPOINT ["/usr/local/bin/yurt-app-manager"]

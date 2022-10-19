@@ -31,6 +31,7 @@ type YurtAppOptions struct {
 	Namespace               string
 	CreateDefaultPool       bool
 	Version                 bool
+	WorkloadNamespace       string
 }
 
 // NewYurtAppOptions creates a new YurtAppOptions with a default config.
@@ -64,6 +65,7 @@ func (o *YurtAppOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&o.EnablePprof, "enable-pprof", o.EnablePprof, "Enable pprof for controller manager.")
 	fs.StringVar(&o.LeaderElectionNamespace, "leader-election-namespace", o.LeaderElectionNamespace, "This determines the namespace in which the leader election configmap will be created, it will use in-cluster namespace if empty.")
 	fs.StringVar(&o.Namespace, "namespace", o.Namespace, "Namespace if specified restricts the manager's cache to watch objects in the desired namespace. Defaults to all namespaces.")
+	fs.StringVar(&o.WorkloadNamespace, "workloadNamespace", o.WorkloadNamespace, "")
 	fs.BoolVar(&o.CreateDefaultPool, "create-default-pool", o.CreateDefaultPool, "Create default cloud/edge pools if indicated.")
 	fs.BoolVar(&o.Version, "version", o.Version, "print the version information.")
 }
