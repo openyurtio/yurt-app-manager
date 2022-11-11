@@ -42,6 +42,10 @@ func TestNodePoolDefaulter(t *testing.T) {
 	if err := webhook.Default(context.TODO(), defaultNodePool); err != nil {
 		t.Fatal(err)
 	}
+	if defaultNodePool.Labels[v1alpha1.NodePoolTypeLabelKey] != string(defaultNodePool.Spec.Type) {
+		t.Fatalf("the default NodePool label doesn't match NodePool.Spec.Type. label:%s, type:%s",
+			defaultNodePool.Labels[v1alpha1.NodePoolTypeLabelKey], string(defaultNodePool.Spec.Type))
+	}
 }
 
 func TestNodePoolValidator(t *testing.T) {

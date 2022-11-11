@@ -60,6 +60,9 @@ func (webhook *NodePoolHandler) Default(ctx context.Context, obj runtime.Object)
 	}
 
 	// add NodePool.Spec.Type to NodePool labels
+	if np.Labels == nil {
+		np.Labels = make(map[string]string)
+	}
 	np.Labels[v1alpha1.NodePoolTypeLabelKey] = string(np.Spec.Type)
 
 	return nil
