@@ -26,6 +26,8 @@ type NodePoolType string
 const (
 	Edge  NodePoolType = "Edge"
 	Cloud NodePoolType = "Cloud"
+
+	NodePoolTypeLabelKey = "openyurt.io/node-pool-type"
 )
 
 // NodePoolSpec defines the desired state of NodePool

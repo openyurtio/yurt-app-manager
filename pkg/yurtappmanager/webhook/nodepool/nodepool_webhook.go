@@ -59,6 +59,9 @@ func (webhook *NodePoolHandler) Default(ctx context.Context, obj runtime.Object)
 		MatchLabels: map[string]string{v1alpha1.LabelCurrentNodePool: np.Name},
 	}
 
+	// add NodePool.Spec.Type to NodePool labels
+	np.Labels[v1alpha1.NodePoolTypeLabelKey] = string(np.Spec.Type)
+
 	return nil
 }
 
