@@ -16,6 +16,7 @@ package nodepool
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,7 +43,7 @@ func TestNodePoolDefaulter(t *testing.T) {
 	if err := webhook.Default(context.TODO(), defaultNodePool); err != nil {
 		t.Fatal(err)
 	}
-	if defaultNodePool.Labels[v1alpha1.NodePoolTypeLabelKey] != string(defaultNodePool.Spec.Type) {
+	if defaultNodePool.Labels[v1alpha1.NodePoolTypeLabelKey] != strings.ToLower(string(defaultNodePool.Spec.Type)) {
 		t.Fatalf("the default NodePool label doesn't match NodePool.Spec.Type. label:%s, type:%s",
 			defaultNodePool.Labels[v1alpha1.NodePoolTypeLabelKey], string(defaultNodePool.Spec.Type))
 	}

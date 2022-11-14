@@ -17,6 +17,7 @@ package nodepool
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +64,7 @@ func (webhook *NodePoolHandler) Default(ctx context.Context, obj runtime.Object)
 	if np.Labels == nil {
 		np.Labels = make(map[string]string)
 	}
-	np.Labels[v1alpha1.NodePoolTypeLabelKey] = string(np.Spec.Type)
+	np.Labels[v1alpha1.NodePoolTypeLabelKey] = strings.ToLower(string(np.Spec.Type))
 
 	return nil
 }
