@@ -17,6 +17,7 @@ package nodepool
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,6 +59,12 @@ func (webhook *NodePoolHandler) Default(ctx context.Context, obj runtime.Object)
 	np.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: map[string]string{v1alpha1.LabelCurrentNodePool: np.Name},
 	}
+
+	// add NodePool.Spec.Type to NodePool labels
+	if np.Labels == nil {
+		np.Labels = make(map[string]string)
+	}
+	np.Labels[v1alpha1.NodePoolTypeLabelKey] = strings.ToLower(string(np.Spec.Type))
 
 	return nil
 }
