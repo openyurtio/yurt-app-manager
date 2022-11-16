@@ -35,6 +35,12 @@ import (
 	adpt "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappset/adapter"
 )
 
+var (
+	ten     int32 = 10
+	forteen int64 = 14
+	fifteen int64 = 15
+)
+
 func TestReconcileYurtAppSet_Reconcile(t *testing.T) {
 	instance := &appsv1alpha1.YurtAppSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -66,7 +72,7 @@ func TestReconcileYurtAppSet_Reconcile(t *testing.T) {
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "container-a",
+										Name:  "container",
 										Image: "nginx:1.0",
 									},
 								},

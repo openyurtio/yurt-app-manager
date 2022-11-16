@@ -30,7 +30,7 @@ import (
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 )
 
-func TestDeploymentAdapter_GetDetails(t *testing.T) {
+func TestDeploymentAdapter_ApplyPoolTemplate(t *testing.T) {
 	var one int32 = 1
 
 	cases := []struct {
@@ -196,7 +196,7 @@ func TestDeploymentAdapter_GetDetails(t *testing.T) {
 	}
 }
 
-func TestDeploymentAdapter_ApplyPoolTemplate(t *testing.T) {
+func TestDeploymentAdapter_GetDetails(t *testing.T) {
 	var one int32 = 1
 	cases := []struct {
 		name             string

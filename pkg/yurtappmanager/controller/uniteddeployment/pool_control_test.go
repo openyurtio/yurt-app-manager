@@ -14,105 +14,299 @@ limitations under the License.
 package uniteddeployment
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strconv"
+	"testing"
 
-	alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
-	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment/adapter"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	fakeclint "sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
+	adpt "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment/adapter"
 )
 
 var (
-	one32 int32 = 1
-	one64 int64 = 1
+	one int32 = 1
+	two int32 = 2
 )
 
-var _ = Describe("Convert to pool", func() {
+func TestPoolControl_GetAllPools(t *testing.T) {
 
-	var (
-		deployment = appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "deployment",
-				Annotations: map[string]string{
-					alpha1.AnnotationPatchKey: "deployment patch",
+	instance := &appsv1alpha1.UnitedDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo-ud",
+			Namespace: "foo-ud-ns",
+		},
+		Spec: appsv1alpha1.UnitedDeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "ud",
 				},
-				Labels: map[string]string{
-					alpha1.PoolNameLabelKey: "hangzhou",
+			},
+			WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+				DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ud",
+						Labels: map[string]string{
+							"name": "ud",
+						},
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: &two,
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"name": "ud",
+								},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "container",
+										Image: "ud-image",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
-			Spec: appsv1.DeploymentSpec{
-				Replicas: &one32,
+			Topology: appsv1alpha1.Topology{
+				Pools: []appsv1alpha1.Pool{
+					{
+						Name:     "foo-0",
+						Replicas: &one,
+						NodeSelectorTerm: corev1.NodeSelectorTerm{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "app.openyurt.io/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values: []string{
+										"foo-0",
+									},
+								},
+							},
+						},
+					},
+					{
+						Name:     "foo-1",
+						Replicas: &two,
+						NodeSelectorTerm: corev1.NodeSelectorTerm{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "app.openyurt.io/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values: []string{
+										"foo-1",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
-			Status: appsv1.DeploymentStatus{
-				ObservedGeneration: one64,
-				ReadyReplicas:      one32,
-			},
+		},
+	}
+
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance).Build()
+	pc := PoolControl{
+		Client:  fc,
+		scheme:  scheme,
+		adapter: &adpt.DeploymentAdapter{Client: fc, Scheme: scheme},
+	}
+	for i := 0; i < 2; i++ {
+		tf := pc.CreatePool(instance, "foo-"+strconv.FormatInt(int64(i), 10), "v0.1.0", two)
+		if tf != nil {
+			t.Logf("failed create node pool resource")
 		}
+	}
+	pools, err := pc.GetAllPools(instance)
+	if err != nil && len(pools) != 2 {
+		t.Logf("failed to get the pools of uniteddeployment")
+	}
+}
 
-		statefulset = appsv1.StatefulSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "statefulset",
-				Annotations: map[string]string{
-					alpha1.AnnotationPatchKey: "statefulset patch",
+func TestPoolControl_UpdatePool(t *testing.T) {
+
+	instance := &appsv1alpha1.UnitedDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo-ud",
+			Namespace: "foo-ud-ns",
+		},
+		Spec: appsv1alpha1.UnitedDeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "ud",
 				},
-				Labels: map[string]string{
-					alpha1.PoolNameLabelKey: "beijing",
+			},
+			WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+				DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ud",
+						Labels: map[string]string{
+							"name": "ud",
+						},
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: &two,
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"name": "ud",
+								},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "container",
+										Image: "image-ud",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
-			Spec: appsv1.StatefulSetSpec{
-				Replicas: &one32,
-			},
-			Status: appsv1.StatefulSetStatus{
-				ObservedGeneration: one64,
-				ReadyReplicas:      one32,
-			},
-		}
-
-		wantDeployPool = Pool{
-			Name:      "hangzhou",
-			Namespace: "deployment",
-			Spec: PoolSpec{
-				PoolRef: &deployment,
-			},
-			Status: PoolStatus{
-				ObservedGeneration: one64,
-				ReplicasInfo: adapter.ReplicasInfo{
-					Replicas:      one32,
-					ReadyReplicas: one32,
+			Topology: appsv1alpha1.Topology{
+				Pools: []appsv1alpha1.Pool{
+					{
+						Name:     "foo",
+						Replicas: &one,
+						NodeSelectorTerm: corev1.NodeSelectorTerm{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "app.openyurt.io/nodepool",
+									Operator: corev1.NodeSelectorOpIn,
+									Values: []string{
+										"foo-0",
+									},
+								},
+							},
+						},
+					},
 				},
-				PatchInfo: "deployment patch",
 			},
-		}
+		},
+	}
 
-		wantStsPool = Pool{
-			Name:      "beijing",
-			Namespace: "statefulset",
-			Spec: PoolSpec{
-				PoolRef: &statefulset,
-			},
-			Status: PoolStatus{
-				ObservedGeneration: one64,
-				ReplicasInfo: adapter.ReplicasInfo{
-					Replicas:      one32,
-					ReadyReplicas: one32,
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
+
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance).Build()
+	pc := PoolControl{
+		Client:  fc,
+		scheme:  scheme,
+		adapter: &adpt.DeploymentAdapter{Client: fc, Scheme: scheme},
+	}
+	tf := pc.CreatePool(instance, "foo", "v0.1.0", two)
+	if tf != nil {
+		t.Logf("failed create node pool resource")
+	}
+	pools, err := pc.GetAllPools(instance)
+	if err != nil && len(pools) != 2 {
+		t.Logf("failed to get the pools of uniteddeployment")
+	}
+	tf = pc.UpdatePool(pools[0], instance, "v2", one)
+	if tf != nil {
+		t.Logf("failed update node pool resource")
+	}
+}
+
+func TestPoolControl_DeletePool(t *testing.T) {
+	instance := &appsv1alpha1.UnitedDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo-ud",
+			Namespace: "foo-ud-ns",
+		},
+		Spec: appsv1alpha1.UnitedDeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "ud",
 				},
-				PatchInfo: "statefulset patch",
 			},
-		}
-	)
+			WorkloadTemplate: appsv1alpha1.WorkloadTemplate{
+				DeploymentTemplate: &appsv1alpha1.DeploymentTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "ud",
+						Labels: map[string]string{
+							"name": "ud",
+						},
+					},
+					Spec: appsv1.DeploymentSpec{
+						Replicas: &two,
+						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"name": "ud",
+								},
+							},
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name:  "container",
+										Image: "image-ud",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Topology: appsv1alpha1.Topology{
+				Pools: []appsv1alpha1.Pool{
+					{
+						Name:     "foo",
+						Replicas: &one,
+					},
+				},
+			},
+		},
+	}
+	scheme := runtime.NewScheme()
+	if err := appsv1alpha1.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add yurt custom resource")
+		return
+	}
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		t.Logf("failed to add kubernetes clint-go custom resource")
+		return
+	}
 
-	deployPoolCtrl := &PoolControl{adapter: &adapter.DeploymentAdapter{}}
-	stsPoolCtrl := &PoolControl{adapter: &adapter.StatefulSetAdapter{}}
-	It("convert deployment set to pool", func() {
-		deployPool, err := deployPoolCtrl.convertToPool(&deployment)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(*deployPool).To(Equal(wantDeployPool))
-	})
-
-	It("convert statefulset set to pool", func() {
-		stsPool, err := stsPoolCtrl.convertToPool(&statefulset)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(*stsPool).To(Equal(wantStsPool))
-	})
-})
+	fc := fakeclint.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(instance).Build()
+	pc := PoolControl{
+		Client:  fc,
+		scheme:  scheme,
+		adapter: &adpt.DeploymentAdapter{Client: fc, Scheme: scheme},
+	}
+	tf := pc.CreatePool(instance, "foo", "v0.1.0", two)
+	if tf != nil {
+		t.Logf("failed create node pool resource")
+	}
+	pools, err := pc.GetAllPools(instance)
+	if err != nil && len(pools) != 2 {
+		t.Logf("failed to get the pools of uniteddeployment")
+	}
+	tf = pc.DeletePool(pools[0])
+	if tf != nil {
+		t.Logf("failed update node pool resource")
+	}
+}

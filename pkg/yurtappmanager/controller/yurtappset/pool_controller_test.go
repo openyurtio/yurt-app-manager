@@ -35,10 +35,6 @@ import (
 var (
 	one int32 = 1
 	two int32 = 2
-	ten int32 = 10
-
-	forteen int64 = 14
-	fifteen int64 = 15
 )
 
 func TestPoolControl_GetAllPools(t *testing.T) {
@@ -73,7 +69,7 @@ func TestPoolControl_GetAllPools(t *testing.T) {
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "container-a",
+										Name:  "container",
 										Image: "nginx:1.0",
 									},
 								},
@@ -178,7 +174,7 @@ func TestPoolControl_UpdatePool(t *testing.T) {
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "container-a",
+										Name:  "container",
 										Image: "nginx:1.0",
 									},
 								},
@@ -270,7 +266,7 @@ func TestPoolControl_DeletePool(t *testing.T) {
 							Spec: corev1.PodSpec{
 								Containers: []corev1.Container{
 									{
-										Name:  "container-a",
+										Name:  "container",
 										Image: "nginx:1.0",
 									},
 								},
