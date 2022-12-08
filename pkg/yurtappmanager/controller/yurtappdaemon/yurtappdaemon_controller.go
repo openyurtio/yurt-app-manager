@@ -186,13 +186,13 @@ func (r *ReconcileYurtAppDaemon) Reconcile(_ context.Context, request reconcile.
 		return reconcile.Result{}, err
 	}
 
-	return r.updateStatus(instance, newStatus, oldStatus, currentRevision, collisionCount, templateType)
+	return r.updateStatus(instance, newStatus, oldStatus, expectedRevision, collisionCount, templateType)
 }
 
 func (r *ReconcileYurtAppDaemon) updateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus, oldStatus *unitv1alpha1.YurtAppDaemonStatus,
-	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) (reconcile.Result, error) {
+	expectedRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) (reconcile.Result, error) {
 
-	newStatus = r.calculateStatus(instance, newStatus, currentRevision, collisionCount, templateType)
+	newStatus = r.calculateStatus(instance, newStatus, expectedRevision, collisionCount, templateType)
 	_, err := r.updateYurtAppDaemon(instance, oldStatus, newStatus)
 
 	return reconcile.Result{}, err
@@ -203,7 +203,7 @@ func (r *ReconcileYurtAppDaemon) updateYurtAppDaemon(yad *unitv1alpha1.YurtAppDa
 		*oldStatus.CollisionCount == *newStatus.CollisionCount &&
 		oldStatus.TemplateType == newStatus.TemplateType &&
 		yad.Generation == newStatus.ObservedGeneration &&
-		reflect.DeepEqual(oldStatus.NodePools, newStatus.NodePools) &&
+		sliceEqual(oldStatus.NodePools, newStatus.NodePools) &&
 		reflect.DeepEqual(oldStatus.Conditions, newStatus.Conditions) {
 		klog.Infof("YurtAppDaemon[%s/%s] oldStatus==newStatus, no need to update status", yad.GetNamespace(), yad.GetName())
 		return yad, nil
@@ -238,14 +238,11 @@ func (r *ReconcileYurtAppDaemon) updateYurtAppDaemon(yad *unitv1alpha1.YurtAppDa
 }
 
 func (r *ReconcileYurtAppDaemon) calculateStatus(instance *unitv1alpha1.YurtAppDaemon, newStatus *unitv1alpha1.YurtAppDaemonStatus,
-	currentRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) *unitv1alpha1.YurtAppDaemonStatus {
+	expectedRevision *appsv1.ControllerRevision, collisionCount int32, templateType unitv1alpha1.TemplateType) *unitv1alpha1.YurtAppDaemonStatus {
 
 	newStatus.CollisionCount = &collisionCount
 
-	if newStatus.CurrentRevision == "" {
-		// init with current revision
-		newStatus.CurrentRevision = currentRevision.Name
-	}
+	newStatus.CurrentRevision = expectedRevision.Name
 
 	newStatus.TemplateType = templateType
 

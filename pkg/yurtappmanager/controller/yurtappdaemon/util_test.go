@@ -207,3 +207,50 @@ func TestSetYurtAppDaemonCondition(t *testing.T) {
 		})
 	}
 }
+
+func TestDeepEqual(t *testing.T) {
+
+	tests := []struct {
+		name   string
+		x      []string
+		y      []string
+		expect bool
+	}{
+		{
+			name:   "nil",
+			expect: true,
+		},
+		{
+			name:   "empty",
+			x:      []string{},
+			y:      []string{},
+			expect: true,
+		},
+		{
+			name:   "notequal",
+			x:      []string{"a", "b", "c"},
+			y:      []string{"b", "c"},
+			expect: false,
+		},
+		{
+			name:   "disorder",
+			x:      []string{"a", "b", "c"},
+			y:      []string{"b", "c", "a"},
+			expect: true,
+		},
+		{
+			name:   "order",
+			x:      []string{"a", "b", "c"},
+			y:      []string{"a", "b", "c"},
+			expect: true,
+		},
+	}
+
+	for _, st := range tests {
+		get := sliceEqual(st.x, st.y)
+		if !reflect.DeepEqual(get, st.expect) {
+			t.Fatalf("\t%s\ttest:%s, expect %v, but get %v", failed, st.name, st.expect, get)
+		}
+		t.Logf("\t%s\ttest:%s, expect %v, get %v", succeed, st.name, st.expect, get)
+	}
+}

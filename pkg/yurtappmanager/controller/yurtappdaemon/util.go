@@ -82,3 +82,21 @@ func filterOutCondition(conditions []unitv1alpha1.YurtAppDaemonCondition, condTy
 	}
 	return newConditions
 }
+
+func sliceEqual(x []string, y []string) bool {
+	if len(x) != len(y) {
+		return false
+	}
+
+	t := make(map[string]bool, len(x))
+	for _, v := range x {
+		t[v] = true
+	}
+	for _, v := range y {
+		if _, ok := t[v]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
