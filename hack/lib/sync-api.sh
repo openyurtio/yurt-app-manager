@@ -1,5 +1,5 @@
 #!/bin/bash -l
-# Copyright 2020 The OpenYurt Authors.
+# Copyright 2022 The OpenYurt Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,48 +26,41 @@ echo "git clone"
 cd ..
 git config --global user.email "openyurt-bot@openyurt.io"
 git config --global user.name "openyurt-bot"
-git clone --single-branch --depth 1 git@github.com:openyurtio/yurt-app-manager-api.git yurt-app-manager-api
+git clone --single-branch --depth 1 git@github.com:openyurtio/api.git yurt-api
 
-if [ -d "yurt-app-manager-api/pkg/yurtappmanager/apis" ]
+if [ -d "yurt-api/apps" ]
 then
-    echo "yurt-app-manager-api apis exists, remove it"
-    rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/*
+    echo "api apps exists, remove it"
+    rm -r yurt-api/apps/*
 else
-    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/apis
+    mkdir -p yurt-api/apps
 fi
 
-if [ -d "yurt-app-manager-api/pkg/yurtappmanager/client" ]
-then
-    echo "yurt-app-manager-api client exists, remove it"
-    rm -r yurt-app-manager-api/pkg/yurtappmanager/client/*
-else
-    mkdir -p yurt-app-manager-api/pkg/yurtappmanager/client
-fi
-
-echo "update yurt-app-manager-api api/"
-cp -R yurt-app-manager/pkg/yurtappmanager/apis/* yurt-app-manager-api/pkg/yurtappmanager/apis/
+echo "update apps"
+cp -R yurt-app-manager/pkg/yurtappmanager/apis/apps/* yurt-api/apps/
 # remove controller depends functions
-rm -r yurt-app-manager-api/pkg/yurtappmanager/apis/apps/v1alpha1/defaults.go
+rm -rf yurt-api/apps/v1alpha1/defaults.go
 
-echo "update yurt-app-manager-api client/"
-cp -R yurt-app-manager/pkg/yurtappmanager/client/* yurt-app-manager-api/pkg/yurtappmanager/client/
+echo "update addtoschema"
+rm -rf yurt-api/addtoscheme_apps_v1alpha1.go
+cp yurt-app-manager/pkg/yurtappmanager/apis/addtoscheme_apps_v1alpha1.go yurt-api/addtoscheme_apps_v1alpha1.go
 
-echo "change import paths, and change them"
-find ./yurt-app-manager-api -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/|github.com/openyurtio/yurt-app-manager-api/|g'
+echo "find import paths, and change them"
+find ./yurt-api -type f -name "*.go" -print0 | xargs -0 sed -i 's|github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/|github.com/openyurtio/api/apps/|g'
+
+cd yurt-api
 
 echo "test api"
-cd yurt-app-manager-api
 go mod tidy
-make test
 
-echo "push to yurt-app-manager-api"
+echo "push to yurt-api"
 echo "version: $VERSION, commit: $COMMIT_ID, tag: $TAG"
 
 if [ -z "$(git status --porcelain)" ]; then
   echo "nothing need to push, finished!"
 else
   git add .
-  git commit -m "align with yurt-app-manager-$VERSION from commit $COMMIT_ID"
+  git commit -m "align with yurt-app-manager $VERSION from commit $COMMIT_ID"
   git tag "$VERSION"
   git push origin main
 fi
