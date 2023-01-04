@@ -21,15 +21,18 @@ package yurtappset
 
 import (
 	"context"
+	"fmt"
 
 	fuzz "github.com/AdaLogics/go-fuzz-headers"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/yaml"
 
 	appsv1alpha1 "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/apis/apps/v1alpha1"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappset/adapter"
@@ -59,7 +62,6 @@ func GetUnstructured(f *fuzz.ConsumeFuzzer) (*unstructured.Unstructured, error) 
 	}
 	return &unstructured.Unstructured{Object: obj}, nil
 }
-
 
 func validateUnstructured(unstr *unstructured.Unstructured) error {
 	if _, ok := unstr.Object["kind"]; !ok {
