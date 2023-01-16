@@ -102,26 +102,6 @@ rules:
   - apiGroups:
       - apps.openyurt.io
     resources:
-      - yurtappsets
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - apps.openyurt.io
-    resources:
-      - yurtappsets/status
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - apps.openyurt.io
-    resources:
       - uniteddeployments
     verbs:
       - create
@@ -162,6 +142,26 @@ rules:
   - apiGroups:
       - apps.openyurt.io
     resources:
+      - yurtappsets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps.openyurt.io
+    resources:
+      - yurtappsets/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - apps.openyurt.io
+    resources:
       - yurtingresses
     verbs:
       - create
@@ -175,6 +175,32 @@ rules:
       - apps.openyurt.io
     resources:
       - yurtingresses/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - apps.openyurt.io
+    resources:
+      - staticpods
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - apps.openyurt.io
+    resources:
+      - staticpods/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - apps.openyurt.io
+    resources:
+      - staticpods/status
     verbs:
       - get
       - patch
@@ -261,6 +287,12 @@ rules:
       - patch
       - update
       - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+    verbs:
+      - update
   - apiGroups:
       - ""
     resources:

@@ -22,6 +22,7 @@ import (
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/nodepool"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/nodepool/v1beta1"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/staticpod"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/uniteddeployment"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappdaemon"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/webhook/yurtappset"
@@ -36,6 +37,10 @@ func SetupWebhooks(mgr ctrl.Manager) error {
 
 	if err := (&v1beta1.NodePoolHandler{}).SetupWebhookWithManager(mgr); err != nil {
 		return errors.Wrapf(err, "unable to create webhook for v1beta1 NodePool")
+	}
+
+	if err := (&staticpod.StaticPodHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {
+		return errors.Wrapf(err, "unable to create webhook for StaticPod")
 	}
 
 	if err := (&uniteddeployment.UnitedDeploymentHandler{Client: mgr.GetClient()}).SetupWebhookWithManager(mgr); err != nil {

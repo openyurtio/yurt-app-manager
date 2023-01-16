@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/nodepool"
+	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/staticpod"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/uniteddeployment"
 	yurtappdaemon "github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappdaemon"
 	"github.com/openyurtio/yurt-app-manager/pkg/yurtappmanager/controller/yurtappset"
@@ -34,7 +35,7 @@ import (
 var controllerAddFuncs []func(manager.Manager, context.Context) error
 
 func init() {
-	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, yurtappset.Add, nodepool.Add, yurtappdaemon.Add, yurtingress.Add)
+	controllerAddFuncs = append(controllerAddFuncs, uniteddeployment.Add, yurtappset.Add, nodepool.Add, yurtappdaemon.Add, yurtingress.Add, staticpod.Add)
 }
 
 func SetupWithManager(m manager.Manager, ctx context.Context) error {

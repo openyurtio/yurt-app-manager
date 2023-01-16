@@ -3,6 +3,7 @@ module github.com/openyurtio/yurt-app-manager
 go 1.16
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
@@ -12,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	k8s.io/api v0.22.3
 	k8s.io/apimachinery v0.22.3
+	k8s.io/cli-runtime v0.22.3
 	k8s.io/client-go v0.22.3
 	k8s.io/component-helpers v0.22.3
 	k8s.io/klog v1.0.0
