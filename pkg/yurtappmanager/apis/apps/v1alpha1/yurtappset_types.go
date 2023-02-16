@@ -138,6 +138,7 @@ type Pool struct {
 	// Now support strategic merge path :https://kubernetes.io/docs/tasks/manage-kubernetes-objects/update-api-object-kubectl-patch/#notes-on-the-strategic-merge-patch
 	// Patch takes precedence over Replicas fields
 	// If the Patch also modifies the Replicas, use the Replicas value in the Patch
+	// +kubebuilder:pruning:PreserveUnknownFields
 	// +optional
 	Patch *runtime.RawExtension `json:"patch,omitempty"`
 }
