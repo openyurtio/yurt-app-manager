@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	defaultIngressControllerImage     string = "k8s.gcr.io/ingress-nginx/controller:v0.48.1"
+	defaultIngressControllerImage     string = "registry.k8s.io/ingress-nginx/controller:v0.48.1"
 	defaultIngressWebhookCertGenImage string = "docker.io/jettech/kube-webhook-certgen:v1.5.1"
 )
 

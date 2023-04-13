@@ -34,8 +34,8 @@ var defaultYurtIngress = &v1alpha1.YurtIngress{
 	},
 	Spec: v1alpha1.YurtIngressSpec{
 		Replicas:                   1,
-		IngressControllerImage:     "k8s.gcr.io/ingress-nginx/controller:v0.49.0",
-		IngressWebhookCertGenImage: "k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v0.49.0",
+		IngressControllerImage:     "registry.k8s.io/ingress-nginx/controller:v0.49.0",
+		IngressWebhookCertGenImage: "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v0.49.0",
 		Pools:                      []v1alpha1.IngressPool{{Name: "beijing"}},
 	},
 }
