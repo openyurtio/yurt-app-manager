@@ -1,12 +1,14 @@
 # Yurt-app-manager
 
-<div align="center">
+**IMPORTANT: This project is no longer being actively maintained and has been archived.**
 
-[![Version](https://img.shields.io/badge/YurtAppManager-v0.6.0-orange)](https://github.com/openyurtio/yurt-app-manager/releases/tag/v0.6.0-beta.1)
-[![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Go Report Card](https://goreportcard.com/badge/github.com/openyurtio/yurt-app-manager)](https://goreportcard.com/report/github.com/openyurtio/yurt-app-manager)
-[![codecov](https://codecov.io/gh/openyurtio/yurt-app-manager/branch/master/graph/badge.svg)](https://app.codecov.io/gh/openyurtio/yurt-app-manager)
-</div>
+## Archived Project
+
+This project has been archived and is no longer being actively maintained. This means you can view and copy the code, but cannot make changes or propose pull requests.
+
+While you're here, feel free to review the code and learn from it. If you wish to use the code or revive the project, you can fork it to your own GitHub account.
+
+## Project Description
 
 This repository contains 4 CRD/controllers: NodePool, YurtAppSet, YurtAppDaemon and YurtIngress.
 
@@ -26,31 +28,36 @@ YurtAppDaemon: [document](https://github.com/openyurtio/openyurt/blob/master/doc
 
 YurtIngress: [document](https://github.com/openyurtio/openyurt/blob/master/docs/proposals/20210628-nodepool-ingress-support.md).
 
-## Getting Start
+## Previous Contributions
 
-Since the OpenYurt is extended from the upstream Kubernetes using only plugins,
-the NodePool, YurtAppSet, YurtAppDaemon and YurtIngress can be used with upstream Kubernetes as well.
-But to make the best use of them, we recommend using them with the OpenYurt.
-For a complete example, please check out the [tutorial](docs/yurt-app-manager-tutorial.md).
+We want to take a moment to thank all of the previous contributors to this project. Your work has been greatly appreciated and has made a significant impact.
 
-## Contributing
+- [huiwq1990](https://github.com/huiwq1990)
+- [kadisi](https://github.com/kadisi)
+- [rambohe-ch](https://github.com/rambohe-ch)
+- [luc99hen](https://github.com/luc99hen)
+- [charleszheng44](https://github.com/charleszheng44)
+- [rudolf-chy](https://github.com/rudolf-chy)
+- [River-sh](https://github.com/River-sh)
+- [YTGhost](https://github.com/YTGhost)
+- [LindaYu17](https://github.com/LindaYu17)
+- [JameKeal](https://github.com/JameKeal)
+- [xavier-hou](https://github.com/xavier-hou)
+- [ahmedwaleedmalik](https://github.com/ahmedwaleedmalik)
+- [kyakdan](https://github.com/kyakdan)
+- [donychen1134](https://github.com/donychen1134)
+- [Congrool](https://github.com/Congrool)
+- [cndoit18](https://github.com/cndoit18)
+- [maoyangLiu](https://github.com/maoyangLiu)
+- [wawlian](https://github.com/wawlian)
+- [gnunu](https://github.com/gnunu)
+- [cuisongliu](https://github.com/cuisongliu)
+- [ZBoIsHere](https://github.com/ZBoIsHere)
+- [yanyhui](https://github.com/yanyhui)
 
-Contributions are welcome, whether by creating new issues or pull requests. See
-our [contributing document](https://github.com/openyurtio/openyurt/blob/master/CONTRIBUTING.md) to get started.
+## Alternative Projects
 
-## Contact
+All the functions of this project have been migrated into `yurt-manager` component in [openyurt](https://github.com/openyurtio/openyurt) repo.
 
-- Mailing List: openyurt@googlegroups.com
-- Slack: [channel](https://join.slack.com/t/openyurt/shared_invite/zt-iw2lvjzm-MxLcBHWm01y1t2fiTD15Gw)
-- Dingtalk Group (钉钉讨论群)
-
-<div align="left">
-    <img src="https://github.com/openyurtio/openyurt/blob/master/docs/img/ding.jpg" width=25% title="dingtalk">
-</div>
-
-## License
-Yurt-app-manager is under the Apache 2.0 license. See the [LICENSE](LICENSE) file
-for details. Certain implementations in Yurt-app-manager rely on the existing code
-from [Kubernetes](https://github.com/kubernetes/kubernetes) and
-[OpenKruise](https://github.com/openkruise/kruise) the credits go to the
-original authors.
+- [controllers](https://github.com/openyurtio/openyurt/tree/master/pkg/yurtmanager/controller)
+- [webhooks](https://github.com/openyurtio/openyurt/tree/master/pkg/yurtmanager/webhook)
